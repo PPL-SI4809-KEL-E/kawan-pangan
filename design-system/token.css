@@ -1,0 +1,57 @@
+/* Design token Kawan Pangan (PSKE-12).
+   Pakai lewat var(--nama-token), jangan tulis kode warna langsung di komponen. */
+:root {
+  /* Warna brand */
+  --color-primary: #1E3A5F;        /* navy: header, tombol utama */
+  --color-primary-hover: #162C48;
+  --color-accent: #F5B700;         /* kuning: aksen, highlight */
+  --color-on-primary: #FFFFFF;     /* teks di atas primary */
+  --color-on-accent: #1E3A5F;      /* teks di atas accent */
+
+  /* Warna netral */
+  --color-bg: #F8FAFC;             /* latar halaman */
+  --color-surface: #FFFFFF;        /* kartu, tabel, modal */
+  --color-border: #E5E7EB;
+  --color-text: #111827;           /* teks utama */
+  --color-text-muted: #4B5563;     /* teks sekunder */
+
+  /* Status ketersediaan stok */
+  --color-kritis: #B42318;    --color-kritis-bg: #FEE4E2;    /* < 14 hari */
+  --color-waspada: #B54708;   --color-waspada-bg: #FEF0C7;   /* 14–30 hari */
+  --color-aman: #067647;      --color-aman-bg: #DCFAE6;      /* > 30 hari */
+  --color-info: #175CD3;      --color-info-bg: #D1E9FF;      /* diajukan, diproses */
+  --color-netral: #344054;    --color-netral-bg: #F2F4F7;    /* draf, dibatalkan */
+
+  /* Tipografi */
+  --font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-size-xs: 0.75rem;   /* 12px: label kecil */
+  --font-size-sm: 0.875rem;  /* 14px: tabel, caption */
+  --font-size-md: 1rem;      /* 16px: teks isi */
+  --font-size-lg: 1.25rem;   /* 20px: judul kartu */
+  --font-size-xl: 1.5rem;    /* 24px: judul halaman */
+  --font-size-2xl: 2rem;     /* 32px: judul besar */
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height: 1.5;
+
+  /* Spasi (kelipatan 4px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  /* Sudut dan bayangan */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 999px;
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06);
+  --shadow-md: 0 4px 12px rgb(16 24 40 / 0.10);
+
+  /* Breakpoint (acuan media query, PSKE-14) */
+  /* mobile >= 360px, tablet >= 768px, desktop >= 1024px */
+}
