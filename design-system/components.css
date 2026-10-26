@@ -1,0 +1,139 @@
+/* Komponen UI dasar Kawan Pangan (PSKE-13).
+   Butuh tokens.css dimuat lebih dulu. Contoh pemakaian ada di styleguide.html. */
+
+/* Dasar */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height);
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+h1, h2, h3 { margin: 0 0 var(--space-3); line-height: 1.25; }
+h1 { font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); }
+h2 { font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); }
+h3 { font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); }
+.text-muted { color: var(--color-text-muted); }
+
+:focus-visible { outline: 3px solid var(--color-accent); outline-offset: 2px; }
+
+/* Tombol: .btn + varian (.btn-primary, .btn-secondary, .btn-accent, .btn-danger, .btn-ghost) */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.btn-primary { background: var(--color-primary); color: var(--color-on-primary); }
+.btn-primary:hover { background: var(--color-primary-hover); }
+.btn-secondary { background: var(--color-surface); color: var(--color-primary); border-color: var(--color-border); }
+.btn-secondary:hover { border-color: var(--color-primary); }
+.btn-accent { background: var(--color-accent); color: var(--color-on-accent); }
+.btn-danger { background: var(--color-kritis); color: var(--color-on-primary); }
+.btn-ghost { background: transparent; color: var(--color-primary); }
+.btn-ghost:hover { background: var(--color-netral-bg); }
+.btn-sm { min-height: 32px; padding: var(--space-1) var(--space-3); font-size: var(--font-size-xs); }
+.btn-block { width: 100%; }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
+
+/* Form: .field berisi label, input/select/textarea, lalu .field-help atau .field-error */
+.field { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-4); }
+.field label { font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
+.field .required { color: var(--color-kritis); }
+
+.input, .select, .textarea {
+  width: 100%;
+  min-height: 40px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-sm);
+}
+.textarea { min-height: 96px; resize: vertical; }
+.input:focus, .select:focus, .textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-info-bg); }
+.input:disabled, .select:disabled, .textarea:disabled { background: var(--color-netral-bg); color: var(--color-text-muted); }
+
+.field-help { font-size: var(--font-size-xs); color: var(--color-text-muted); }
+.field-error { font-size: var(--font-size-xs); color: var(--color-kritis); }
+.field.has-error .input, .field.has-error .select, .field.has-error .textarea { border-color: var(--color-kritis); }
+
+/* Kartu */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+}
+.card-title { margin: 0 0 var(--space-2); font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); }
+.card-footer { display: flex; gap: var(--space-2); justify-content: flex-end; margin-top: var(--space-4); }
+
+/* Kartu angka ringkas untuk dashboard */
+.stat-card { display: flex; flex-direction: column; gap: var(--space-1); }
+.stat-label { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.stat-value { font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); }
+
+/* Badge status: .badge + .badge-kritis / -waspada / -aman / -info / -netral */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+.badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.badge-kritis { color: var(--color-kritis); background: var(--color-kritis-bg); }
+.badge-waspada { color: var(--color-waspada); background: var(--color-waspada-bg); }
+.badge-aman { color: var(--color-aman); background: var(--color-aman-bg); }
+.badge-info { color: var(--color-info); background: var(--color-info-bg); }
+.badge-netral { color: var(--color-netral); background: var(--color-netral-bg); }
+
+/* Tabel: bungkus dengan .table-wrap supaya bisa digeser di layar kecil */
+.table-wrap {
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+.table { width: 100%; border-collapse: collapse; font-size: var(--font-size-sm); }
+.table th, .table td { padding: var(--space-3) var(--space-4); text-align: left; border-bottom: 1px solid var(--color-border); }
+.table th { background: var(--color-bg); color: var(--color-text-muted); font-weight: var(--font-weight-semibold); white-space: nowrap; }
+.table tbody tr:last-child td { border-bottom: 0; }
+.table tbody tr:hover { background: var(--color-bg); }
+.table .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Pesan: .alert + .alert-error / -success / -warning / -info */
+.alert {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+}
+.alert strong { font-weight: var(--font-weight-semibold); }
+.alert-error { color: var(--color-kritis); background: var(--color-kritis-bg); }
+.alert-success { color: var(--color-aman); background: var(--color-aman-bg); }
+.alert-warning { color: var(--color-waspada); background: var(--color-waspada-bg); }
+.alert-info { color: var(--color-info); background: var(--color-info-bg); }

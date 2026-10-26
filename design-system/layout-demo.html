@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contoh Layout Kawan Pangan</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="components.css">
+  <link rel="stylesheet" href="layout.css">
+</head>
+<body>
+<div class="app" id="app">
+  <header class="app-header">
+    <button class="menu-toggle" type="button" aria-label="Buka menu" aria-controls="sidebar" aria-expanded="false" id="menu-toggle">
+      <span class="menu-icon"></span>
+    </button>
+    <a class="app-brand" href="#"><span class="app-brand-mark">KP</span>Kawan Pangan</a>
+    <div class="app-header-actions">
+      <span class="app-user">Hadid Hamar · Petugas</span>
+      <button class="btn btn-accent btn-sm" type="button">Keluar</button>
+    </div>
+  </header>
+
+  <nav class="app-sidebar" id="sidebar" aria-label="Menu utama">
+    <ul class="nav">
+      <li><a class="nav-link" href="#" aria-current="page">Dashboard</a></li>
+      <li><a class="nav-link" href="#">Peta Ketersediaan</a></li>
+      <li><a class="nav-link" href="#">Stok Gudang</a></li>
+      <li><a class="nav-link" href="#">Laporan Wilayah</a></li>
+      <li><a class="nav-link" href="#">Pengiriman</a></li>
+    </ul>
+    <p class="nav-label">Data Master</p>
+    <ul class="nav">
+      <li><a class="nav-link" href="#">Wilayah</a></li>
+      <li><a class="nav-link" href="#">Komoditas</a></li>
+      <li><a class="nav-link" href="#">Gudang & Instansi</a></li>
+      <li><a class="nav-link" href="#">Pengguna</a></li>
+    </ul>
+  </nav>
+  <div class="app-overlay" id="overlay"></div>
+
+  <main class="app-main">
+    <div class="container">
+      <div class="page-header">
+        <div>
+          <h1>Dashboard</h1>
+          <p class="text-muted" style="margin: 0">Ringkasan ketersediaan pangan per 26 Oktober 2026</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-secondary" type="button">Unduh</button>
+          <button class="btn btn-primary" type="button">Tambah Stok</button>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="grid grid-4">
+          <div class="card stat-card"><span class="stat-label">Gudang terdaftar</span><span class="stat-value">128</span></div>
+          <div class="card stat-card"><span class="stat-label">Wilayah aman</span><span class="stat-value" style="color: var(--color-aman)">96</span></div>
+          <div class="card stat-card"><span class="stat-label">Wilayah waspada</span><span class="stat-value" style="color: var(--color-waspada)">25</span></div>
+          <div class="card stat-card"><span class="stat-label">Wilayah kritis</span><span class="stat-value" style="color: var(--color-kritis)">7</span></div>
+        </div>
+
+        <div class="grid grid-main-aside">
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr><th>Gudang</th><th>Komoditas</th><th class="num">Tersedia (kg)</th><th class="num">Ketahanan</th><th>Status</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Gudang Sukamaju</td><td>Beras</td><td class="num">12.400</td><td class="num">42 hari</td><td><span class="badge badge-aman">Aman</span></td></tr>
+                <tr><td>Gudang Mekarjaya</td><td>Beras</td><td class="num">3.150</td><td class="num">21 hari</td><td><span class="badge badge-waspada">Waspada</span></td></tr>
+                <tr><td>Gudang Sukahati</td><td>Jagung</td><td class="num">820</td><td class="num">9 hari</td><td><span class="badge badge-kritis">Kritis</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card">
+            <h3 class="card-title">Laporan terbaru</h3>
+            <div class="stack" style="gap: var(--space-3)">
+              <div><span class="badge badge-info">Diajukan</span><p style="margin: var(--space-1) 0 0">Desa Sukahati butuh 500 kg beras</p></div>
+              <div><span class="badge badge-waspada">Diverifikasi</span><p style="margin: var(--space-1) 0 0">Kec. Mekarjaya butuh minyak goreng</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // Buka-tutup sidebar di HP dan tablet
+  const app = document.getElementById('app');
+  const toggle = document.getElementById('menu-toggle');
+  function setMenu(open) {
+    app.classList.toggle('is-menu-open', open);
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? 'Tutup menu' : 'Buka menu');
+  }
+  toggle.addEventListener('click', () => setMenu(!app.classList.contains('is-menu-open')));
+  document.getElementById('overlay').addEventListener('click', () => setMenu(false));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
+</script>
+</body>
+</html>
