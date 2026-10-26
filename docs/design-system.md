@@ -34,3 +34,19 @@ Kelipatan 4px: 4, 8, 12, 16, 24, 32, 48. Gunakan `--space-*`.
 
 ## Breakpoint
 Mobile mulai 360px, tablet mulai 768px, desktop mulai 1024px.
+
+## Layout
+Kerangka halaman ada di `design-system/layout.css`, contohnya di `design-system/layout-demo.html`.
+
+| Kelas | Fungsi |
+| --- | --- |
+| `.app` | Pembungkus seluruh halaman yang memakai sidebar |
+| `.app-header` | Bar atas berisi tombol menu, logo, dan akun |
+| `.app-sidebar` | Menu navigasi. Di HP dan tablet berupa laci yang dibuka lewat tombol menu; di desktop selalu tampil |
+| `.app-main` > `.container` | Area isi halaman |
+| `.page-header` | Judul halaman dan tombol aksi (bertumpuk di HP, sejajar mulai tablet) |
+| `.grid .grid-2/3/4` | Grid kartu: 1 kolom di HP, 2 di tablet, 2/3/4 di desktop |
+| `.grid .grid-main-aside` | Isi utama dan panel samping (2:1) di desktop |
+| `.auth-page` > `.auth-card` | Halaman tanpa sidebar, misalnya login dan registrasi |
+
+Sudah dicek pada lebar 360px, 768px, dan 1280px tanpa scroll ke samping. Tabel lebar bisa digeser di dalam `.table-wrap`.

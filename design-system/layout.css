@@ -1,0 +1,127 @@
+/* Layout responsif Kawan Pangan (PSKE-14).
+   Mobile-first: gaya dasar untuk HP mulai 360px, lalu tablet (>= 768px) dan desktop (>= 1024px).
+   Butuh tokens.css dan components.css. Contoh pemakaian ada di layout-demo.html. */
+
+/* Kerangka aplikasi: .app berisi .app-header, .app-sidebar, .app-overlay, dan .app-main */
+.app { min-height: 100vh; }
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 56px;
+  padding: 0 var(--space-4);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+.app-brand { display: flex; align-items: center; gap: var(--space-2); font-weight: var(--font-weight-bold); color: inherit; text-decoration: none; }
+.app-brand-mark { display: grid; place-items: center; width: 32px; height: 32px; border-radius: var(--radius-md); background: var(--color-accent); color: var(--color-on-accent); }
+.app-header-actions { display: flex; align-items: center; gap: var(--space-2); margin-left: auto; }
+.app-user { display: none; font-size: var(--font-size-sm); }
+
+/* Tombol menu hanya tampil di HP dan tablet */
+.menu-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.menu-toggle:hover { background: rgb(255 255 255 / 0.12); }
+.menu-icon, .menu-icon::before, .menu-icon::after { display: block; width: 20px; height: 2px; background: currentColor; border-radius: 2px; }
+.menu-icon { position: relative; }
+.menu-icon::before, .menu-icon::after { content: ""; position: absolute; left: 0; }
+.menu-icon::before { top: -6px; }
+.menu-icon::after { top: 6px; }
+
+/* Sidebar: di HP dan tablet berupa laci yang digeser masuk dari kiri */
+.app-sidebar {
+  position: fixed;
+  top: 56px;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
+  width: 264px;
+  max-width: 85vw;
+  padding: var(--space-4) var(--space-3);
+  overflow-y: auto;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  transform: translateX(-100%);
+  transition: transform 0.2s ease;
+}
+.app.is-menu-open .app-sidebar { transform: translateX(0); box-shadow: var(--shadow-md); }
+
+.app-overlay {
+  position: fixed;
+  inset: 56px 0 0 0;
+  z-index: 35;
+  background: rgb(16 24 40 / 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.app.is-menu-open .app-overlay { opacity: 1; pointer-events: auto; }
+
+.nav { display: flex; flex-direction: column; gap: var(--space-1); margin: 0; padding: 0; list-style: none; }
+.nav-label { margin: var(--space-4) var(--space-3) var(--space-1); font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 40px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+}
+.nav-link:hover { background: var(--color-bg); }
+.nav-link[aria-current="page"] { background: var(--color-info-bg); color: var(--color-primary); font-weight: var(--font-weight-semibold); }
+
+/* Area isi */
+.app-main { min-width: 0; padding: var(--space-4); }
+.container { width: 100%; max-width: 1200px; margin: 0 auto; }
+
+/* Judul halaman dan tombol aksi: bertumpuk di HP, sejajar mulai tablet */
+.page-header { display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-6); }
+.page-header h1 { margin: 0; font-size: var(--font-size-xl); }
+.page-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+/* Grid: 1 kolom di HP, kolom bertambah sesuai kelas di layar lebih besar */
+.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+.stack { display: flex; flex-direction: column; gap: var(--space-4); }
+
+/* Tablet */
+@media (min-width: 768px) {
+  .app-main { padding: var(--space-6); }
+  .app-user { display: inline; }
+  .page-header { flex-direction: row; align-items: center; justify-content: space-between; }
+  .page-header h1 { font-size: var(--font-size-2xl); }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Desktop: sidebar selalu tampil, tombol menu dan overlay disembunyikan */
+@media (min-width: 1024px) {
+  .menu-toggle, .app-overlay { display: none; }
+  .app-sidebar { transform: none; box-shadow: none; }
+  .app-main { margin-left: 264px; padding: var(--space-8); }
+  .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .grid-main-aside { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+}
+
+/* Halaman tanpa sidebar, misalnya login dan registrasi */
+.auth-page { display: grid; place-items: center; min-height: 100vh; padding: var(--space-4); }
+.auth-card { width: 100%; max-width: 420px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .app-sidebar, .app-overlay { transition: none; }
+}
