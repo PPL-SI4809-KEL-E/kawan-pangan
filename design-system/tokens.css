@@ -1,5 +1,4 @@
-/* Design token Kawan Pangan (PSKE-12).
-   Pakai lewat var(--nama-token), jangan tulis kode warna langsung di komponen. */
+/* Design token Kawan Pangan (PSKE-12).*/
 :root {
   /* Warna brand */
   --color-primary: #1E3A5F;        /* navy: header, tombol utama */

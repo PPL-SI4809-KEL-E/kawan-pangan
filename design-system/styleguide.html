@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Styleguide Kawan Pangan</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="components.css">
+  <style>
+    /* tata letak halaman styleguide */
+    .sg { max-width: 1040px; margin: 0 auto; padding: var(--space-8) var(--space-4); }
+    .sg-section { margin-bottom: var(--space-12); }
+    .sg-row { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+    .sg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4); }
+    .sg-swatch { height: 56px; border-radius: var(--radius-md); border: 1px solid var(--color-border); margin-bottom: var(--space-2); }
+    .sg-code { font-family: ui-monospace, monospace; font-size: var(--font-size-xs); color: var(--color-text-muted); }
+  </style>
+</head>
+<body>
+<main class="sg">
+  <header class="sg-section">
+    <h1>Styleguide Kawan Pangan</h1>
+    <p class="text-muted">Komponen UI dasar (PSKE-13). Salin HTML-nya, jangan buat ulang gaya sendiri.</p>
+  </header>
+
+  <section class="sg-section">
+    <h2>Warna</h2>
+    <div class="sg-grid">
+      <div><div class="sg-swatch" style="background: var(--color-primary)"></div><strong>Primary</strong><div class="sg-code">--color-primary</div></div>
+      <div><div class="sg-swatch" style="background: var(--color-accent)"></div><strong>Accent</strong><div class="sg-code">--color-accent</div></div>
+      <div><div class="sg-swatch" style="background: var(--color-bg)"></div><strong>Latar</strong><div class="sg-code">--color-bg</div></div>
+      <div><div class="sg-swatch" style="background: var(--color-text)"></div><strong>Teks</strong><div class="sg-code">--color-text</div></div>
+      <div><div class="sg-swatch" style="background: var(--color-kritis)"></div><strong>Kritis</strong><div class="sg-code">--color-kritis</div></div>
+      <div><div class="sg-swatch" style="background: var(--color-waspada)"></div><strong>Waspada</strong><div class="sg-code">--color-waspada</div></div>
+      <div><div class="sg-swatch" style="background: var(--color-aman)"></div><strong>Aman</strong><div class="sg-code">--color-aman</div></div>
+      <div><div class="sg-swatch" style="background: var(--color-info)"></div><strong>Info</strong><div class="sg-code">--color-info</div></div>
+    </div>
+  </section>
+
+  <section class="sg-section">
+    <h2>Tipografi</h2>
+    <h1>Judul besar 32px</h1>
+    <h2>Judul halaman 24px</h2>
+    <h3>Judul kartu 20px</h3>
+    <p>Teks isi 16px. Ketersediaan beras di Gudang Bulog Sukamaju diperkirakan cukup untuk 21 hari.</p>
+    <p class="text-muted" style="font-size: var(--font-size-sm)">Teks sekunder 14px, untuk keterangan dan tabel.</p>
+  </section>
+
+  <section class="sg-section">
+    <h2>Tombol</h2>
+    <div class="sg-row">
+      <button class="btn btn-primary">Simpan</button>
+      <button class="btn btn-secondary">Batal</button>
+      <button class="btn btn-accent">Ajukan Laporan</button>
+      <button class="btn btn-danger">Tolak</button>
+      <button class="btn btn-ghost">Lihat detail</button>
+      <button class="btn btn-primary btn-sm">Kecil</button>
+      <button class="btn btn-primary" disabled>Nonaktif</button>
+    </div>
+  </section>
+
+  <section class="sg-section">
+    <h2>Badge Status</h2>
+    <div class="sg-row">
+      <span class="badge badge-kritis">Kritis</span>
+      <span class="badge badge-waspada">Waspada</span>
+      <span class="badge badge-aman">Aman</span>
+      <span class="badge badge-info">Diajukan</span>
+      <span class="badge badge-info">Diproses</span>
+      <span class="badge badge-aman">Selesai</span>
+      <span class="badge badge-kritis">Ditolak</span>
+      <span class="badge badge-netral">Draf</span>
+    </div>
+  </section>
+
+  <section class="sg-section">
+    <h2>Form</h2>
+    <div class="card" style="max-width: 480px">
+      <div class="field">
+        <label for="nama">Nama instansi <span class="required">*</span></label>
+        <input id="nama" class="input" placeholder="Contoh: Dinas Ketahanan Pangan Kota Bandung">
+        <span class="field-help">Tulis nama resmi sesuai surat tugas.</span>
+      </div>
+      <div class="field has-error">
+        <label for="email">Email <span class="required">*</span></label>
+        <input id="email" class="input" type="email" value="petugas@" aria-invalid="true" aria-describedby="email-error">
+        <span id="email-error" class="field-error">Format email belum benar.</span>
+      </div>
+      <div class="field">
+        <label for="komoditas">Komoditas</label>
+        <select id="komoditas" class="select">
+          <option>Beras</option>
+          <option>Jagung</option>
+          <option>Minyak goreng</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="catatan">Catatan</label>
+        <textarea id="catatan" class="textarea" placeholder="Opsional"></textarea>
+      </div>
+      <div class="field">
+        <label for="surat">Surat tugas</label>
+        <input id="surat" class="input" type="file" accept=".pdf,.jpg,.jpeg">
+        <span class="field-help">PDF atau JPG, maksimal 2 MB.</span>
+      </div>
+      <button class="btn btn-primary btn-block">Daftar</button>
+    </div>
+  </section>
+
+  <section class="sg-section">
+    <h2>Kartu</h2>
+    <div class="sg-grid">
+      <div class="card stat-card">
+        <span class="stat-label">Gudang terdaftar</span>
+        <span class="stat-value">128</span>
+      </div>
+      <div class="card stat-card">
+        <span class="stat-label">Wilayah kritis</span>
+        <span class="stat-value" style="color: var(--color-kritis)">7</span>
+      </div>
+      <div class="card">
+        <h3 class="card-title">Gudang Sukamaju</h3>
+        <p class="text-muted">Beras · 12.400 kg tersedia</p>
+        <span class="badge badge-aman">Aman · 42 hari</span>
+        <div class="card-footer"><button class="btn btn-secondary btn-sm">Detail</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sg-section">
+    <h2>Tabel</h2>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>Gudang</th><th>Komoditas</th><th class="num">Tersedia (kg)</th><th class="num">Ketahanan</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Gudang Sukamaju</td><td>Beras</td><td class="num">12.400</td><td class="num">42 hari</td><td><span class="badge badge-aman">Aman</span></td></tr>
+          <tr><td>Gudang Mekarjaya</td><td>Beras</td><td class="num">3.150</td><td class="num">21 hari</td><td><span class="badge badge-waspada">Waspada</span></td></tr>
+          <tr><td>Gudang Sukahati</td><td>Jagung</td><td class="num">820</td><td class="num">9 hari</td><td><span class="badge badge-kritis">Kritis</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="sg-section">
+    <h2>Pesan</h2>
+    <div style="display: grid; gap: var(--space-3)">
+      <div class="alert alert-error" role="alert"><strong>Gagal menyimpan</strong>Ukuran file melebihi 2 MB.</div>
+      <div class="alert alert-success" role="status"><strong>Berhasil</strong>Akun terdaftar dan menunggu verifikasi.</div>
+      <div class="alert alert-warning"><strong>Perhatian</strong>Stok beras di 3 gudang di bawah 30 hari.</div>
+      <div class="alert alert-info"><strong>Info</strong>Data diperbarui setiap pukul 00.00 WIB.</div>
+    </div>
+  </section>
+</main>
+</body>
+</html>

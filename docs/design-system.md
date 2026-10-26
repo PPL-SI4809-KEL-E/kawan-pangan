@@ -1,6 +1,7 @@
 # Design System Kawan Pangan
 
-Token disimpan di `design-system/tokens.css`. Semua komponen wajib memakai token,
+Token disimpan di `design-system/tokens.css`, komponen di `design-system/components.css`,
+dan contoh semua komponen bisa dilihat di `design-system/styleguide.html`. Semua komponen wajib memakai token,
 misalnya `color: var(--color-text)`, bukan kode warna langsung.
 
 ## Warna
