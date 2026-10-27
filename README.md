@@ -1,9 +1,8 @@
 # Kawan Pangan - SDG 2 Website
 
-[![CI/CD Pipeline & Demo Deploy](https://github.com/PPL-SI4809-KEL-E/kawan-pangan/actions/workflows/deploy.yml/badge.svg)](https://github.com/PPL-SI4809-KEL-E/kawan-pangan/actions/workflows/deploy.yml)
-[![Framework](https://img.shields.io/badge/Framework-Laravel%2010-red.svg)](https://laravel.com)
+[![CI/CD Pipeline & Build Verification](https://github.com/PPL-SI4809-KEL-E/kawan-pangan/actions/workflows/deploy.yml/badge.svg)](https://github.com/PPL-SI4809-KEL-E/kawan-pangan/actions/workflows/deploy.yml)
+[![Framework](https://img.shields.io/badge/Framework-Laravel%2012-red.svg)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.2%2B-blue.svg)](https://php.net)
-[![PBI](https://img.shields.io/badge/Sprint%201-PSKE--7%20Verified-success.svg)](https://pplkelompokesi4809.atlassian.net)
 
 Repository tugas besar **Proyek Perangkat Lunak** dari **Kelompok E SI4809**.
 
@@ -13,16 +12,16 @@ Kawan Pangan adalah website untuk memetakan ketersediaan stok pangan di Indonesi
 
 ## 👥 Anggota Tim
 
-| Nama | Peran | Fokus Modul |
-| --- | --- | --- |
-| **Pak Gelar Aditya** | Product Owner (dosen) | Pembimbing & Evaluator |
-| **Hadid Hamar** | Scrum Master & Developer | PM, UI/UX, Design System (PBI-02) |
-| **Hafizh Rafi Maulana Suyufi** | Developer | Frontend & UI Halaman (PBI-05) |
-| **Ahmad Rizky Ivanzya** | Developer | Backend Layanan Stok & Pengiriman |
-| **Naufan Rae Rasyad Torick** | Developer | Peta & Pengiriman Lapangan (PIC PBI-01) |
-| **Calista Aurelia Putri** | Developer | Alur Laporan & Analisis Sistem |
-| **Muhammad Syamsul Arifin** | Developer | Basis Data, Master Data, Penerimaan (PBI-03) |
-| **Yudha Pamungkas** | Developer | Autentikasi, Hak Akses, Pengujian (PBI-04, 06, 07) |
+| Nama | Peran |
+| --- | --- |
+| **Pak Gelar Aditya** | Product Owner (dosen) |
+| **Hadid Hamar** | Scrum Master & Developer |
+| **Hafizh Rafi Maulana Suyufi** | Developer |
+| **Ahmad Rizky Ivanzya** | Developer |
+| **Naufan Rae Rasyad Torick** | Developer |
+| **Calista Aurelia Putri** | Developer |
+| **Muhammad Syamsul Arifin** | Developer |
+| **Yudha Pamungkas** | Developer |
 
 ---
 
@@ -30,7 +29,6 @@ Kawan Pangan adalah website untuk memetakan ketersediaan stok pangan di Indonesi
 
 - **Jira**: product backlog, sprint, dan pembagian tugas (project `PSKE` / `PPL-SI4809-KEL E`)
 - **GitHub**: tempat menyimpan kode, satu branch untuk setiap tugas
-- **Slack / WA**: diskusi, daily report, dan info meeting
 
 ---
 
@@ -82,11 +80,15 @@ npm install
 
 ### 4. Konfigurasi Environment File
 Salin file konfigurasi `.env.example` menjadi `.env`:
+
 ```bash
-# Windows PowerShell:
+# Linux / macOS / Git Bash:
 cp .env.example .env
 
-# Atau CMD:
+# Windows PowerShell:
+Copy-Item .env.example .env
+
+# Atau Windows CMD:
 copy .env.example .env
 ```
 
@@ -97,8 +99,13 @@ php artisan key:generate
 
 ### 6. Setup Basis Data Lokal (SQLite)
 Secara default, proyek telah disiapkan menggunakan SQLite agar pengembang dapat langsung menjalankan sistem tanpa konfigurasi database server tambahan:
+
 ```bash
-# Windows PowerShell (jika file database belum ada):
+# Linux / macOS / Git Bash:
+touch database/database.sqlite
+chmod -R 775 storage bootstrap/cache
+
+# Windows PowerShell:
 if (!(Test-Path 'database/database.sqlite')) { New-Item -ItemType File -Path 'database/database.sqlite' }
 
 # Jalankan migrasi tabel:

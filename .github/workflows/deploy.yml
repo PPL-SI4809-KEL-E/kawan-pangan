@@ -1,4 +1,4 @@
-name: CI/CD Pipeline & Demo Deploy
+name: CI/CD Pipeline & Build Verification
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-test:
-    name: Build, Test & Verify Demo
+    name: Build & Test Verification
     runs-on: ubuntu-latest
 
     steps:
@@ -40,10 +40,9 @@ jobs:
     - name: Run Tests
       run: php artisan test
 
-    - name: Deploy Demo Verification
-      if: github.ref == 'refs/heads/main'
+    - name: Build & Test Verification
       run: |
-        echo "=== Pipeline Deploy Demo Kawan Pangan ==="
-        echo "Status: Berhasil diverifikasi dan siap live."
+        echo "=== Build & Test Verification Kawan Pangan ==="
+        echo "Status: Build aplikasi, migrasi basis data, dan seluruh automated test berhasil diverifikasi."
         echo "PBI: PBI-01 Setup repositori, struktur proyek, dan deploy demo."
         echo "Commit: ${{ github.sha }}"
