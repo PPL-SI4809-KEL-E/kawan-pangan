@@ -5,6 +5,7 @@ namespace Tests\Feature\Registrasi;
 use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
@@ -12,32 +13,13 @@ use Tests\TestCase;
  */
 class FormRegistrasiTest extends TestCase
 {
-    use RefreshDatabase;
+    use DataRegistrasi, RefreshDatabase;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->withoutVite();
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    protected function dataValid(array $ubah = []): array
-    {
-        return array_merge([
-            'role' => 'KEPALA_WILAYAH',
-            'name' => 'Budi Santoso',
-            'email' => 'budi@desa.id',
-            'no_hp' => '081234567890',
-            'password' => 'rahasia123',
-            'password_confirmation' => 'rahasia123',
-            'wilayah_provinsi' => '32',
-            'wilayah_kabkota' => '32.04',
-            'wilayah_kecamatan' => '32.04.12',
-            'wilayah_desa' => '32.04.12.2001',
-            'setuju' => '1',
-        ], $ubah);
+        Storage::fake('local');
     }
 
     public function test_halaman_registrasi_hanya_menampilkan_kepala_wilayah_dan_badan_resmi(): void

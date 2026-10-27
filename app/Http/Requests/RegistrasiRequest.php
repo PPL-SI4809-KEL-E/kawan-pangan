@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\Role;
+use App\Models\DokumenPendukung;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -44,6 +45,15 @@ class RegistrasiRequest extends FormRequest
             'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()],
             'kode_wilayah' => ['nullable', 'required_if:role,'.Role::KepalaWilayah->value, 'string', 'max:20'],
             'instansi_id' => ['nullable', 'required_if:role,'.Role::BadanResmi->value, 'integer'],
+            // PSKE-5: PDF/JPG maks 2 MB. "mimes" menebak tipe dari isi berkas, bukan dari namanya,
+            // sehingga berkas .exe yang diganti nama menjadi .pdf tetap ditolak.
+            'surat_tugas' => [
+                'required',
+                'file',
+                'mimes:pdf,jpg,jpeg',
+                'mimetypes:application/pdf,image/jpeg',
+                'max:'.DokumenPendukung::MAKS_KB,
+            ],
             'setuju' => ['accepted'],
         ];
     }
@@ -72,6 +82,12 @@ class RegistrasiRequest extends FormRequest
             'kode_wilayah.required_if' => 'Pilih wilayah tugas sampai kecamatan atau desa/kelurahan.',
             'instansi_id.required_if' => 'Pilih instansi tempat Anda bertugas.',
             'instansi_id.integer' => 'Instansi tidak valid.',
+            'surat_tugas.required' => 'Surat tugas wajib diunggah.',
+            'surat_tugas.file' => 'Surat tugas gagal diunggah. Silakan pilih ulang berkasnya.',
+            'surat_tugas.uploaded' => 'Surat tugas gagal diunggah. Ukuran maksimal 2 MB.',
+            'surat_tugas.mimes' => 'Format surat tugas harus PDF atau JPG.',
+            'surat_tugas.mimetypes' => 'Format surat tugas harus PDF atau JPG.',
+            'surat_tugas.max' => 'Ukuran surat tugas maksimal 2 MB.',
             'setuju.accepted' => 'Anda harus menyatakan data yang diisi benar.',
         ];
     }

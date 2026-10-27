@@ -95,6 +95,57 @@ if (form) {
     const terpilih = form.querySelector('input[name="role"]:checked');
     if (terpilih) aturRole(terpilih.value);
 
+    // ---------- PSKE-5: unggah surat tugas ----------
+    const fileInput = document.getElementById('surat_tugas');
+    const dropzone = document.getElementById('dropzone');
+    const maksByte = Number(fileInput.dataset.maksKb) * 1024;
+    const EKSTENSI = ['pdf', 'jpg', 'jpeg'];
+    const MIME = ['application/pdf', 'image/jpeg'];
+
+    const formatUkuran = (b) =>
+        b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1024 / 1024).toFixed(1).replace('.', ',')} MB`;
+
+    function periksaBerkas(file) {
+        if (!file) return 'Surat tugas wajib diunggah.';
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (!EKSTENSI.includes(ext) || (file.type && !MIME.includes(file.type))) return 'Format surat tugas harus PDF atau JPG.';
+        if (file.size > maksByte) return `Ukuran surat tugas ${formatUkuran(file.size)}, maksimal 2 MB.`;
+        return '';
+    }
+
+    function tampilkanBerkas() {
+        const file = fileInput.files[0];
+        const pesan = file ? periksaBerkas(file) : '';
+        aturGalat('surat_tugas', pesan);
+        const valid = file && !pesan;
+        document.getElementById('dz-empty').hidden = Boolean(valid);
+        document.getElementById('dz-file').hidden = !valid;
+        if (valid) {
+            document.getElementById('dz-nama').textContent = file.name;
+            document.getElementById('dz-ukuran').textContent = formatUkuran(file.size);
+            document.getElementById('dz-ext').textContent = file.name.toLowerCase().endsWith('.pdf') ? 'PDF' : 'JPG';
+        } else if (file) {
+            fileInput.value = '';
+        }
+    }
+
+    fileInput.addEventListener('change', tampilkanBerkas);
+    ['dragenter', 'dragover'].forEach((ev) => dropzone.addEventListener(ev, (e) => { e.preventDefault(); dropzone.classList.add('is-drag'); }));
+    ['dragleave', 'drop'].forEach((ev) => dropzone.addEventListener(ev, (e) => { e.preventDefault(); dropzone.classList.remove('is-drag'); }));
+    dropzone.addEventListener('drop', (e) => {
+        if (!e.dataTransfer.files.length) return;
+        fileInput.files = e.dataTransfer.files;
+        tampilkanBerkas();
+    });
+
+    form.addEventListener('registrasi:validasi', (e) => {
+        const pesan = periksaBerkas(fileInput.files[0]);
+        if (pesan) {
+            aturGalat('surat_tugas', pesan);
+            e.preventDefault();
+        }
+    });
+
     // ---------- Kirim ----------
     form.addEventListener('submit', (e) => {
         const btn = document.getElementById('btn-daftar');

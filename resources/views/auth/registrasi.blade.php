@@ -111,6 +111,26 @@
             <input class="input" id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password">
         </div>
 
+        {{-- PSKE-5: unggah surat tugas --}}
+        <div class="field @error('surat_tugas') has-error @enderror">
+            <label for="surat_tugas">Surat tugas <span class="required">*</span></label>
+            <label class="dropzone" id="dropzone">
+                <input id="surat_tugas" name="surat_tugas" type="file"
+                       accept=".pdf,.jpg,.jpeg,application/pdf,image/jpeg" data-maks-kb="{{ \App\Models\DokumenPendukung::MAKS_KB }}">
+                <span class="dropzone-empty" id="dz-empty"><strong>Pilih berkas</strong> atau seret ke sini</span>
+                <span class="dropzone-file" id="dz-file" hidden>
+                    <span class="file-badge" id="dz-ext">PDF</span>
+                    <span class="file-meta"><strong id="dz-nama"></strong><small class="text-muted" id="dz-ukuran"></small></span>
+                    <span class="btn btn-ghost btn-sm" aria-hidden="true">Ganti</span>
+                </span>
+            </label>
+            <span class="field-help">
+                PDF atau JPG, maksimal 2 MB.
+                @if ($errors->any()) Pilih ulang berkasnya karena unggahan sebelumnya tidak disimpan. @endif
+            </span>
+            <span class="field-error" data-error="surat_tugas">@error('surat_tugas'){{ $message }}@enderror</span>
+        </div>
+
         <div class="field @error('setuju') has-error @enderror">
             <label class="reg-check">
                 <input type="checkbox" name="setuju" value="1" @checked(old('setuju'))>
