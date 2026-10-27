@@ -1,0 +1,42 @@
+/* PBI-05 · Gaya khusus halaman registrasi.
+   Hanya berisi bagian yang belum ada di design system; semua nilai memakai token. */
+
+.auth-card.reg-card { max-width: 480px; padding: var(--space-6) 0; }
+.auth-brand { color: var(--color-primary); margin-bottom: var(--space-4); }
+.reg-title { font-size: var(--font-size-xl); color: var(--color-primary); margin-bottom: var(--space-1); }
+.reg-sub { font-size: var(--font-size-sm); margin: 0 0 var(--space-6); }
+.reg-alert { margin-bottom: var(--space-4); }
+.reg-foot { text-align: center; font-size: var(--font-size-sm); margin: var(--space-4) 0 0; }
+
+/* fieldset memakai gaya .field tanpa bingkai bawaan browser */
+.reg-fieldset { border: 0; padding: 0; margin-left: 0; margin-right: 0; min-width: 0; }
+.reg-legend { padding: 0; margin-bottom: var(--space-1); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
+.reg-stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); margin-top: var(--space-1); }
+
+/* Pilihan jenis akun (PSKE-4) */
+.role-group { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); }
+.role-option {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-weight: var(--font-weight-regular) !important;
+  cursor: pointer;
+}
+.role-option input { margin-top: 4px; accent-color: var(--color-primary); }
+.role-option-body { display: flex; flex-direction: column; font-size: var(--font-size-sm); }
+.role-option-body strong { font-weight: var(--font-weight-semibold); }
+.role-option-body small { font-size: var(--font-size-xs); }
+.role-option:has(input:checked) { border-color: var(--color-primary); background: var(--color-info-bg); }
+.field.has-error .role-option { border-color: var(--color-kritis); }
+
+.reg-check { display: flex; gap: var(--space-3); align-items: flex-start; font-weight: var(--font-weight-regular) !important; }
+.reg-check input { margin-top: 4px; accent-color: var(--color-primary); }
+
+@media (min-width: 768px) {
+  .role-group { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .reg-stack { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
