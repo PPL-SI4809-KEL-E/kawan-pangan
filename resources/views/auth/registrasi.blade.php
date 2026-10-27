@@ -1,4 +1,4 @@
-{{-- PBI-05 · M-07 Registrasi akun (PSKE-4) --}}
+{{-- PBI-05 · M-07 Registrasi akun (PSKE-4, PSKE-5) --}}
 @extends('layouts.auth')
 
 @section('title', 'Daftar Akun')
@@ -15,12 +15,6 @@
         Untuk Kepala Wilayah (kepala desa, lurah, camat) dan staf Badan Resmi.
         Masyarakat tidak perlu mendaftar untuk melihat peta dan informasi.
     </p>
-
-    @if (session('registrasi_email'))
-        <div class="alert alert-success reg-alert" role="status">
-            Pendaftaran {{ session('registrasi_email') }} berhasil dikirim.
-        </div>
-    @endif
 
     @if ($errors->any())
         <div class="alert alert-error reg-alert" role="alert">

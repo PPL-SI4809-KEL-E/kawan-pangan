@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Enums\Role;
+use App\Enums\StatusAkun;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RegistrasiRequest;
 use App\Models\DokumenPendukung;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -35,7 +37,10 @@ class RegistrasiController extends Controller
 
         try {
             $user = DB::transaction(function () use ($request, $berkas, &$path) {
-                $user = User::create($request->dataAkun());
+                // PSKE-6: status ditetapkan server, tidak pernah diambil dari input.
+                $user = new User($request->dataAkun());
+                $user->status = StatusAkun::Menunggu;
+                $user->save();
 
                 // PSKE-5: nama berkas acak, disimpan per pengguna di disk privat.
                 $path = $berkas->store("surat-tugas/{$user->id}", self::DISK);
@@ -63,7 +68,24 @@ class RegistrasiController extends Controller
         }
 
         return redirect()
-            ->route('registrasi.create')
+            ->route('registrasi.terkirim')
             ->with('registrasi_email', $user->email);
+    }
+
+    /**
+     * PSKE-6: konfirmasi bahwa akun menunggu verifikasi. Pengguna tidak diarahkan ke panel.
+     */
+    public function terkirim(Request $request): View|RedirectResponse
+    {
+        $email = $request->session()->get('registrasi_email');
+
+        if (! $email) {
+            return redirect()->route('registrasi.create');
+        }
+
+        return view('auth.registrasi-terkirim', [
+            'email' => $email,
+            'status' => StatusAkun::Menunggu,
+        ]);
     }
 }

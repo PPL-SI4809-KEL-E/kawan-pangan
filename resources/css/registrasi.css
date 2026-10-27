@@ -66,6 +66,22 @@
 .reg-check { display: flex; gap: var(--space-3); align-items: flex-start; font-weight: var(--font-weight-regular) !important; }
 .reg-check input { margin-top: 4px; accent-color: var(--color-primary); }
 
+/* Konfirmasi setelah registrasi (PSKE-6) */
+.reg-terkirim { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); text-align: center; }
+.reg-terkirim p { margin: 0; font-size: var(--font-size-sm); }
+.reg-terkirim .reg-title { margin: 0; }
+.reg-ikon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: var(--color-waspada-bg);
+  color: var(--color-waspada);
+}
+.reg-langkah { margin: 0; padding-left: var(--space-6); text-align: left; font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.reg-langkah li + li { margin-top: var(--space-1); }
+
 @media (min-width: 768px) {
   .role-group { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .reg-stack { grid-template-columns: repeat(2, minmax(0, 1fr)); }

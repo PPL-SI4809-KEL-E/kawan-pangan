@@ -138,8 +138,11 @@ if (form) {
         tampilkanBerkas();
     });
 
+    // Tahan pengiriman hanya bila berkas yang dipilih salah, agar berkas besar tidak ikut terunggah.
+    // Bila belum memilih berkas, biarkan server menampilkan seluruh galat sekaligus.
     form.addEventListener('registrasi:validasi', (e) => {
-        const pesan = periksaBerkas(fileInput.files[0]);
+        const file = fileInput.files[0];
+        const pesan = file ? periksaBerkas(file) : '';
         if (pesan) {
             aturGalat('surat_tugas', pesan);
             e.preventDefault();
