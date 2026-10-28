@@ -88,4 +88,54 @@ class User extends Authenticatable
             default => 'Status akun tidak valid.',
         };
     }
+
+    // ──────────────────────────────────────────────────────────────
+    //  Helper otorisasi wilayah, instansi, dan penugasan
+    // ──────────────────────────────────────────────────────────────
+
+    public function isSuperadmin(): bool
+    {
+        return $this->role === Role::Superadmin;
+    }
+
+    public function isKepalaWilayah(): bool
+    {
+        return $this->role === Role::KepalaWilayah;
+    }
+
+    public function isBadanResmi(): bool
+    {
+        return $this->role === Role::BadanResmi;
+    }
+
+    /**
+     * Periksa apakah kode wilayah tertentu berada dalam cakupan pengguna ini.
+     * Menggunakan pencocokan prefix hierarki: kode_wilayah `32.04` mencakup
+     * `32.04`, `32.04.12`, `32.04.12.2001`, dan seterusnya.
+     *
+     * Mengembalikan false jika pengguna tidak memiliki penugasan wilayah.
+     */
+    public function menguasaiWilayah(string $kodeWilayah): bool
+    {
+        if ($this->kode_wilayah === null) {
+            return false;
+        }
+
+        return $kodeWilayah === $this->kode_wilayah
+            || str_starts_with($kodeWilayah, $this->kode_wilayah.'.');
+    }
+
+    /**
+     * Periksa apakah instansi tertentu sesuai dengan penugasan pengguna ini.
+     *
+     * Mengembalikan false jika pengguna tidak memiliki penugasan instansi.
+     */
+    public function menguasaiInstansi(int $instansiId): bool
+    {
+        if ($this->instansi_id === null) {
+            return false;
+        }
+
+        return (int) $this->instansi_id === $instansiId;
+    }
 }

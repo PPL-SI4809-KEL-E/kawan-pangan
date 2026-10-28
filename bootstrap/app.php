@@ -12,7 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        // Alias middleware pembatasan akses berdasarkan role.
+        $middleware->alias([
+            'role' => \App\Http\Middleware\PeriksaRole::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
