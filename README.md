@@ -126,6 +126,46 @@ Aplikasi dapat langsung diakses melalui browser pada:
 
 ---
 
+## 🌐 Kesiapan Deployment Demo (Hosting Live & Database Online)
+
+Bagian ini memfasilitasi persiapan demo live aplikasi untuk presentasi ke dosen evaluator (Pak Gelar) dan pengujian integrasi antar modul tim.
+
+### 1. Build Aset Frontend Production
+Pastikan aset Vite telah dikompilasi sebelum deployment atau demo:
+```bash
+npm run build
+```
+
+### 2. Konfigurasi Basis Data Online Tim (MySQL)
+Untuk pengujian integrasi data bersama tim, sesuaikan konfigurasi pada file `.env`:
+```env
+DB_CONNECTION=mysql
+DB_HOST=157.10.253.27
+DB_PORT=3306
+DB_DATABASE=SI4809_PPL_E
+DB_USERNAME=root
+DB_PASSWORD=rootpassword
+```
+*Antarmuka visual tabel:* [phpMyAdmin Web UI](http://157.10.253.27:3307)
+
+### 3. Langkah Deployment Demo ke Server / Staging
+1. Kloning repositori dan pasang dependensi:
+   ```bash
+   composer install --no-dev --optimize-autoloader
+   npm ci
+   npm run build
+   ```
+2. Jalankan migrasi dan seeder awal:
+   ```bash
+   php artisan migrate --force
+   ```
+3. Verifikasi ketersediaan layanan melalui endpoint API:
+   ```bash
+   curl -i http://localhost:8000/api/health
+   ```
+
+---
+
 ## 📅 Progress Sprint
 
 | Sprint | Periode | Fokus | Status |
