@@ -37,12 +37,24 @@ jobs:
         touch database/database.sqlite
         php artisan migrate --force --database=sqlite
 
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install Frontend Dependencies
+      run: npm ci
+
+    - name: Build Frontend Assets
+      run: npm run build
+
     - name: Run Tests
       run: php artisan test
 
     - name: Build & Test Verification
       run: |
         echo "=== Build & Test Verification Kawan Pangan ==="
-        echo "Status: Build aplikasi, migrasi basis data, dan seluruh automated test berhasil diverifikasi."
+        echo "Status: Build backend, frontend Vite, migrasi basis data, dan seluruh automated test berhasil diverifikasi."
         echo "PBI: PBI-01 Setup repositori, struktur proyek, dan deploy demo."
         echo "Commit: ${{ github.sha }}"
