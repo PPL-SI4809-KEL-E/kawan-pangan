@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -44,6 +45,14 @@ class RegistrasiController extends Controller
 
                 // PSKE-5: nama berkas acak, disimpan per pengguna di disk privat.
                 $path = $berkas->store("surat-tugas/{$user->id}", self::DISK);
+
+                // Disk dengan 'throw' => false mengembalikan false saat gagal, bukan melempar exception.
+                // Lempar sendiri agar transaksi dibatalkan dan akun tidak terbentuk tanpa surat tugas.
+                if (! is_string($path) || $path === '') {
+                    $path = null;
+
+                    throw new RuntimeException('Surat tugas gagal disimpan ke disk "'.self::DISK.'".');
+                }
 
                 $user->dokumenPendukung()->create([
                     'jenis' => DokumenPendukung::JENIS_SURAT_TUGAS,
