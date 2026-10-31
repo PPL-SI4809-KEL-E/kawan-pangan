@@ -1,0 +1,88 @@
+/* PBI-05 · Gaya khusus halaman registrasi.
+   Hanya berisi bagian yang belum ada di design system; semua nilai memakai token. */
+
+.auth-card.reg-card { max-width: 480px; padding: var(--space-6) 0; }
+.auth-brand { color: var(--color-primary); margin-bottom: var(--space-4); }
+.reg-title { font-size: var(--font-size-xl); color: var(--color-primary); margin-bottom: var(--space-1); }
+.reg-sub { font-size: var(--font-size-sm); margin: 0 0 var(--space-6); }
+.reg-alert { margin-bottom: var(--space-4); }
+.reg-foot { text-align: center; font-size: var(--font-size-sm); margin: var(--space-4) 0 0; }
+
+/* fieldset memakai gaya .field tanpa bingkai bawaan browser */
+.reg-fieldset { border: 0; padding: 0; margin-left: 0; margin-right: 0; min-width: 0; }
+.reg-legend { padding: 0; margin-bottom: var(--space-1); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
+.reg-stack { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); margin-top: var(--space-1); }
+
+/* Pilihan jenis akun (PSKE-4) */
+.role-group { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-2); }
+.role-option {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-weight: var(--font-weight-regular) !important;
+  cursor: pointer;
+}
+.role-option input { margin-top: 4px; accent-color: var(--color-primary); }
+.role-option-body { display: flex; flex-direction: column; font-size: var(--font-size-sm); }
+.role-option-body strong { font-weight: var(--font-weight-semibold); }
+.role-option-body small { font-size: var(--font-size-xs); }
+.role-option:has(input:checked) { border-color: var(--color-primary); background: var(--color-info-bg); }
+.field.has-error .role-option { border-color: var(--color-kritis); }
+
+/* Dropzone surat tugas (PSKE-5) */
+.dropzone {
+  position: relative;
+  display: block;
+  padding: var(--space-4);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  text-align: center;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-regular) !important;
+  cursor: pointer;
+}
+.dropzone:focus-within { border-color: var(--color-primary); }
+.dropzone.is-drag { border-color: var(--color-primary); background: var(--color-info-bg); }
+.field.has-error .dropzone { border-color: var(--color-kritis); background: var(--color-kritis-bg); }
+.dropzone input[type="file"] { position: absolute; inset: 0; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+.dropzone-file { display: flex; align-items: center; gap: var(--space-3); text-align: left; }
+.file-badge {
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+}
+.file-meta { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.file-meta strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-meta small { font-size: var(--font-size-xs); }
+
+.reg-check { display: flex; gap: var(--space-3); align-items: flex-start; font-weight: var(--font-weight-regular) !important; }
+.reg-check input { margin-top: 4px; accent-color: var(--color-primary); }
+
+/* Konfirmasi setelah registrasi (PSKE-6) */
+.reg-terkirim { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); text-align: center; }
+.reg-terkirim p { margin: 0; font-size: var(--font-size-sm); }
+.reg-terkirim .reg-title { margin: 0; }
+.reg-ikon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: var(--color-waspada-bg);
+  color: var(--color-waspada);
+}
+.reg-langkah { margin: 0; padding-left: var(--space-6); text-align: left; font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.reg-langkah li + li { margin-top: var(--space-1); }
+
+@media (min-width: 768px) {
+  .role-group { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .reg-stack { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

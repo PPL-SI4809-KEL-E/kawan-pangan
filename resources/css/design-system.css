@@ -1,0 +1,8 @@
+/* Memuat design system tim (PSKE-12, PSKE-13, PSKE-14) lewat Vite.
+   Dipakai halaman Blade yang memakai komponen dari folder design-system/. */
+@import '../../design-system/tokens.css';
+@import '../../design-system/components.css';
+@import '../../design-system/layout.css';
+
+[hidden] { display: none !important; }
+.field-error:empty { display: none; }
