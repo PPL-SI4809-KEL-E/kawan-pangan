@@ -109,6 +109,26 @@ class User extends Authenticatable
     }
 
     /**
+     * Nilai atribut `jabatan` untuk akun Badan Resmi yang berperan sebagai
+     * pengelola instansi. Akun Badan Resmi lain diperlakukan sebagai petugas.
+     */
+    public const JABATAN_PENGELOLA = 'PENGELOLA';
+
+    /**
+     * Periksa apakah pengguna adalah pengelola instansi.
+     *
+     * Bersifat fail-closed: jika penanda jabatan belum ditetapkan saat
+     * verifikasi akun, pengguna tidak dianggap pengelola. Atribut `jabatan`
+     * sengaja tidak fillable agar tidak bisa diisi dari request.
+     */
+    public function isPengelolaInstansi(): bool
+    {
+        return $this->isBadanResmi()
+            && $this->instansi_id !== null
+            && $this->getAttribute('jabatan') === self::JABATAN_PENGELOLA;
+    }
+
+    /**
      * Periksa apakah kode wilayah tertentu berada dalam cakupan pengguna ini.
      * Menggunakan pencocokan prefix hierarki: kode_wilayah `32.04` mencakup
      * `32.04`, `32.04.12`, `32.04.12.2001`, dan seterusnya.

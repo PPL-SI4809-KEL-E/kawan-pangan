@@ -77,16 +77,17 @@ class PengirimanPolicyTest extends TestCase
     #[Test]
     public function petugas_tidak_boleh_memperbarui_pengiriman_petugas_lain(): void
     {
-        $petugas = new User([
+        $petugasA = new User([
             'role' => Role::BadanResmi->value,
             'instansi_id' => 1,
         ]);
-        $petugas->id = 10;
+        $petugasA->id = 10;
 
-        $pengirimanStafLain = $this->buatPengiriman(petugasId: 20, instansiId: 1);
+        // Pengiriman milik petugas B pada instansi yang sama.
+        $pengirimanPetugasB = $this->buatPengiriman(petugasId: 20, instansiId: 1);
 
-        // update masih boleh karena instansi cocok, tapi checkpoint harus ditolak.
-        $this->assertFalse($this->policy->updateCheckpoint($petugas, $pengirimanStafLain));
+        $this->assertFalse($this->policy->update($petugasA, $pengirimanPetugasB));
+        $this->assertFalse($this->policy->updateCheckpoint($petugasA, $pengirimanPetugasB));
     }
 
     #[Test]
@@ -107,14 +108,22 @@ class PengirimanPolicyTest extends TestCase
 
     // ── Pengelola (Badan Resmi): instansi sendiri ─────────────────
 
-    #[Test]
-    public function pengelola_boleh_memperbarui_pengiriman_instansinya(): void
+    private function buatPengelola(int $id, int $instansiId): User
     {
         $pengelola = new User([
             'role' => Role::BadanResmi->value,
-            'instansi_id' => 1,
+            'instansi_id' => $instansiId,
         ]);
-        $pengelola->id = 5;
+        $pengelola->id = $id;
+        $pengelola->forceFill(['jabatan' => User::JABATAN_PENGELOLA]);
+
+        return $pengelola;
+    }
+
+    #[Test]
+    public function pengelola_boleh_memperbarui_pengiriman_instansinya(): void
+    {
+        $pengelola = $this->buatPengelola(id: 5, instansiId: 1);
 
         // Pengiriman instansi yang sama, petugas berbeda.
         $pengiriman = $this->buatPengiriman(petugasId: 10, instansiId: 1);
@@ -123,13 +132,47 @@ class PengirimanPolicyTest extends TestCase
     }
 
     #[Test]
-    public function pengelola_tidak_boleh_update_checkpoint_jika_bukan_petugas(): void
+    public function pengelola_tidak_boleh_memperbarui_pengiriman_instansi_lain(): void
     {
-        $pengelola = new User([
+        $pengelola = $this->buatPengelola(id: 5, instansiId: 1);
+
+        $pengirimanInstansiLain = $this->buatPengiriman(petugasId: 30, instansiId: 2);
+
+        $this->assertFalse($this->policy->update($pengelola, $pengirimanInstansiLain));
+    }
+
+    #[Test]
+    public function badan_resmi_tanpa_jabatan_pengelola_tidak_dianggap_pengelola(): void
+    {
+        $user = new User([
             'role' => Role::BadanResmi->value,
             'instansi_id' => 1,
         ]);
-        $pengelola->id = 5;
+        $user->id = 5;
+
+        $pengiriman = $this->buatPengiriman(petugasId: 10, instansiId: 1);
+
+        $this->assertFalse($user->isPengelolaInstansi());
+        $this->assertFalse($this->policy->update($user, $pengiriman));
+    }
+
+    #[Test]
+    public function jabatan_pengelola_tidak_bisa_diisi_lewat_mass_assignment(): void
+    {
+        $user = new User([
+            'role' => Role::BadanResmi->value,
+            'instansi_id' => 1,
+            'jabatan' => User::JABATAN_PENGELOLA,
+        ]);
+
+        $this->assertNull($user->getAttribute('jabatan'));
+        $this->assertFalse($user->isPengelolaInstansi());
+    }
+
+    #[Test]
+    public function pengelola_tidak_boleh_update_checkpoint_jika_bukan_petugas(): void
+    {
+        $pengelola = $this->buatPengelola(id: 5, instansiId: 1);
 
         $pengiriman = $this->buatPengiriman(petugasId: 10, instansiId: 1);
 

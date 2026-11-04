@@ -73,8 +73,10 @@ class PengirimanPolicy
     }
 
     /**
-     * Petugas hanya boleh memperbarui pengiriman yang ditugaskan kepadanya.
-     * Pengelola (Badan Resmi) boleh memperbarui pengiriman instansinya.
+     * Izin memperbarui pengiriman dibedakan berdasarkan penugasan:
+     * - Pengelola instansi boleh memperbarui pengiriman milik instansinya.
+     * - Petugas hanya boleh memperbarui pengiriman yang ditugaskan kepadanya,
+     *   meskipun pengiriman lain berada di instansi yang sama.
      *
      * @param  Model  $pengiriman  Model pengiriman.
      */
@@ -84,8 +86,12 @@ class PengirimanPolicy
             return false;
         }
 
+        if ($user->isPengelolaInstansi()) {
+            return $this->instansiCocok($user, $pengiriman);
+        }
+
         return $this->petugasCocok($user, $pengiriman)
-            || $this->instansiCocok($user, $pengiriman);
+            && $this->instansiCocok($user, $pengiriman);
     }
 
     /**
