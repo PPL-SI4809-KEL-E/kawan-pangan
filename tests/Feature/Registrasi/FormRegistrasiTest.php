@@ -113,8 +113,10 @@ class FormRegistrasiTest extends TestCase
 
     public function test_opsi_wilayah_dan_instansi_tersedia_untuk_dropdown(): void
     {
-        $this->getJson('/registrasi/opsi/wilayah')->assertOk()->assertJsonFragment(['kode' => '32']);
-        $this->getJson('/registrasi/opsi/wilayah?induk=32.04.12')->assertOk()->assertJsonFragment(['kode' => '32.04.12.2001']);
+        // Tabel master sudah tersedia, tetapi belum diimpor. Jangan tampilkan
+        // kode contoh seolah-olah berasal dari master resmi.
+        $this->getJson('/registrasi/opsi/wilayah')->assertOk()->assertExactJson(['data' => [], 'contoh' => false]);
+        $this->getJson('/registrasi/opsi/wilayah?induk=32.04.12')->assertOk()->assertExactJson(['data' => [], 'contoh' => false]);
         $this->getJson('/registrasi/opsi/instansi')->assertOk()->assertJsonFragment(['id' => 1]);
     }
 }

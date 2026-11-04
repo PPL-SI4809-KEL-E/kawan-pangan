@@ -123,6 +123,7 @@ Aplikasi dapat langsung diakses melalui browser pada:
 * **Halaman Frontend / Landing Page:** [http://localhost:8000](http://localhost:8000)
 * **Endpoint Health Check API:** [http://localhost:8000/api/health](http://localhost:8000/api/health)
 * **Design System Styleguide:** [design-system/styleguide.html](design-system/styleguide.html)
+* **Master Wilayah (Superadmin aktif):** `/admin/wilayah` — [panduan impor dan pengelolaan](docs/pbi-08-master-wilayah.md).
 
 ---
 
