@@ -50,3 +50,11 @@ Kerangka halaman ada di `design-system/layout.css`, contohnya di `design-system/
 | `.auth-page` > `.auth-card` | Halaman tanpa sidebar, misalnya login dan registrasi |
 
 Sudah dicek pada lebar 360px, 768px, dan 1280px tanpa scroll ke samping. Tabel lebar bisa digeser di dalam `.table-wrap`.
+
+## Pola halaman
+| Halaman contoh | Isi |
+| --- | --- |
+| `design-system/penerimaan-demo.html` | Mockup M-18 penerimaan bantuan versi ponsel (PSKE-66) |
+| `design-system/keadaan-khusus.html` | Data kosong, riwayat kurang, validasi gagal, menunggu verifikasi, akses ditolak (PSKE-67) |
+
+Aturan alur penerimaan ada di `docs/pbi-14-penerimaan.md`.
