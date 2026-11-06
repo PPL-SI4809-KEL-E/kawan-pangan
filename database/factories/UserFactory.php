@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Enums\Role;
+use App\Enums\StatusAkun;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -41,4 +43,55 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
+    // ──────────────────────────────────────────────────────────────
+    //  State untuk role dan otorisasi
+    // ──────────────────────────────────────────────────────────────
+
+    /**
+     * Akun aktif (sudah diverifikasi Superadmin).
+     */
+    public function aktif(): static
+    {
+        return $this->state(fn () => [
+            'status' => StatusAkun::Aktif->value,
+        ]);
+    }
+
+    /**
+     * Kepala Wilayah dengan kode_wilayah tertentu.
+     */
+    public function kepalaWilayah(string $kodeWilayah = '32.04'): static
+    {
+        return $this->aktif()->state(fn () => [
+            'role' => Role::KepalaWilayah->value,
+            'kode_wilayah' => $kodeWilayah,
+            'instansi_id' => null,
+        ]);
+    }
+
+    /**
+     * Badan Resmi (pengelola) dengan instansi_id tertentu.
+     */
+    public function badanResmi(int $instansiId = 1): static
+    {
+        return $this->aktif()->state(fn () => [
+            'role' => Role::BadanResmi->value,
+            'instansi_id' => $instansiId,
+            'kode_wilayah' => null,
+        ]);
+    }
+
+    /**
+     * Superadmin.
+     */
+    public function superadmin(): static
+    {
+        return $this->aktif()->state(fn () => [
+            'role' => Role::Superadmin->value,
+            'kode_wilayah' => null,
+            'instansi_id' => null,
+        ]);
+    }
 }
+
