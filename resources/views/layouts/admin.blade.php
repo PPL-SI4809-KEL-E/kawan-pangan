@@ -16,7 +16,11 @@
     </header>
     <nav class="app-sidebar" id="sidebar" aria-label="Menu utama">
         <p class="nav-label">Data Master</p>
-        <ul class="nav"><li><a class="nav-link" href="{{ route('admin.wilayah.index') }}" aria-current="page">Wilayah</a></li></ul>
+        <ul class="nav">
+            @foreach (['wilayah' => 'Wilayah', 'komoditas' => 'Komoditas', 'instansi' => 'Instansi', 'gudang' => 'Gudang'] as $menu => $label)
+                <li><a class="nav-link" href="{{ route('admin.'.$menu.'.index') }}" @if(request()->routeIs('admin.'.$menu.'.*')) aria-current="page" @endif>{{ $label }}</a></li>
+            @endforeach
+        </ul>
         <a class="nav-link" href="{{ url('/') }}">Beranda</a>
     </nav>
     <div class="app-overlay" id="overlay"></div>

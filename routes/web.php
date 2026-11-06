@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\GudangController;
+use App\Http\Controllers\Admin\InstansiController;
+use App\Http\Controllers\Admin\KomoditasController;
 use App\Http\Controllers\Admin\WilayahController;
 use App\Http\Controllers\Auth\OpsiRegistrasiController;
 use App\Http\Controllers\Auth\RegistrasiController;
@@ -37,4 +40,12 @@ Route::middleware(SuperadminAktif::class)->prefix('admin/wilayah')->name('admin.
     Route::post('/impor', [WilayahController::class, 'impor'])->name('impor');
     Route::get('/{wilayah}/edit', [WilayahController::class, 'edit'])->name('edit');
     Route::patch('/{wilayah}', [WilayahController::class, 'update'])->name('update');
+});
+
+Route::middleware(SuperadminAktif::class)->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('komoditas', KomoditasController::class)->parameters(['komoditas' => 'komoditas'])->except('show');
+    Route::resource('instansi', InstansiController::class)->except('show');
+    Route::get('gudang/opsi-wilayah', [GudangController::class, 'opsiWilayah'])->name('gudang.opsi-wilayah');
+    Route::patch('gudang/{gudang}/status', [GudangController::class, 'status'])->name('gudang.status');
+    Route::resource('gudang', GudangController::class)->except('show');
 });

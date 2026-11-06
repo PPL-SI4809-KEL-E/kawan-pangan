@@ -44,7 +44,10 @@ class RegistrasiRequest extends FormRequest
             'no_hp' => ['required', 'regex:/^(\+62|62|0)8[0-9]{7,12}$/'],
             'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()],
             'kode_wilayah' => ['nullable', 'required_if:role,'.Role::KepalaWilayah->value, 'string', 'max:20'],
-            'instansi_id' => ['nullable', 'required_if:role,'.Role::BadanResmi->value, 'integer'],
+            'instansi_id' => [
+                'nullable', 'required_if:role,'.Role::BadanResmi->value, 'integer',
+                Rule::when($this->input('role') === Role::BadanResmi->value, ['exists:instansi,id']),
+            ],
             // PSKE-5: PDF/JPG maks 2 MB. "mimes" menebak tipe dari isi berkas, bukan dari namanya,
             // sehingga berkas .exe yang diganti nama menjadi .pdf tetap ditolak.
             'surat_tugas' => [
@@ -82,6 +85,7 @@ class RegistrasiRequest extends FormRequest
             'kode_wilayah.required_if' => 'Pilih wilayah tugas sampai kecamatan atau desa/kelurahan.',
             'instansi_id.required_if' => 'Pilih instansi tempat Anda bertugas.',
             'instansi_id.integer' => 'Instansi tidak valid.',
+            'instansi_id.exists' => 'Instansi tidak ditemukan. Pilih instansi yang tersedia.',
             'surat_tugas.required' => 'Surat tugas wajib diunggah.',
             'surat_tugas.file' => 'Surat tugas gagal diunggah. Silakan pilih ulang berkasnya.',
             'surat_tugas.uploaded' => 'Surat tugas gagal diunggah. Ukuran maksimal 2 MB.',
