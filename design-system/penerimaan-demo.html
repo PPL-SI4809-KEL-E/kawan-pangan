@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mockup M-18 Penerimaan Bantuan · Kawan Pangan</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="components.css">
+  <link rel="stylesheet" href="layout.css">
+  <style>
+    /* tata letak mockup ponsel (PSKE-66); halaman asli memakai kelas yang sama */
+    .m18 { max-width: 440px; margin: 0 auto; padding: var(--space-4); }
+    .m18-back { display: inline-block; margin-bottom: var(--space-3); color: var(--color-primary); font-size: var(--font-size-sm); text-decoration: none; }
+    .m18-title { margin-bottom: var(--space-1); font-size: var(--font-size-xl); color: var(--color-primary); }
+    .m18-meta { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-1) var(--space-3); margin: var(--space-3) 0 0; font-size: var(--font-size-sm); }
+    .m18-meta dt { color: var(--color-text-muted); }
+    .m18-meta dd { margin: 0; }
+    .m18-item { padding: var(--space-4); }
+    .m18-item-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-2); margin-bottom: var(--space-3); }
+    .m18-item-head h3 { margin: 0; font-size: var(--font-size-md); }
+    .m18-dikirim { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+    .m18-angka { font-variant-numeric: tabular-nums; }
+    .m18-foto { display: grid; place-items: center; min-height: 120px; border: 1px dashed var(--color-border); border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text-muted); font-size: var(--font-size-sm); text-align: center; padding: var(--space-4); }
+    .m18-ringkas { display: flex; justify-content: space-between; font-size: var(--font-size-sm); }
+    .m18 .alert { margin-bottom: var(--space-4); }
+    .field:last-child { margin-bottom: 0; }
+    [hidden] { display: none !important; } /* sama dengan resources/css/design-system.css */
+  </style>
+</head>
+<body>
+<header class="app-header">
+  <a class="app-brand" href="#"><span class="app-brand-mark">KP</span>Kawan Pangan</a>
+  <div class="app-header-actions"><span class="badge badge-netral">Kepala Wilayah</span></div>
+</header>
+
+<main class="m18 stack">
+  <div class="alert alert-info"><strong>Mockup desain M-18 (PSKE-66).</strong> Semua angka dan nama di halaman ini adalah data contoh.</div>
+
+  <div>
+    <a class="m18-back" href="#">&larr; Daftar pengiriman masuk</a>
+    <h1 class="m18-title">Konfirmasi penerimaan</h1>
+    <p class="text-muted" style="margin: 0">Periksa barang yang tiba, lalu isi jumlah yang benar-benar diterima.</p>
+  </div>
+
+  <section class="card m18-item" aria-labelledby="judul-pengiriman">
+    <div class="m18-item-head">
+      <h2 id="judul-pengiriman" class="card-title" style="margin: 0">PGR-0142 (contoh)</h2>
+      <span class="badge badge-info">Tiba di tujuan</span>
+    </div>
+    <dl class="m18-meta">
+      <dt>Dari</dt><dd>Gudang Contoh Kab. Bandung</dd>
+      <dt>Tujuan</dt><dd>Desa Contoh Sukamaju</dd>
+      <dt>Petugas</dt><dd>Petugas Contoh</dd>
+      <dt>Dikirim</dt><dd>5 Nov 2026, 09.30</dd>
+    </dl>
+  </section>
+
+  <form class="stack" id="form-penerimaan" novalidate>
+    <h2 style="margin: 0; font-size: var(--font-size-lg)">Barang diterima</h2>
+
+    <!-- Item 1: ada selisih, alasan wajib -->
+
+    <section class="card m18-item" data-item data-dikirim="1000" aria-labelledby="item-beras">
+      <div class="m18-item-head">
+        <h3 id="item-beras">Beras</h3>
+        <span class="badge badge-waspada" data-status>Selisih &minus;50 kg</span>
+      </div>
+      <p class="m18-dikirim">Dikirim: <strong class="m18-angka">1.000 kg</strong></p>
+      <div class="field">
+        <label for="diterima-beras">Jumlah diterima (kg) <span class="required">*</span></label>
+        <input class="input m18-angka" id="diterima-beras" type="number" inputmode="decimal" min="0" step="0.001" value="950" required aria-describedby="bantuan-beras">
+        <span class="field-help" id="bantuan-beras">Isi 0 bila barang tidak diterima sama sekali.</span>
+      </div>
+      <div class="field" data-alasan>
+        <label for="alasan-beras">Alasan selisih <span class="required">*</span></label>
+        <select class="select" id="alasan-beras">
+          <option value="">Pilih alasan</option>
+          <option selected>Rusak saat pengiriman</option>
+          <option>Kurang dari surat jalan</option>
+          <option>Lebih dari surat jalan</option>
+          <option>Lainnya</option>
+        </select>
+      </div>
+      <div class="field" data-alasan>
+        <label for="catatan-beras">Catatan</label>
+        <textarea class="textarea" id="catatan-beras" maxlength="500">2 karung basah karena hujan saat bongkar muat.</textarea>
+      </div>
+    </section>
+
+    <!-- Item 2: sesuai, alasan disembunyikan -->
+    <section class="card m18-item" data-item data-dikirim="200" aria-labelledby="item-minyak">
+      <div class="m18-item-head">
+        <h3 id="item-minyak">Minyak goreng</h3>
+        <span class="badge badge-aman" data-status>Sesuai</span>
+      </div>
+      <p class="m18-dikirim">Dikirim: <strong class="m18-angka">200 liter</strong></p>
+      <div class="field">
+        <label for="diterima-minyak">Jumlah diterima (liter) <span class="required">*</span></label>
+        <input class="input m18-angka" id="diterima-minyak" type="number" inputmode="decimal" min="0" step="0.001" value="200" required>
+      </div>
+      <div class="field" data-alasan hidden>
+        <label for="alasan-minyak">Alasan selisih <span class="required">*</span></label>
+        <select class="select" id="alasan-minyak">
+          <option value="">Pilih alasan</option>
+          <option>Rusak saat pengiriman</option>
+          <option>Kurang dari surat jalan</option>
+          <option>Lebih dari surat jalan</option>
+          <option>Lainnya</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="card m18-item" aria-labelledby="judul-foto">
+      <h3 id="judul-foto" style="margin: 0 0 var(--space-3); font-size: var(--font-size-md)">Bukti foto <span class="required" style="color: var(--color-kritis)">*</span></h3>
+      <div class="field">
+        <label class="m18-foto" for="foto">Ketuk untuk memotret barang dan surat jalan</label>
+        <input class="input" id="foto" type="file" accept="image/jpeg,image/png" capture="environment" multiple required aria-describedby="bantuan-foto">
+        <span class="field-help" id="bantuan-foto">JPG atau PNG, maksimal 5 MB per foto, paling banyak 3 foto.</span>
+      </div>
+    </section>
+
+    <section class="card m18-item" aria-label="Ringkasan">
+      <div class="m18-ringkas"><span class="text-muted">Jumlah item</span><strong>2</strong></div>
+      <div class="m18-ringkas"><span class="text-muted">Item dengan selisih</span><strong data-jumlah-selisih>1</strong></div>
+    </section>
+
+    <div class="alert alert-warning">Setelah dikirim, konfirmasi tidak bisa diubah. Stok wilayah bertambah sesuai jumlah yang diterima.</div>
+
+    <div class="stack" style="gap: var(--space-2)">
+      <button class="btn btn-primary btn-block" type="submit">Kirim konfirmasi penerimaan</button>
+      <button class="btn btn-secondary btn-block" type="button">Simpan sebagai draf</button>
+    </div>
+  </form>
+</main>
+
+<script>
+  // Hanya untuk demo: hitung selisih dan tampilkan kolom alasan bila jumlah tidak sesuai.
+  const items = document.querySelectorAll('[data-item]');
+  const angka = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 3 });
+
+  function perbarui() {
+    let adaSelisih = 0;
+    items.forEach((item) => {
+      const dikirim = Number(item.dataset.dikirim);
+      const input = item.querySelector('input[type="number"]');
+      const status = item.querySelector('[data-status]');
+      const satuan = input.labels[0].textContent.match(/\((.+?)\)/)[1];
+      const selisih = input.value === '' ? null : Number(input.value) - dikirim;
+
+      const sesuai = selisih === 0;
+      if (selisih !== null && !sesuai) adaSelisih++;
+      status.className = 'badge ' + (selisih === null ? 'badge-netral' : sesuai ? 'badge-aman' : 'badge-waspada');
+      status.textContent = selisih === null ? 'Belum diisi' : sesuai ? 'Sesuai' : `Selisih ${selisih > 0 ? '+' : '−'}${angka.format(Math.abs(selisih))} ${satuan}`;
+      item.querySelectorAll('[data-alasan]').forEach((el) => { el.hidden = selisih === null || sesuai; });
+    });
+    document.querySelector('[data-jumlah-selisih]').textContent = adaSelisih;
+  }
+
+  items.forEach((item) => item.querySelector('input[type="number"]').addEventListener('input', perbarui));
+  document.getElementById('form-penerimaan').addEventListener('submit', (event) => event.preventDefault());
+  perbarui();
+</script>
+</body>
+</html>
