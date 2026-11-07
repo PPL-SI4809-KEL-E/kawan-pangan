@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Keadaan Khusus · Kawan Pangan</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="components.css">
+  <link rel="stylesheet" href="layout.css">
+  <style>
+    /* tata letak halaman contoh keadaan khusus (PSKE-67) */
+    .kk { max-width: 1040px; margin: 0 auto; padding: var(--space-8) var(--space-4); }
+    .kk-label { margin-bottom: var(--space-2); font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .kk-kosong { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding: var(--space-8) var(--space-4); text-align: center; }
+    .kk-kosong h3, .kk-kosong p { margin: 0; }
+    .kk-ikon { display: grid; place-items: center; width: 48px; height: 48px; border-radius: var(--radius-full); background: var(--color-netral-bg); color: var(--color-netral); font-weight: var(--font-weight-bold); }
+    .kk-ikon-kritis { background: var(--color-kritis-bg); color: var(--color-kritis); }
+    .kk-ikon-info { background: var(--color-info-bg); color: var(--color-info); }
+    .kk-baris { display: flex; justify-content: space-between; gap: var(--space-3); font-size: var(--font-size-sm); }
+    .kk .card > :last-child { margin-bottom: 0; }
+  </style>
+</head>
+<body>
+<main class="kk">
+  <header style="margin-bottom: var(--space-8)">
+    <h1>Keadaan khusus</h1>
+    <p class="text-muted">Pesan yang tampil saat data kosong, riwayat kurang, validasi gagal, akun menunggu verifikasi, dan akses ditolak (PSKE-67).
+      Salin HTML-nya, jangan buat ulang gaya sendiri. Semua contoh memakai komponen dari <a href="styleguide.html">styleguide</a>.</p>
+  </header>
+
+  <div class="grid grid-2" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))">
+
+    <!-- 1. Data kosong: jelaskan kenapa kosong dan apa yang bisa dilakukan -->
+    <section aria-labelledby="kk-1">
+      <p class="kk-label" id="kk-1">1 · Data kosong</p>
+      <div class="card kk-kosong">
+        <span class="kk-ikon" aria-hidden="true">0</span>
+        <h3>Belum ada pengiriman masuk</h3>
+        <p class="text-muted">Pengiriman bantuan ke wilayah Anda akan tampil di sini setelah dikirim oleh Badan Resmi.</p>
+        <a class="btn btn-secondary btn-sm" href="#">Lihat status stok wilayah</a>
+      </div>
+    </section>
+
+    <!-- 2. Riwayat kurang: stok tetap tampil, ketahanan tidak dihitung -->
+    <section aria-labelledby="kk-2">
+      <p class="kk-label" id="kk-2">2 · Riwayat kurang</p>
+      <div class="card stack" style="gap: var(--space-3)">
+        <div class="kk-baris"><strong>Beras · Desa Contoh</strong><span class="badge badge-netral">Riwayat kurang</span></div>
+        <div class="kk-baris"><span class="text-muted">Stok tersedia</span><span>2.400 kg</span></div>
+        <div class="kk-baris"><span class="text-muted">Ketahanan</span><span>&mdash;</span></div>
+        <div class="alert alert-warning">
+          <strong>Estimasi belum dapat dihitung.</strong>
+          Riwayat penyaluran baru 12 dari 30 hari. Estimasi muncul otomatis setelah riwayat 30 hari tersedia.
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Validasi gagal: ringkasan di atas form + pesan per field -->
+    <section aria-labelledby="kk-3">
+      <p class="kk-label" id="kk-3">3 · Validasi gagal</p>
+      <form class="card" novalidate>
+        <div class="alert alert-error" role="alert" style="margin-bottom: var(--space-4)">
+          <strong>Konfirmasi belum dapat dikirim.</strong>
+          Periksa kembali isian yang ditandai merah.
+        </div>
+        <div class="field has-error">
+          <label for="kk-jumlah">Jumlah diterima (kg) <span class="required">*</span></label>
+          <input class="input" id="kk-jumlah" type="number" aria-invalid="true" aria-describedby="kk-jumlah-error">
+          <span class="field-error" id="kk-jumlah-error">Jumlah diterima wajib diisi. Isi 0 bila barang tidak diterima.</span>
+        </div>
+        <div class="field has-error">
+          <label for="kk-alasan">Alasan selisih <span class="required">*</span></label>
+          <select class="select" id="kk-alasan" aria-invalid="true" aria-describedby="kk-alasan-error"><option>Pilih alasan</option></select>
+          <span class="field-error" id="kk-alasan-error">Pilih alasan karena jumlah diterima berbeda dari jumlah dikirim.</span>
+        </div>
+        <div class="field has-error">
+          <label for="kk-foto">Bukti foto <span class="required">*</span></label>
+          <input class="input" id="kk-foto" type="file" aria-invalid="true" aria-describedby="kk-foto-error">
+          <span class="field-error" id="kk-foto-error">Unggah minimal 1 foto barang dan surat jalan (JPG/PNG, maks. 5 MB).</span>
+        </div>
+      </form>
+    </section>
+
+    <!-- 4. Menunggu verifikasi: kalimat sama dengan pesan login (StatusAkun) -->
+    <section aria-labelledby="kk-4">
+      <p class="kk-label" id="kk-4">4 · Menunggu verifikasi</p>
+      <div class="card kk-kosong">
+        <span class="kk-ikon kk-ikon-info" aria-hidden="true">i</span>
+        <h3>Akun sedang diperiksa</h3>
+        <p class="text-muted">Akun Anda masih menunggu verifikasi Superadmin. Anda belum dapat masuk.</p>
+        <span class="badge badge-info">Menunggu verifikasi</span>
+        <p class="field-help">Pemeriksaan surat tugas biasanya selesai dalam 1&ndash;2 hari kerja.</p>
+      </div>
+    </section>
+
+    <!-- 5. Akses ditolak (403): jangan bocorkan isi data wilayah lain -->
+    <section aria-labelledby="kk-5">
+      <p class="kk-label" id="kk-5">5 · Akses ditolak</p>
+      <div class="card kk-kosong">
+        <span class="kk-ikon kk-ikon-kritis" aria-hidden="true">!</span>
+        <h3>Anda tidak memiliki akses</h3>
+        <p class="text-muted">Halaman ini hanya untuk wilayah atau instansi yang ditugaskan kepada Anda.</p>
+        <a class="btn btn-primary btn-sm" href="#">Kembali ke beranda saya</a>
+      </div>
+    </section>
+
+  </div>
+</main>
+</body>
+</html>
