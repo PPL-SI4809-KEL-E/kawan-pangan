@@ -11,6 +11,8 @@ export default defineConfig({
                 'resources/css/design-system.css',
                 'resources/css/registrasi.css',
                 'resources/js/registrasi.js',
+                'resources/css/wilayah.css',
+                'resources/js/admin.js',
             ],
             refresh: true,
         }),

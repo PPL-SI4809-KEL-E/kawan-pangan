@@ -1,0 +1,16 @@
+.page-header { margin-bottom: 0; }
+.page-header p { margin-bottom: 0; }
+.alert ul { margin: 0; padding-left: var(--space-5); }
+.wilayah-filter { display: grid; gap: var(--space-3); align-items: end; }
+.wilayah-filter .field { margin-bottom: 0; min-width: 0; }
+.wilayah-upload .input { max-width: 100%; }
+.wilayah-kode { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.wilayah-pagination { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-3); }
+.wilayah-edit { max-width: 640px; }
+.wilayah-edit dl { margin: 0 0 var(--space-6); }
+.wilayah-edit dt { color: var(--color-text-muted); font-size: var(--font-size-sm); }
+.wilayah-edit dd { margin: 0 0 var(--space-3); }
+#impor { scroll-margin-top: 72px; }
+@media (min-width: 768px) {
+  .wilayah-filter { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; }
+}
