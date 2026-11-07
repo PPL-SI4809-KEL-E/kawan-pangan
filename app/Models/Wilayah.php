@@ -26,7 +26,7 @@ class Wilayah extends Model
 
     protected function casts(): array
     {
-        return ['level' => 'integer', 'jumlah_penduduk' => 'integer'];
+        return ['level' => 'integer', 'jumlah_penduduk' => 'integer', 'is_contoh' => 'boolean'];
     }
 
     public static function levelDariKode(string $kode): ?int
