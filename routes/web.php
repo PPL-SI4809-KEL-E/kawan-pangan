@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AmbangStatusController;
 use App\Http\Controllers\Admin\GudangController;
 use App\Http\Controllers\Admin\InstansiController;
 use App\Http\Controllers\Admin\KomoditasController;
@@ -43,6 +44,8 @@ Route::middleware(SuperadminAktif::class)->prefix('admin/wilayah')->name('admin.
 });
 
 Route::middleware(SuperadminAktif::class)->prefix('admin')->name('admin.')->group(function () {
+    Route::get('ambang-status', [AmbangStatusController::class, 'edit'])->name('ambang-status.edit');
+    Route::patch('ambang-status', [AmbangStatusController::class, 'update'])->name('ambang-status.update');
     Route::resource('komoditas', KomoditasController::class)->parameters(['komoditas' => 'komoditas'])->except('show');
     Route::resource('instansi', InstansiController::class)->except('show');
     Route::get('gudang/opsi-wilayah', [GudangController::class, 'opsiWilayah'])->name('gudang.opsi-wilayah');

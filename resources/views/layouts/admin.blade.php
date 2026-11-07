@@ -20,6 +20,7 @@
             @foreach (['wilayah' => 'Wilayah', 'komoditas' => 'Komoditas', 'instansi' => 'Instansi', 'gudang' => 'Gudang'] as $menu => $label)
                 <li><a class="nav-link" href="{{ route('admin.'.$menu.'.index') }}" @if(request()->routeIs('admin.'.$menu.'.*')) aria-current="page" @endif>{{ $label }}</a></li>
             @endforeach
+            <li><a class="nav-link" href="{{ route('admin.ambang-status.edit') }}" @if(request()->routeIs('admin.ambang-status.*')) aria-current="page" @endif>Ambang Status</a></li>
         </ul>
         <a class="nav-link" href="{{ url('/') }}">Beranda</a>
     </nav>
