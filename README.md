@@ -1,6 +1,6 @@
 # Kawan Pangan - SDG 2 Website
 
-[![CI/CD Pipeline & Build Verification](https://github.com/PPL-SI4809-KEL-E/kawan-pangan/actions/workflows/deploy.yml/badge.svg)](https://github.com/PPL-SI4809-KEL-E/kawan-pangan/actions/workflows/deploy.yml)
+[![CI Pipeline & Build Verification](https://github.com/PPL-SI4809-KEL-E/kawan-pangan/actions/workflows/deploy.yml/badge.svg)](https://github.com/PPL-SI4809-KEL-E/kawan-pangan/actions/workflows/deploy.yml)
 [![Framework](https://img.shields.io/badge/Framework-Laravel%2012-red.svg)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.2%2B-blue.svg)](https://php.net)
 
@@ -141,13 +141,12 @@ npm run build
 Untuk pengujian integrasi data bersama tim, sesuaikan konfigurasi pada file `.env`:
 ```env
 DB_CONNECTION=mysql
-DB_HOST=157.10.253.27
+DB_HOST=<host>
 DB_PORT=3306
 DB_DATABASE=SI4809_PPL_E
 DB_USERNAME=root
-DB_PASSWORD=rootpassword
+DB_PASSWORD=<minta ke Hadid>
 ```
-*Antarmuka visual tabel:* [phpMyAdmin Web UI](http://157.10.253.27:3307)
 
 ### 3. Langkah Deployment Demo ke Server / Staging
 1. Kloning repositori dan pasang dependensi:
@@ -156,11 +155,16 @@ DB_PASSWORD=rootpassword
    npm ci
    npm run build
    ```
-2. Jalankan migrasi dan seeder awal:
+2. Konfigurasi file environment dan application key:
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+3. Jalankan migrasi basis data:
    ```bash
    php artisan migrate --force
    ```
-3. Verifikasi ketersediaan layanan melalui endpoint API:
+4. Verifikasi ketersediaan layanan melalui endpoint API:
    ```bash
    curl -i http://localhost:8000/api/health
    ```
