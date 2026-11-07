@@ -1,4 +1,4 @@
-name: CI/CD Pipeline & Build Verification
+name: CI Pipeline & Build Verification
 
 on:
   push:
@@ -40,14 +40,16 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '22'
         cache: 'npm'
 
     - name: Install Frontend Dependencies
       run: npm ci
 
     - name: Build Frontend Assets
-      run: npm run build
+      run: |
+        npm run build
+        test -f public/build/manifest.json
 
     - name: Run Tests
       run: php artisan test
