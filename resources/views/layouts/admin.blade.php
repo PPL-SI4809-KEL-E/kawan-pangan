@@ -12,12 +12,22 @@
     <header class="app-header">
         <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Buka menu" aria-controls="sidebar" aria-expanded="false"><span class="menu-icon"></span></button>
         <a class="app-brand" href="{{ url('/') }}"><span class="app-brand-mark">KP</span>Kawan Pangan</a>
-        <div class="app-header-actions"><span class="app-user">{{ auth()->user()->name }}</span><span class="badge badge-info">Superadmin</span></div>
+        <div class="app-header-actions">
+            <span class="app-user">{{ auth()->user()->name }}</span>
+            <span class="badge badge-info">Superadmin</span>
+            <form method="POST" action="{{ route('logout') }}" style="display:inline; margin-left: var(--space-2);">
+                @csrf
+                <button type="submit" class="btn btn-ghost btn-sm">Keluar</button>
+            </form>
+        </div>
     </header>
     <nav class="app-sidebar" id="sidebar" aria-label="Menu utama">
-        <p class="nav-label">Data Master</p>
-        <ul class="nav"><li><a class="nav-link" href="{{ route('admin.wilayah.index') }}" aria-current="page">Wilayah</a></li></ul>
-        <a class="nav-link" href="{{ url('/') }}">Beranda</a>
+        <p class="nav-label">Menu Utama</p>
+        <ul class="nav">
+            <li><a class="nav-link" href="{{ route('admin.dashboard') }}">Dashboard Admin</a></li>
+            <li><a class="nav-link" href="{{ route('admin.wilayah.index') }}">Data Wilayah</a></li>
+        </ul>
+        <a class="nav-link" href="{{ url('/') }}">Beranda Publik</a>
     </nav>
     <div class="app-overlay" id="overlay"></div>
     <main class="app-main" id="content">

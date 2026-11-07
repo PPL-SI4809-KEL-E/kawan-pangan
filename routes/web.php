@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\Admin\WilayahController;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\OpsiRegistrasiController;
 use App\Http\Controllers\Auth\RegistrasiController;
+use App\Http\Controllers\PanelController;
 use App\Http\Middleware\SuperadminAktif;
 use Illuminate\Support\Facades\Route;
 
@@ -21,13 +23,36 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// PBI-05 · Registrasi akun dengan surat tugas
+// PBI-04 & PBI-05 · Autentikasi Pengunjung (Tamu)
 Route::middleware('guest')->group(function () {
+    // PBI-04 · Login (PSKE-16, PSKE-31)
+    Route::get('/login', [LoginController::class, 'create'])->name('login');
+    Route::post('/login', [LoginController::class, 'store']);
+
+    // PBI-05 · Registrasi akun dengan surat tugas
     Route::get('/registrasi', [RegistrasiController::class, 'create'])->name('registrasi.create');
     Route::post('/registrasi', [RegistrasiController::class, 'store'])->name('registrasi.store');
     Route::get('/registrasi/terkirim', [RegistrasiController::class, 'terkirim'])->name('registrasi.terkirim');
     Route::get('/registrasi/opsi/wilayah', [OpsiRegistrasiController::class, 'wilayah'])->name('registrasi.opsi.wilayah');
     Route::get('/registrasi/opsi/instansi', [OpsiRegistrasiController::class, 'instansi'])->name('registrasi.opsi.instansi');
+});
+
+// PBI-04 · Logout (PSKE-34)
+Route::post('/logout', [LoginController::class, 'destroy'])
+    ->middleware('auth')
+    ->name('logout');
+
+// PBI-04 · Panel Sederhana per Role (PSKE-31)
+Route::middleware(['auth', 'role:SUPERADMIN'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [PanelController::class, 'admin'])->name('dashboard');
+});
+
+Route::middleware(['auth', 'role:KEPALA_WILAYAH'])->prefix('panel/wilayah')->name('panel.wilayah')->group(function () {
+    Route::get('/', [PanelController::class, 'wilayah']);
+});
+
+Route::middleware(['auth', 'role:BADAN_RESMI'])->prefix('panel/instansi')->name('panel.instansi')->group(function () {
+    Route::get('/', [PanelController::class, 'instansi']);
 });
 
 // PBI-08 · Master wilayah Kemendagri (PSKE-19).
