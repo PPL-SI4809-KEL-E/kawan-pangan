@@ -3,6 +3,7 @@
 namespace Tests\Feature\Registrasi;
 
 use App\Enums\Role;
+use App\Models\Instansi;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -103,12 +104,20 @@ class FormRegistrasiTest extends TestCase
 
     public function test_badan_resmi_tersimpan_dengan_instansi_dan_tanpa_wilayah(): void
     {
-        $this->post('/registrasi', $this->dataValid(['role' => 'BADAN_RESMI', 'instansi_id' => '1']));
+        $instansi = Instansi::create(['nama' => 'Instansi Contoh', 'alamat' => 'Jalan Contoh', 'latitude' => 0, 'longitude' => 0]);
+        $this->post('/registrasi', $this->dataValid(['role' => 'BADAN_RESMI', 'instansi_id' => (string) $instansi->id]));
 
         $user = User::where('email', 'budi@desa.id')->firstOrFail();
         $this->assertSame(Role::BadanResmi, $user->role);
-        $this->assertSame(1, $user->instansi_id);
+        $this->assertSame($instansi->id, $user->instansi_id);
         $this->assertNull($user->kode_wilayah);
+    }
+
+    public function test_badan_resmi_tidak_bisa_memakai_instansi_yang_tidak_ada(): void
+    {
+        $this->post('/registrasi', $this->dataValid(['role' => 'BADAN_RESMI', 'instansi_id' => '999']))
+            ->assertSessionHasErrors('instansi_id');
+        $this->assertDatabaseCount('users', 0);
     }
 
     public function test_opsi_wilayah_dan_instansi_tersedia_untuk_dropdown(): void
@@ -117,6 +126,6 @@ class FormRegistrasiTest extends TestCase
         // kode contoh seolah-olah berasal dari master resmi.
         $this->getJson('/registrasi/opsi/wilayah')->assertOk()->assertExactJson(['data' => [], 'contoh' => false]);
         $this->getJson('/registrasi/opsi/wilayah?induk=32.04.12')->assertOk()->assertExactJson(['data' => [], 'contoh' => false]);
-        $this->getJson('/registrasi/opsi/instansi')->assertOk()->assertJsonFragment(['id' => 1]);
+        $this->getJson('/registrasi/opsi/instansi')->assertOk()->assertExactJson(['data' => [], 'contoh' => false]);
     }
 }
