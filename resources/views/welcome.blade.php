@@ -334,6 +334,18 @@
             <a href="#peta" class="nav-link">Peta Wilayah</a>
             <a href="#status" class="nav-link">Status API</a>
             <a href="#tim" class="nav-link">Tim Pengembang</a>
+            @auth
+                @if (auth()->user()->isSuperadmin())
+                    <a href="{{ route('admin.dashboard') }}" class="nav-link" style="color: var(--accent-emerald); font-weight: 600;">Panel Admin</a>
+                @elseif (auth()->user()->isKepalaWilayah())
+                    <a href="{{ route('panel.wilayah') }}" class="nav-link" style="color: var(--accent-emerald); font-weight: 600;">Panel Wilayah</a>
+                @elseif (auth()->user()->isBadanResmi())
+                    <a href="{{ route('panel.instansi') }}" class="nav-link" style="color: var(--accent-emerald); font-weight: 600;">Panel Instansi</a>
+                @endif
+            @else
+                <a href="{{ route('login') }}" class="nav-link" style="color: var(--accent-emerald); font-weight: 600;">Masuk</a>
+                <a href="{{ route('registrasi.create') }}" class="nav-link">Daftar</a>
+            @endauth
         </nav>
     </header>
 
