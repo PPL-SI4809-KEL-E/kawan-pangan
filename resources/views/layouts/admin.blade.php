@@ -24,6 +24,7 @@
     <nav class="app-sidebar" id="sidebar" aria-label="Menu utama">
         <ul class="nav">
             <li><a class="nav-link" href="{{ route('admin.dashboard') }}" @if(request()->routeIs('admin.dashboard')) aria-current="page" @endif>Dashboard Admin</a></li>
+            <li><a class="nav-link" href="{{ route('admin.akun.index') }}" @if(request()->routeIs('admin.akun.*')) aria-current="page" @endif>Verifikasi Akun</a></li>
         </ul>
         <p class="nav-label">Data Master</p>
         <ul class="nav">

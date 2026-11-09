@@ -29,7 +29,7 @@
                 Verifikasi pendaftaran akun Kepala Wilayah dan staf Badan Resmi beserta surat tugasnya.
             </p>
             <div class="card-footer">
-                <a href="{{ url('/admin/akun') }}" class="btn btn-secondary">Buka Verifikasi Akun</a>
+                <a href="{{ route('admin.akun.index') }}" class="btn btn-secondary">Buka Verifikasi Akun</a>
             </div>
         </div>
     </div>
