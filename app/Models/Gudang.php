@@ -26,4 +26,3 @@ class Gudang extends Model
         return $this->belongsTo(Wilayah::class, 'kode_wilayah', 'kode');
     }
 }
-

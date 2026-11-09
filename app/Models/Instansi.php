@@ -26,4 +26,3 @@ class Instansi extends Model
         return $this->hasMany(User::class);
     }
 }
-

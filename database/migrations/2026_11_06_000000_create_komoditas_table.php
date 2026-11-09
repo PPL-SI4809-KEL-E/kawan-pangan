@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('komoditas', function (Blueprint $table) {
             $table->id();
             $table->string('nama', 150);
+            // Kunci terpisah menjaga keunikan yang sama pada SQLite dan MySQL.
             $table->string('nama_unik', 150)->unique();
             $table->string('satuan', 30);
             $table->timestamps();

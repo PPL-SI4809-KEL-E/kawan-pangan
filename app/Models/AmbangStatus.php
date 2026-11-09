@@ -63,4 +63,3 @@ class AmbangStatus extends Model
         return 'WASPADA';
     }
 }
-

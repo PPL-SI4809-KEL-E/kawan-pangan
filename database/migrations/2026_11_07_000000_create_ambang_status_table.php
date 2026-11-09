@@ -10,6 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('ambang_status', function (Blueprint $table) {
+            // Satu pengaturan global, dibaca melalui AmbangStatus::aktif().
             $table->unsignedTinyInteger('id')->primary();
             $table->unsignedSmallInteger('kritis_hari')->default(14);
             $table->unsignedSmallInteger('aman_hari')->default(30);
