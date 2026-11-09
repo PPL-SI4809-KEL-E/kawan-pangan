@@ -18,8 +18,8 @@ class SuperadminSeeder extends Seeder
      */
     public function run(): void
     {
-        $email = env('SUPERADMIN_EMAIL');
-        $password = env('SUPERADMIN_PASSWORD');
+        $email = config('kawan_pangan.superadmin_email');
+        $password = config('kawan_pangan.superadmin_password');
 
         // Jangan membuat akun jika konfigurasi di .env belum diisi.
         if (empty($email) || empty($password)) {

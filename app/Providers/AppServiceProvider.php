@@ -37,4 +37,3 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy('App\Models\Pengiriman', \App\Policies\PengirimanPolicy::class);
     }
 }
-
