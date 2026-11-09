@@ -12,9 +12,19 @@
     <header class="app-header">
         <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Buka menu" aria-controls="sidebar" aria-expanded="false"><span class="menu-icon"></span></button>
         <a class="app-brand" href="{{ url('/') }}"><span class="app-brand-mark">KP</span>Kawan Pangan</a>
-        <div class="app-header-actions"><span class="app-user">{{ auth()->user()->name }}</span><span class="badge badge-info">Superadmin</span></div>
+        <div class="app-header-actions">
+            <span class="app-user">{{ auth()->user()->name }}</span>
+            <span class="badge badge-info">Superadmin</span>
+            <form method="POST" action="{{ route('logout') }}" style="display:inline; margin-left: var(--space-2);">
+                @csrf
+                <button type="submit" class="btn btn-ghost btn-sm">Keluar</button>
+            </form>
+        </div>
     </header>
     <nav class="app-sidebar" id="sidebar" aria-label="Menu utama">
+        <ul class="nav">
+            <li><a class="nav-link" href="{{ route('admin.dashboard') }}" @if(request()->routeIs('admin.dashboard')) aria-current="page" @endif>Dashboard Admin</a></li>
+        </ul>
         <p class="nav-label">Data Master</p>
         <ul class="nav">
             @foreach (['wilayah' => 'Wilayah', 'komoditas' => 'Komoditas', 'instansi' => 'Instansi', 'gudang' => 'Gudang'] as $menu => $label)
