@@ -1,6 +1,6 @@
 # Kawan Pangan - SDG 2 Website
 
-[![CI/CD Pipeline & Build Verification](https://github.com/PPL-SI4809-KEL-E/kawan-pangan/actions/workflows/deploy.yml/badge.svg)](https://github.com/PPL-SI4809-KEL-E/kawan-pangan/actions/workflows/deploy.yml)
+[![CI Pipeline & Build Verification](https://github.com/PPL-SI4809-KEL-E/kawan-pangan/actions/workflows/deploy.yml/badge.svg)](https://github.com/PPL-SI4809-KEL-E/kawan-pangan/actions/workflows/deploy.yml)
 [![Framework](https://img.shields.io/badge/Framework-Laravel%2012-red.svg)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.2%2B-blue.svg)](https://php.net)
 
@@ -124,6 +124,50 @@ Aplikasi dapat langsung diakses melalui browser pada:
 * **Endpoint Health Check API:** [http://localhost:8000/api/health](http://localhost:8000/api/health)
 * **Design System Styleguide:** [design-system/styleguide.html](design-system/styleguide.html)
 * **Master Wilayah (Superadmin aktif):** `/admin/wilayah` — [panduan impor dan pengelolaan](docs/pbi-08-master-wilayah.md).
+
+---
+
+## 🌐 Kesiapan Deployment Demo (Hosting Live & Database Online)
+
+Bagian ini memfasilitasi persiapan demo live aplikasi untuk presentasi ke dosen evaluator (Pak Gelar) dan pengujian integrasi antar modul tim.
+
+### 1. Build Aset Frontend Production
+Pastikan aset Vite telah dikompilasi sebelum deployment atau demo:
+```bash
+npm run build
+```
+
+### 2. Konfigurasi Basis Data Online Tim (MySQL)
+Untuk pengujian integrasi data bersama tim, sesuaikan konfigurasi pada file `.env`:
+```env
+DB_CONNECTION=mysql
+DB_HOST=<host>
+DB_PORT=3306
+DB_DATABASE=SI4809_PPL_E
+DB_USERNAME=root
+DB_PASSWORD=<minta ke Hadid>
+```
+
+### 3. Langkah Deployment Demo ke Server / Staging
+1. Kloning repositori dan pasang dependensi:
+   ```bash
+   composer install --no-dev --optimize-autoloader
+   npm ci
+   npm run build
+   ```
+2. Konfigurasi file environment dan application key:
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+3. Jalankan migrasi basis data:
+   ```bash
+   php artisan migrate --force
+   ```
+4. Verifikasi ketersediaan layanan melalui endpoint API:
+   ```bash
+   curl -i http://localhost:8000/api/health
+   ```
 
 ---
 
