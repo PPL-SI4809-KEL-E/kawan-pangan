@@ -124,6 +124,7 @@ Aplikasi dapat langsung diakses melalui browser pada:
 * **Endpoint Health Check API:** [http://localhost:8000/api/health](http://localhost:8000/api/health)
 * **Design System Styleguide:** [design-system/styleguide.html](design-system/styleguide.html)
 * **Master Wilayah (Superadmin aktif):** `/admin/wilayah` — [panduan impor dan pengelolaan](docs/pbi-08-master-wilayah.md).
+* **Master Komoditas, Instansi, Gudang, dan Ambang Status (Superadmin aktif):** `/admin/komoditas`, `/admin/instansi`, `/admin/gudang`, `/admin/ambang-status` — [panduan data master PBI-09](docs/pbi-09-data-master.md) dan [kontrak integrasi tabel](docs/pbi-09-kontrak-tabel.md).
 
 ---
 
