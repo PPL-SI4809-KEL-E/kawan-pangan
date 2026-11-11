@@ -232,4 +232,123 @@ class VerifikasiAkunTest extends TestCase
             ->assertOk()
             ->assertDownload('surat-tugas.pdf');
     }
+
+    /**
+     * Akun Superadmin tidak dapat dimodifikasi (403 Forbidden).
+     */
+    public function test_akun_superadmin_tidak_bisa_dimodifikasi(): void
+    {
+        $superadminLain = User::factory()->superadmin()->create(['email' => 'other.sa@pangan.go.id']);
+
+        // Show
+        $this->actingAs($this->superadmin)
+            ->get(route('admin.akun.show', $superadminLain))
+            ->assertForbidden();
+
+        // Aktivasi
+        $this->actingAs($this->superadmin)
+            ->post(route('admin.akun.aktivasi', $superadminLain), ['kode_wilayah' => '32.04.12'])
+            ->assertForbidden();
+
+        // Tolak
+        $this->actingAs($this->superadmin)
+            ->post(route('admin.akun.tolak', $superadminLain), ['alasan_penolakan' => 'Ditolak'])
+            ->assertForbidden();
+
+        // Nonaktifkan
+        $this->actingAs($this->superadmin)
+            ->post(route('admin.akun.nonaktifkan', $superadminLain))
+            ->assertForbidden();
+    }
+
+    /**
+     * Aktivasi dan tolak hanya bisa untuk akun berstatus MENUNGGU (422 Unprocessable).
+     */
+    public function test_aktivasi_dan_tolak_hanya_untuk_akun_menunggu(): void
+    {
+        $provinsi = Wilayah::create(['kode' => '32', 'nama' => 'Jawa Barat']);
+        $kabupaten = Wilayah::create(['kode' => '32.04', 'nama' => 'Kab. Bandung', 'kode_induk' => '32']);
+        $kecamatan = Wilayah::create(['kode' => '32.04.12', 'nama' => 'Kec. Soreang', 'kode_induk' => '32.04']);
+
+        $statuses = [StatusAkun::Aktif, StatusAkun::Ditolak, StatusAkun::Nonaktif];
+
+        foreach ($statuses as $status) {
+            $user = User::factory()->create([
+                'role' => Role::KepalaWilayah,
+                'status' => $status,
+                'kode_wilayah' => '32.04.12',
+            ]);
+
+            // Aktivasi pada status non-MENUNGGU ditolak 422
+            $this->actingAs($this->superadmin)
+                ->post(route('admin.akun.aktivasi', $user), ['kode_wilayah' => '32.04.12'])
+                ->assertStatus(422);
+
+            // Tolak pada status non-MENUNGGU ditolak 422
+            $this->actingAs($this->superadmin)
+                ->post(route('admin.akun.tolak', $user), ['alasan_penolakan' => 'Alasan coba'])
+                ->assertStatus(422);
+        }
+    }
+
+    /**
+     * Nonaktifkan hanya bisa untuk akun berstatus AKTIF (422 Unprocessable).
+     */
+    public function test_nonaktifkan_hanya_untuk_akun_aktif(): void
+    {
+        $statuses = [StatusAkun::Menunggu, StatusAkun::Ditolak, StatusAkun::Nonaktif];
+
+        foreach ($statuses as $status) {
+            $user = User::factory()->create([
+                'role' => Role::KepalaWilayah,
+                'status' => $status,
+            ]);
+
+            // Nonaktifkan pada status non-AKTIF ditolak 422
+            $this->actingAs($this->superadmin)
+                ->post(route('admin.akun.nonaktifkan', $user))
+                ->assertStatus(422);
+        }
+    }
+
+    /**
+     * Dropdown wilayah di halaman show selalu menyertakan wilayah pilihan pendaftar.
+     */
+    public function test_dropdown_wilayah_menyertakan_wilayah_pilihan_pendaftar(): void
+    {
+        $provinsi = Wilayah::create(['kode' => '32', 'nama' => 'Jawa Barat']);
+        $kabupaten = Wilayah::create(['kode' => '32.04', 'nama' => 'Kab. Bandung', 'kode_induk' => '32']);
+        $kecamatan = Wilayah::create(['kode' => '32.04.12', 'nama' => 'Kec. Soreang', 'kode_induk' => '32.04']);
+        $desa = Wilayah::create(['kode' => '32.04.12.2001', 'nama' => 'Desa Khusus Pendaftar', 'kode_induk' => '32.04.12']);
+
+        $pendaftar = User::factory()->create([
+            'role' => Role::KepalaWilayah,
+            'status' => StatusAkun::Menunggu,
+            'kode_wilayah' => $desa->kode,
+        ]);
+
+        $this->actingAs($this->superadmin)
+            ->get(route('admin.akun.show', $pendaftar))
+            ->assertOk()
+            ->assertSee('Desa Khusus Pendaftar')
+            ->assertSee('32.04.12.2001');
+    }
+
+    /**
+     * Endpoint pencarian wilayah AJAX mengembalikan data yang cocok.
+     */
+    public function test_endpoint_cari_wilayah_mengembalikan_json(): void
+    {
+        $provinsi = Wilayah::create(['kode' => '32', 'nama' => 'Jawa Barat']);
+        $kabupaten = Wilayah::create(['kode' => '32.04', 'nama' => 'Kab. Bandung', 'kode_induk' => '32']);
+        $kec1 = Wilayah::create(['kode' => '32.04.13', 'nama' => 'Kec. Pasirjambu', 'kode_induk' => '32.04']);
+        $kec2 = Wilayah::create(['kode' => '32.04.14', 'nama' => 'Kec. Ciwidey', 'kode_induk' => '32.04']);
+
+        $response = $this->actingAs($this->superadmin)
+            ->getJson(route('admin.akun.cari-wilayah', ['q' => 'Ciwidey']));
+
+        $response->assertOk()
+            ->assertJsonFragment(['kode' => '32.04.14', 'nama' => 'Kec. Ciwidey'])
+            ->assertJsonMissing(['kode' => '32.04.13']);
+    }
 }

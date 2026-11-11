@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\Otorisasi;
 
+use App\Enums\StatusAkun;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -136,5 +138,50 @@ class PeriksaRoleTest extends TestCase
         $response->assertForbidden();
         $response->assertDontSee('password');
         $response->assertDontSee('remember_token');
+    }
+
+    // ── PSKE-17: bolehLogin() check ───────────────────────────────
+
+    #[Test]
+    public function akun_nonaktif_dikeluarkan_dan_dialihkan_ke_login(): void
+    {
+        $user = User::factory()->kepalaWilayah()->create([
+            'status' => StatusAkun::Nonaktif,
+        ]);
+
+        $response = $this->actingAs($user)->get('/test/kepala-wilayah');
+
+        $response->assertRedirect(route('login'));
+        $response->assertSessionHasErrors(['email' => 'Akun Anda telah dinonaktifkan.']);
+        $this->assertGuest();
+    }
+
+    #[Test]
+    public function akun_ditolak_dikeluarkan_dan_dialihkan_ke_login(): void
+    {
+        $user = User::factory()->kepalaWilayah()->create([
+            'status' => StatusAkun::Ditolak,
+            'alasan_penolakan' => 'Dokumen tidak lengkap.',
+        ]);
+
+        $response = $this->actingAs($user)->get('/test/kepala-wilayah');
+
+        $response->assertRedirect(route('login'));
+        $response->assertSessionHasErrors(['email' => 'Pendaftaran Anda ditolak. Alasan: Dokumen tidak lengkap.']);
+        $this->assertGuest();
+    }
+
+    #[Test]
+    public function akun_menunggu_dikeluarkan_dan_dialihkan_ke_login(): void
+    {
+        $user = User::factory()->kepalaWilayah()->create([
+            'status' => StatusAkun::Menunggu,
+        ]);
+
+        $response = $this->actingAs($user)->get('/test/kepala-wilayah');
+
+        $response->assertRedirect(route('login'));
+        $response->assertSessionHasErrors('email');
+        $this->assertGuest();
     }
 }

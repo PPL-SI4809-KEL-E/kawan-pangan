@@ -11,6 +11,7 @@ use App\Models\DokumenPendukung;
 use App\Models\Instansi;
 use App\Models\User;
 use App\Models\Wilayah;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -70,25 +71,69 @@ class AkunController extends Controller
     /**
      * Tampilkan rincian pendaftar dan formulir penugasan/verifikasi.
      */
-    public function show(User $user): View
+    public function show(Request $request, User $user): View
     {
+        abort_if($user->isSuperadmin(), 403, 'Akun Superadmin tidak dapat dimodifikasi.');
+
         $user->load(['dokumenPendukung', 'wilayah', 'instansi', 'verifikator']);
 
         // Data opsi untuk formulir penugasan
         $daftarInstansi = Instansi::orderBy('nama')->get();
 
-        // Wilayah tingkat kecamatan (level 3) dan desa (level 4)
-        $daftarWilayah = Wilayah::whereIn('level', [3, 4])
-            ->orderBy('kode')
-            ->limit(100)
-            ->get();
+        // Wilayah pilihan pendaftar (jika ada) selalu disertakan
+        $wilayahPendaftar = $user->kode_wilayah
+            ? Wilayah::where('kode', $user->kode_wilayah)->first()
+            : null;
+
+        $pencarianWilayah = $request->query('q_wilayah');
+
+        $queryWilayah = Wilayah::whereIn('level', [3, 4]);
+
+        if ($pencarianWilayah) {
+            $queryWilayah->where(function ($q) use ($pencarianWilayah) {
+                $q->where('nama', 'like', "%{$pencarianWilayah}%")
+                    ->orWhere('kode', 'like', "%{$pencarianWilayah}%");
+            });
+        }
+
+        $daftarWilayah = $queryWilayah->orderBy('kode')->limit(100)->get();
+
+        // Pastikan wilayah pilihan pendaftar selalu ada di daftar pilihan
+        if ($wilayahPendaftar && ! $daftarWilayah->contains('kode', $wilayahPendaftar->kode)) {
+            $daftarWilayah->prepend($wilayahPendaftar);
+        }
 
         return view('admin.akun.show', [
             'user' => $user,
             'suratTugas' => $user->dokumenPendukung()->where('jenis', DokumenPendukung::JENIS_SURAT_TUGAS)->latest()->first(),
             'daftarInstansi' => $daftarInstansi,
             'daftarWilayah' => $daftarWilayah,
+            'wilayahPendaftar' => $wilayahPendaftar,
+            'pencarianWilayah' => $pencarianWilayah,
         ]);
+    }
+
+    /**
+     * Endpoint pencarian wilayah AJAX untuk dropdown dinamis (level 3 & 4).
+     */
+    public function cariWilayah(Request $request): JsonResponse
+    {
+        $q = trim((string) $request->query('q', ''));
+
+        $query = Wilayah::whereIn('level', [3, 4]);
+
+        if ($q !== '') {
+            $query->where(function ($w) use ($q) {
+                $w->where('nama', 'like', "%{$q}%")
+                    ->orWhere('kode', 'like', "%{$q}%");
+            });
+        }
+
+        $hasil = $query->orderBy('kode')
+            ->limit(50)
+            ->get(['kode', 'nama', 'level']);
+
+        return response()->json($hasil);
     }
 
     /**
@@ -96,6 +141,8 @@ class AkunController extends Controller
      */
     public function unduhSuratTugas(User $user): StreamedResponse
     {
+        abort_if($user->isSuperadmin(), 403, 'Akun Superadmin tidak memiliki surat tugas.');
+
         $dokumen = $user->dokumenPendukung()
             ->where('jenis', DokumenPendukung::JENIS_SURAT_TUGAS)
             ->latest()
@@ -113,6 +160,9 @@ class AkunController extends Controller
      */
     public function aktivasi(AktivasiAkunRequest $request, User $user): RedirectResponse
     {
+        abort_if($user->isSuperadmin(), 403, 'Akun Superadmin tidak dapat dimodifikasi.');
+        abort_if($user->status !== StatusAkun::Menunggu, 422, 'Hanya akun berstatus Menunggu yang dapat diaktifkan.');
+
         $data = [
             'status' => StatusAkun::Aktif,
             'verifikator_id' => $request->user()->id,
@@ -142,6 +192,9 @@ class AkunController extends Controller
      */
     public function tolak(TolakAkunRequest $request, User $user): RedirectResponse
     {
+        abort_if($user->isSuperadmin(), 403, 'Akun Superadmin tidak dapat dimodifikasi.');
+        abort_if($user->status !== StatusAkun::Menunggu, 422, 'Hanya akun berstatus Menunggu yang dapat ditolak.');
+
         $user->forceFill([
             'status' => StatusAkun::Ditolak,
             'alasan_penolakan' => $request->input('alasan_penolakan'),
@@ -158,6 +211,9 @@ class AkunController extends Controller
      */
     public function nonaktifkan(Request $request, User $user): RedirectResponse
     {
+        abort_if($user->isSuperadmin(), 403, 'Akun Superadmin tidak dapat dimodifikasi.');
+        abort_if($user->status !== StatusAkun::Aktif, 422, 'Hanya akun berstatus Aktif yang dapat dinonaktifkan.');
+
         $user->forceFill([
             'status' => StatusAkun::Nonaktif,
         ])->save();

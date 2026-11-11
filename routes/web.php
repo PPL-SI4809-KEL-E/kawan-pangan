@@ -73,6 +73,7 @@ Route::middleware(SuperadminAktif::class)->prefix('admin')->name('admin.')->grou
     // PBI-06 · Verifikasi akun dan penugasan (PSKE-17).
     Route::prefix('akun')->name('akun.')->group(function () {
         Route::get('/', [AkunController::class, 'index'])->name('index');
+        Route::get('/cari-wilayah', [AkunController::class, 'cariWilayah'])->name('cari-wilayah');
         Route::get('/{user}', [AkunController::class, 'show'])->name('show');
         Route::get('/{user}/surat-tugas', [AkunController::class, 'unduhSuratTugas'])->name('unduh-surat-tugas');
         Route::post('/{user}/aktivasi', [AkunController::class, 'aktivasi'])->name('aktivasi');
