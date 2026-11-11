@@ -7,6 +7,7 @@ use App\Enums\Role;
 use App\Enums\StatusAkun;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -67,6 +68,21 @@ class User extends Authenticatable
         return $this->hasMany(DokumenPendukung::class);
     }
 
+    public function wilayah(): BelongsTo
+    {
+        return $this->belongsTo(Wilayah::class, 'kode_wilayah', 'kode');
+    }
+
+    public function instansi(): BelongsTo
+    {
+        return $this->belongsTo(Instansi::class, 'instansi_id');
+    }
+
+    public function verifikator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'verifikator_id');
+    }
+
     /**
      * PSKE-6: hanya akun AKTIF yang boleh login.
      */
@@ -113,6 +129,7 @@ class User extends Authenticatable
      * pengelola instansi. Akun Badan Resmi lain diperlakukan sebagai petugas.
      */
     public const JABATAN_PENGELOLA = 'PENGELOLA';
+    public const JABATAN_PETUGAS = 'PETUGAS';
 
     /**
      * Periksa apakah pengguna adalah pengelola instansi.

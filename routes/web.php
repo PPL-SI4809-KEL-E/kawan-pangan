@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AmbangStatusController;
 use App\Http\Controllers\Admin\GudangController;
 use App\Http\Controllers\Admin\InstansiController;
 use App\Http\Controllers\Admin\KomoditasController;
+use App\Http\Controllers\Admin\AkunController;
 use App\Http\Controllers\Admin\WilayahController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\OpsiRegistrasiController;
@@ -69,6 +70,17 @@ Route::middleware(SuperadminAktif::class)->prefix('admin/wilayah')->name('admin.
 });
 
 Route::middleware(SuperadminAktif::class)->prefix('admin')->name('admin.')->group(function () {
+    // PBI-06 · Verifikasi akun dan penugasan (PSKE-17).
+    Route::prefix('akun')->name('akun.')->group(function () {
+        Route::get('/', [AkunController::class, 'index'])->name('index');
+        Route::get('/cari-wilayah', [AkunController::class, 'cariWilayah'])->name('cari-wilayah');
+        Route::get('/{user}', [AkunController::class, 'show'])->name('show');
+        Route::get('/{user}/surat-tugas', [AkunController::class, 'unduhSuratTugas'])->name('unduh-surat-tugas');
+        Route::post('/{user}/aktivasi', [AkunController::class, 'aktivasi'])->name('aktivasi');
+        Route::post('/{user}/tolak', [AkunController::class, 'tolak'])->name('tolak');
+        Route::post('/{user}/nonaktifkan', [AkunController::class, 'nonaktifkan'])->name('nonaktifkan');
+    });
+
     Route::get('ambang-status', [AmbangStatusController::class, 'edit'])->name('ambang-status.edit');
     Route::patch('ambang-status', [AmbangStatusController::class, 'update'])->name('ambang-status.update');
     Route::resource('komoditas', KomoditasController::class)->parameters(['komoditas' => 'komoditas'])->except('show');
