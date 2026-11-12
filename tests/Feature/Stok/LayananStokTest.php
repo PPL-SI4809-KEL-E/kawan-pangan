@@ -222,4 +222,37 @@ class LayananStokTest extends TestCase
 
         $this->assertSame(1, MutasiStok::where('stok_id', $this->stok->id)->count());
     }
+
+    #[Test]
+    public function ref_operasi_duplikat_pada_penerimaan_ditolak_dan_tidak_menggandakan_saldo(): void
+    {
+        $this->layanan->catatPenerimaan($this->stok, '100.000', $this->pencatat, 'REF-UJI-DUPLIKAT');
+        $this->assertSame('100.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame(1, MutasiStok::where('stok_id', $this->stok->id)->count());
+
+        try {
+            $this->layanan->catatPenerimaan($this->stok, '50.000', $this->pencatat, 'REF-UJI-DUPLIKAT');
+            $this->fail('Penggunaan ref_operasi yang sama seharusnya ditolak.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('ref_operasi', $e->errors());
+        }
+
+        // Pastikan saldo TIDAK bertambah ganda dan baris mutasi TIDAK bertambah
+        $this->assertSame('100.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame(1, MutasiStok::where('stok_id', $this->stok->id)->count());
+    }
+
+    #[Test]
+    public function helper_ref_sudah_ada_dan_cari_berdasarkan_ref_bekerja_dengan_benar(): void
+    {
+        $this->assertFalse($this->layanan->refSudahAda('REF-CEK-001'));
+        $this->assertNull($this->layanan->cariBerdasarkanRef('REF-CEK-001'));
+
+        $mutasi = $this->layanan->catatPenerimaan($this->stok, '75.000', $this->pencatat, 'REF-CEK-001');
+
+        $this->assertTrue($this->layanan->refSudahAda('REF-CEK-001'));
+        $ditemukan = $this->layanan->cariBerdasarkanRef('REF-CEK-001');
+        $this->assertNotNull($ditemukan);
+        $this->assertSame($mutasi->id, $ditemukan->id);
+    }
 }

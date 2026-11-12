@@ -75,6 +75,32 @@ class LayananStok
     }
 
     /**
+     * Cari mutasi stok berdasarkan ref_operasi.
+     */
+    public function cariBerdasarkanRef(string $refOperasi): ?MutasiStok
+    {
+        $ref = trim($refOperasi);
+        if ($ref === '') {
+            return null;
+        }
+
+        return MutasiStok::where('ref_operasi', $ref)->first();
+    }
+
+    /**
+     * Periksa apakah ref_operasi sudah pernah dicatat di sistem.
+     */
+    public function refSudahAda(string $refOperasi): bool
+    {
+        $ref = trim($refOperasi);
+        if ($ref === '') {
+            return false;
+        }
+
+        return MutasiStok::where('ref_operasi', $ref)->exists();
+    }
+
+    /**
      * Catat mutasi penyaluran (barang keluar mengurangi saldo fisik layak).
      */
     public function catatPenyaluran(
@@ -306,9 +332,7 @@ class LayananStok
         DateTimeInterface|string|null $waktu,
     ): MutasiStok {
         $waktuMutasi = $this->tentukanWaktuMilidetik($stokTerkunci->id, $waktu);
-        $refFinal = ($refOperasi !== null && trim($refOperasi) !== '')
-            ? trim($refOperasi)
-            : sprintf('MUT-%s-%s', $waktuMutasi->format('YmdHisv'), Str::upper(Str::random(8)));
+        $refFinal = $this->siapkanRefOperasi($refOperasi, $waktuMutasi);
 
         $stokTerkunci->jumlah_fisik_layak = $saldoSetelah;
         $stokTerkunci->diperbarui_pada = $waktuMutasi;
@@ -362,6 +386,36 @@ class LayananStok
         }
 
         return $sekarang;
+    }
+
+    /**
+     * Validasi format dan keunikan ref_operasi sebelum disimpan.
+     */
+    private function siapkanRefOperasi(?string $refOperasi, Carbon $waktuMutasi): string
+    {
+        $ref = $refOperasi !== null ? trim($refOperasi) : '';
+
+        if ($ref === '') {
+            return sprintf(
+                'MUT-%s-%s',
+                $waktuMutasi->format('YmdHisv'),
+                Str::upper(Str::random(8))
+            );
+        }
+
+        if (mb_strlen($ref) > 191) {
+            throw ValidationException::withMessages([
+                'ref_operasi' => ['Referensi operasi maksimal 191 karakter.'],
+            ]);
+        }
+
+        if ($this->refSudahAda($ref)) {
+            throw ValidationException::withMessages([
+                'ref_operasi' => ['Referensi operasi sudah pernah dicatat.'],
+            ]);
+        }
+
+        return $ref;
     }
 
     /**
