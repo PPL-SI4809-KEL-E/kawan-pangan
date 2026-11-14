@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Gudang;
 use Illuminate\View\View;
 
 /**
@@ -30,6 +31,13 @@ class PanelController extends Controller
      */
     public function instansi(): View
     {
-        return view('panel.instansi');
+        $user = auth()->user();
+        $gudangList = $user && $user->instansi_id
+            ? Gudang::where('instansi_id', $user->instansi_id)->with('wilayah')->get()
+            : collect();
+
+        return view('panel.instansi', [
+            'gudangList' => $gudangList,
+        ]);
     }
 }
