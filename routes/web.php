@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\WilayahController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\OpsiRegistrasiController;
 use App\Http\Controllers\Auth\RegistrasiController;
+use App\Http\Controllers\CakupanGudangController;
 use App\Http\Controllers\PanelController;
 use App\Http\Middleware\SuperadminAktif;
 use Illuminate\Support\Facades\Route;
@@ -56,8 +57,16 @@ Route::middleware(['auth', 'role:KEPALA_WILAYAH'])->prefix('panel/wilayah')->nam
     Route::get('/', [PanelController::class, 'wilayah']);
 });
 
-Route::middleware(['auth', 'role:BADAN_RESMI'])->prefix('panel/instansi')->name('panel.instansi')->group(function () {
-    Route::get('/', [PanelController::class, 'instansi']);
+Route::middleware(['auth', 'role:BADAN_RESMI'])->prefix('panel/instansi')->name('panel.instansi.')->group(function () {
+    Route::get('/', [PanelController::class, 'instansi'])->name('index');
+
+    // PSKE-48 / Layar M-12 · Atur cakupan gudang oleh pengelola instansi (PSKE-49, PSKE-50, PSKE-51)
+    Route::prefix('gudang/{gudang}/cakupan')->name('gudang.cakupan.')->group(function () {
+        Route::get('/', [CakupanGudangController::class, 'index'])->name('index');
+        Route::post('/', [CakupanGudangController::class, 'store'])->name('store');
+        Route::patch('/{cakupan}/utama', [CakupanGudangController::class, 'toggleUtama'])->name('toggle-utama');
+        Route::delete('/{cakupan}', [CakupanGudangController::class, 'destroy'])->name('destroy');
+    });
 });
 
 // PBI-08 · Master wilayah Kemendagri (PSKE-19).
@@ -87,5 +96,14 @@ Route::middleware(SuperadminAktif::class)->prefix('admin')->name('admin.')->grou
     Route::resource('instansi', InstansiController::class)->except('show');
     Route::get('gudang/opsi-wilayah', [GudangController::class, 'opsiWilayah'])->name('gudang.opsi-wilayah');
     Route::patch('gudang/{gudang}/status', [GudangController::class, 'status'])->name('gudang.status');
+
+    // PSKE-48 / Layar M-12 · Atur cakupan gudang oleh superadmin
+    Route::prefix('gudang/{gudang}/cakupan')->name('gudang.cakupan.')->group(function () {
+        Route::get('/', [CakupanGudangController::class, 'index'])->name('index');
+        Route::post('/', [CakupanGudangController::class, 'store'])->name('store');
+        Route::patch('/{cakupan}/utama', [CakupanGudangController::class, 'toggleUtama'])->name('toggle-utama');
+        Route::delete('/{cakupan}', [CakupanGudangController::class, 'destroy'])->name('destroy');
+    });
+
     Route::resource('gudang', GudangController::class)->except('show');
 });

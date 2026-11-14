@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -75,5 +76,25 @@ class Wilayah extends Model
     public function anak(): HasMany
     {
         return $this->hasMany(self::class, 'kode_induk', 'kode');
+    }
+
+    public function cakupanGudang(): HasMany
+    {
+        return $this->hasMany(CakupanGudang::class, 'kode_kecamatan', 'kode');
+    }
+
+    public function gudang(): BelongsToMany
+    {
+        return $this->belongsToMany(Gudang::class, 'cakupan_gudang', 'kode_kecamatan', 'gudang_id', 'kode', 'id')
+            ->withPivot('is_utama')
+            ->withTimestamps();
+    }
+
+    public function gudangUtama(): BelongsToMany
+    {
+        return $this->belongsToMany(Gudang::class, 'cakupan_gudang', 'kode_kecamatan', 'gudang_id', 'kode', 'id')
+            ->wherePivot('is_utama', true)
+            ->withPivot('is_utama')
+            ->withTimestamps();
     }
 }
