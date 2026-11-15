@@ -255,4 +255,206 @@ class LayananStokTest extends TestCase
         $this->assertNotNull($ditemukan);
         $this->assertSame($mutasi->id, $ditemukan->id);
     }
+
+    #[Test]
+    public function permintaan_berulang_dengan_catat_mutasi_idempoten_tidak_menggandakan_saldo_atau_baris(): void
+    {
+        $pertama = $this->layanan->catatMutasiIdempoten(
+            $this->stok,
+            MutasiStok::JENIS_PENERIMAAN,
+            '120.000',
+            $this->pencatat,
+            '  REF-IDEMP-001  ',
+            'Penerimaan tahap 1',
+        );
+
+        $kedua = $this->layanan->catatMutasiIdempoten(
+            $this->stok,
+            MutasiStok::JENIS_PENERIMAAN,
+            '120.000',
+            $this->pencatat,
+            'REF-IDEMP-001',
+            'Percobaan ulang karena timeout',
+        );
+
+        $ketiga = $this->layanan->catatMutasiIdempoten(
+            $this->stok,
+            MutasiStok::JENIS_PENERIMAAN,
+            120,
+            $this->pencatat,
+            '  REF-IDEMP-001 ',
+        );
+
+        $this->assertSame($pertama->id, $kedua->id);
+        $this->assertSame($pertama->id, $ketiga->id);
+        $this->assertSame('REF-IDEMP-001', $pertama->ref_operasi);
+        $this->assertSame('120.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame(1, MutasiStok::where('stok_id', $this->stok->id)->count());
+
+        $keluarPertama = $this->layanan->catatMutasiIdempoten(
+            $this->stok,
+            MutasiStok::JENIS_PENYALURAN,
+            '20.000',
+            $this->pencatat,
+            'REF-IDEMP-OUT-001',
+        );
+        $keluarUlang = $this->layanan->catatMutasiIdempoten(
+            $this->stok,
+            MutasiStok::JENIS_PENYALURAN,
+            '20.000',
+            $this->pencatat,
+            'REF-IDEMP-OUT-001',
+        );
+
+        $this->assertSame($keluarPertama->id, $keluarUlang->id);
+        $this->assertSame('100.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame(2, MutasiStok::where('stok_id', $this->stok->id)->count());
+    }
+
+    #[Test]
+    public function catat_mutasi_idempoten_menolak_ref_yang_sudah_dipakai_dengan_payload_berbeda(): void
+    {
+        $this->layanan->catatMutasiIdempoten(
+            $this->stok,
+            MutasiStok::JENIS_PENERIMAAN,
+            '50.000',
+            $this->pencatat,
+            'REF-KONFLIK-001',
+        );
+
+        $komoditasLain = Komoditas::create([
+            'nama' => 'Minyak Goreng',
+            'satuan' => 'liter',
+        ]);
+        $stokLain = $this->layanan->ambilAtauBuatStok($this->stok->gudang_id, $komoditasLain);
+
+        $skenarioKonflik = [
+            [$this->stok, MutasiStok::JENIS_PENERIMAAN, '75.000'],
+            [$this->stok, MutasiStok::JENIS_RETUR, '50.000'],
+            [$stokLain, MutasiStok::JENIS_PENERIMAAN, '50.000'],
+        ];
+
+        foreach ($skenarioKonflik as [$targetStok, $jenis, $jumlah]) {
+            try {
+                $this->layanan->catatMutasiIdempoten(
+                    $targetStok,
+                    $jenis,
+                    $jumlah,
+                    $this->pencatat,
+                    'REF-KONFLIK-001',
+                );
+                $this->fail('Penggunaan ref_operasi dengan payload berbeda seharusnya ditolak.');
+            } catch (ValidationException $e) {
+                $this->assertArrayHasKey('ref_operasi', $e->errors());
+            }
+        }
+
+        $this->assertSame('50.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame('0.000', $stokLain->fresh()->jumlah_fisik_layak);
+        $this->assertSame(1, MutasiStok::count());
+    }
+
+    #[Test]
+    public function catat_mutasi_idempoten_mewajibkan_ref_operasi_tidak_kosong(): void
+    {
+        try {
+            $this->layanan->catatMutasiIdempoten(
+                $this->stok,
+                MutasiStok::JENIS_PENERIMAAN,
+                '25.000',
+                $this->pencatat,
+                '   ',
+            );
+            $this->fail('ref_operasi kosong seharusnya ditolak pada pencatatan idempoten.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('ref_operasi', $e->errors());
+        }
+
+        $this->assertSame('0.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame(0, MutasiStok::where('stok_id', $this->stok->id)->count());
+    }
+
+    #[Test]
+    public function ref_operasi_duplikat_dengan_spasi_ditolak_di_semua_jalur_mutasi_tanpa_mengubah_saldo(): void
+    {
+        $this->layanan->catatPenerimaan($this->stok, '200.000', $this->pencatat, 'REF-SEMUA-001');
+
+        $percobaanDuplikat = [
+            fn () => $this->layanan->catatPenyaluran($this->stok, '10.000', $this->pencatat, '  REF-SEMUA-001  '),
+            fn () => $this->layanan->catatRetur($this->stok, '10.000', $this->pencatat, 'REF-SEMUA-001'),
+            fn () => $this->layanan->catatRusak($this->stok, '10.000', $this->pencatat, 'REF-SEMUA-001'),
+            fn () => $this->layanan->catatPenyesuaian($this->stok, '10.000', $this->pencatat, 'REF-SEMUA-001'),
+            fn () => $this->layanan->sesuaikanSaldo($this->stok, '150.000', $this->pencatat, '  REF-SEMUA-001  '),
+        ];
+
+        foreach ($percobaanDuplikat as $eksekusi) {
+            try {
+                $eksekusi();
+                $this->fail('ref_operasi duplikat seharusnya ditolak pada seluruh jalur mutasi.');
+            } catch (ValidationException $e) {
+                $this->assertArrayHasKey('ref_operasi', $e->errors());
+            }
+        }
+
+        $this->assertSame('200.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame(1, MutasiStok::where('stok_id', $this->stok->id)->count());
+    }
+
+    #[Test]
+    public function ref_operasi_melebihi_batas_191_karakter_ditolak_tanpa_mengubah_saldo(): void
+    {
+        $refTerlaluPanjang = str_repeat('A', 192);
+
+        foreach ([
+            fn () => $this->layanan->catatPenerimaan($this->stok, '10.000', $this->pencatat, $refTerlaluPanjang),
+            fn () => $this->layanan->catatMutasiIdempoten($this->stok, MutasiStok::JENIS_PENERIMAAN, '10.000', $this->pencatat, $refTerlaluPanjang),
+        ] as $eksekusi) {
+            try {
+                $eksekusi();
+                $this->fail('ref_operasi > 191 karakter seharusnya ditolak.');
+            } catch (ValidationException $e) {
+                $this->assertArrayHasKey('ref_operasi', $e->errors());
+            }
+        }
+
+        $this->assertSame('0.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame(0, MutasiStok::where('stok_id', $this->stok->id)->count());
+
+        $mutasiSah = $this->layanan->catatMutasiIdempoten(
+            $this->stok,
+            MutasiStok::JENIS_PENERIMAAN,
+            '10.000',
+            $this->pencatat,
+            str_repeat('B', 191),
+        );
+
+        $this->assertSame(191, mb_strlen($mutasiSah->ref_operasi));
+        $this->assertSame('10.000', $this->stok->fresh()->jumlah_fisik_layak);
+    }
+
+    #[Test]
+    public function pelanggaran_unique_constraint_db_pada_ref_operasi_dikonversi_ke_validation_exception_dan_rollback(): void
+    {
+        $sudahSisipkanKonflik = false;
+
+        MutasiStok::creating(function (MutasiStok $mutasi) use (&$sudahSisipkanKonflik): void {
+            if ($sudahSisipkanKonflik || $mutasi->ref_operasi !== 'REF-RACE-001') {
+                return;
+            }
+
+            $sudahSisipkanKonflik = true;
+            DB::table('mutasi_stok')->insert($mutasi->getAttributes());
+        });
+
+        try {
+            $this->layanan->catatPenerimaan($this->stok, '40.000', $this->pencatat, 'REF-RACE-001');
+            $this->fail('Konflik unique constraint pada tingkat database seharusnya dikonversi menjadi ValidationException.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('ref_operasi', $e->errors());
+        }
+
+        $this->assertTrue($sudahSisipkanKonflik);
+        $this->assertSame('0.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame(0, MutasiStok::where('stok_id', $this->stok->id)->count());
+    }
 }
