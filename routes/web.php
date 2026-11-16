@@ -57,11 +57,11 @@ Route::middleware(['auth', 'role:KEPALA_WILAYAH'])->prefix('panel/wilayah')->nam
     Route::get('/', [PanelController::class, 'wilayah']);
 });
 
-Route::middleware(['auth', 'role:BADAN_RESMI'])->prefix('panel/instansi')->name('panel.instansi.')->group(function () {
-    Route::get('/', [PanelController::class, 'instansi'])->name('index');
+Route::middleware(['auth', 'role:BADAN_RESMI'])->prefix('panel/instansi')->group(function () {
+    Route::get('/', [PanelController::class, 'instansi'])->name('panel.instansi');
 
     // PSKE-48 / Layar M-12 · Atur cakupan gudang oleh pengelola instansi (PSKE-49, PSKE-50, PSKE-51)
-    Route::prefix('gudang/{gudang}/cakupan')->name('gudang.cakupan.')->group(function () {
+    Route::prefix('gudang/{gudang}/cakupan')->name('panel.instansi.gudang.cakupan.')->group(function () {
         Route::get('/', [CakupanGudangController::class, 'index'])->name('index');
         Route::post('/', [CakupanGudangController::class, 'store'])->name('store');
         Route::patch('/{cakupan}/utama', [CakupanGudangController::class, 'toggleUtama'])->name('toggle-utama');

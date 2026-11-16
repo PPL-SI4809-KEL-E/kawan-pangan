@@ -2,7 +2,7 @@
     $isSuperadmin = auth()->user()->isSuperadmin() && request()->routeIs('admin.*');
     $layout = $isSuperadmin ? 'layouts.admin' : 'layouts.panel';
     $routePrefix = $isSuperadmin ? 'admin.gudang.cakupan' : 'panel.instansi.gudang.cakupan';
-    $backRoute = $isSuperadmin ? route('admin.gudang.index') : route('panel.instansi.index');
+    $backRoute = $isSuperadmin ? route('admin.gudang.index') : route('panel.instansi');
 @endphp
 
 @extends($layout)
