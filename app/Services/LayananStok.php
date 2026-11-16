@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Cadangan;
 use App\Models\Gudang;
 use App\Models\Komoditas;
 use App\Models\MutasiStok;
@@ -49,6 +50,39 @@ class LayananStok
                 'is_contoh' => false,
             ]
         );
+    }
+
+    /**
+     * Hitung total jumlah cadangan berstatus AKTIF pada baris stok.
+     */
+    public function totalCadanganAktif(Stok|int $stok): string
+    {
+        $stokId = $stok instanceof Stok ? $stok->id : $stok;
+        $daftarJumlah = Cadangan::where('stok_id', $stokId)
+            ->where('status', Cadangan::STATUS_AKTIF)
+            ->pluck('jumlah');
+
+        $total = '0.000';
+        foreach ($daftarJumlah as $jumlah) {
+            $total = bcadd($total, $this->formatKuantitas($jumlah, 'cadangan'), 3);
+        }
+
+        return $total;
+    }
+
+    /**
+     * Hitung stok tersedia (saldo fisik layak dikurangi total cadangan aktif).
+     */
+    public function hitungStokTersedia(Stok|int $stok): string
+    {
+        $stokId = $stok instanceof Stok ? $stok->id : $stok;
+        $stokSegar = Stok::findOrFail($stokId);
+
+        $fisik = $this->formatKuantitas($stokSegar->jumlah_fisik_layak, 'jumlah_fisik_layak');
+        $cadanganAktif = $this->totalCadanganAktif($stokId);
+        $tersedia = bcsub($fisik, $cadanganAktif, 3);
+
+        return bccomp($tersedia, '0.000', 3) < 0 ? '0.000' : $tersedia;
     }
 
     /**
@@ -433,6 +467,8 @@ class LayananStok
             MutasiStok::JENIS_PENYESUAIAN => bcadd($saldoAwal, $jumlahFormatted, 3),
         };
 
+        $this->pastikanSaldoTidakNegatif($saldoSetelah);
+
         return $this->simpanPerubahanSaldo(
             stokTerkunci: $stokTerkunci,
             jenis: $jenis,
@@ -444,6 +480,18 @@ class LayananStok
             pengirimanId: $pengirimanId,
             waktu: $waktu,
         );
+    }
+
+    /**
+     * Pastikan saldo akhir hasil mutasi tidak pernah bernilai negatif.
+     */
+    private function pastikanSaldoTidakNegatif(string $saldoSetelah, string $namaField = 'jumlah'): void
+    {
+        if (bccomp($saldoSetelah, '0.000', 3) < 0) {
+            throw ValidationException::withMessages([
+                $namaField => ['Saldo stok tidak mencukupi dan tidak boleh menjadi negatif.'],
+            ]);
+        }
     }
 
     /**

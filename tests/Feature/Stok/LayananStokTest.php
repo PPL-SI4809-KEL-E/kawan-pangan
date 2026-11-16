@@ -4,6 +4,7 @@ namespace Tests\Feature\Stok;
 
 use App\Enums\Role;
 use App\Enums\StatusAkun;
+use App\Models\Cadangan;
 use App\Models\Gudang;
 use App\Models\Instansi;
 use App\Models\Komoditas;
@@ -456,5 +457,63 @@ class LayananStokTest extends TestCase
         $this->assertTrue($sudahSisipkanKonflik);
         $this->assertSame('0.000', $this->stok->fresh()->jumlah_fisik_layak);
         $this->assertSame(0, MutasiStok::where('stok_id', $this->stok->id)->count());
+    }
+
+    #[Test]
+    public function helper_total_cadangan_aktif_dan_hitung_stok_tersedia_menghitung_dengan_presisi(): void
+    {
+        $this->assertSame('0.000', $this->layanan->totalCadanganAktif($this->stok));
+        $this->assertSame('0.000', $this->layanan->hitungStokTersedia($this->stok));
+
+        $this->layanan->catatPenerimaan($this->stok, '150.500', $this->pencatat, 'REF-TERSEDIA-001');
+
+        $daftarCadangan = [
+            ['RESI-CAD-01', '40.250', Cadangan::STATUS_AKTIF],
+            ['RESI-CAD-02', '10.125', Cadangan::STATUS_AKTIF],
+            ['RESI-CAD-03', '25.000', Cadangan::STATUS_SELESAI],
+            ['RESI-CAD-04', '15.000', Cadangan::STATUS_BATAL],
+        ];
+
+        foreach ($daftarCadangan as [$noResi, $jumlahCadangan, $status]) {
+            $pengirimanId = DB::table('pengiriman')->insertGetId([
+                'no_resi' => $noResi,
+                'gudang_asal_id' => $this->stok->gudang_id,
+                'kode_wilayah_tujuan' => '32.04.12',
+                'petugas_id' => $this->pencatat->id,
+                'status' => 'DISETUJUI',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            Cadangan::create([
+                'stok_id' => $this->stok->id,
+                'pengiriman_id' => $pengirimanId,
+                'jumlah' => $jumlahCadangan,
+                'status' => $status,
+                'dibuat_pada' => now(),
+                'selesai_pada' => $status === Cadangan::STATUS_AKTIF ? null : now(),
+                'is_contoh' => false,
+            ]);
+        }
+
+        $this->assertSame('50.375', $this->layanan->totalCadanganAktif($this->stok));
+        $this->assertSame('100.125', $this->layanan->hitungStokTersedia($this->stok));
+    }
+
+    #[Test]
+    public function mutasi_keluar_awal_ditolak_bila_membuat_saldo_fisik_negatif(): void
+    {
+        $this->layanan->catatPenerimaan($this->stok, '50.000', $this->pencatat, 'REF-NEG-AWAL');
+
+        try {
+            $this->layanan->catatPenyaluran($this->stok, '50.001', $this->pencatat, 'REF-NEG-TOLAK');
+            $this->fail('Mutasi keluar yang menyebabkan saldo fisik negatif seharusnya ditolak.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('jumlah', $e->errors());
+        }
+
+        $this->assertSame('50.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame(1, MutasiStok::where('stok_id', $this->stok->id)->count());
+        $this->assertFalse($this->layanan->refSudahAda('REF-NEG-TOLAK'));
     }
 }
