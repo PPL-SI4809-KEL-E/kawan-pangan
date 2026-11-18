@@ -1,56 +1,97 @@
-/* Design token Kawan Pangan (PSKE-12).*/
+/* Design token Kawan Pangan v2 (PSKE-87).
+   Satu keluarga abu dingin, navy untuk sidebar dan tombol utama, satu aksen kuning untuk state aktif.
+   Nama token lama tetap dipertahankan supaya halaman yang sudah ada ikut berubah tanpa diedit. */
 :root {
-  /* Warna brand */
-  --color-primary: #1E3A5F;        /* navy: header, tombol utama */
-  --color-primary-hover: #162C48;
-  --color-accent: #F5B700;         /* kuning: aksen, highlight */
-  --color-on-primary: #FFFFFF;     /* teks di atas primary */
-  --color-on-accent: #1E3A5F;      /* teks di atas accent */
+  /* Brand */
+  --color-primary: #13233D;        /* navy: tombol utama, teks penting */
+  --color-primary-hover: #0B1628;
+  --color-accent: #E9B13C;         /* kuning: state aktif, sorotan, CTA publik */
+  --color-accent-hover: #D9A02B;
+  --color-accent-soft: #FBF1DA;
+  --color-on-primary: #FFFFFF;
+  --color-on-accent: #1B1405;
 
-  /* Warna netral */
-  --color-bg: #F8FAFC;             /* latar halaman */
-  --color-surface: #FFFFFF;        /* kartu, tabel, modal */
-  --color-border: #E5E7EB;
-  --color-text: #111827;           /* teks utama */
-  --color-text-muted: #4B5563;     /* teks sekunder */
+  /* Netral (satu keluarga abu dingin) */
+  --color-canvas: #EDF0F3;         /* latar di belakang panel */
+  --color-bg: #F5F7F9;             /* isian halus: kepala tabel, hover */
+  --color-surface: #FFFFFF;        /* kartu, tabel, panel */
+  --color-border: #E2E6EB;
+  --color-border-strong: #CDD3DA;
+  --color-text: #0F1B2D;           /* teks utama */
+  --color-text-muted: #556171;     /* teks sekunder, kontras 6:1 di atas putih */
+  --color-text-subtle: #7A8594;    /* label kecil non-esensial */
 
-  /* Status ketersediaan stok */
-  --color-kritis: #B42318;    --color-kritis-bg: #FEE4E2;    /* < 14 hari */
-  --color-waspada: #B54708;   --color-waspada-bg: #FEF0C7;   /* 14–30 hari */
-  --color-aman: #067647;      --color-aman-bg: #DCFAE6;      /* > 30 hari */
-  --color-info: #175CD3;      --color-info-bg: #D1E9FF;      /* diajukan, diproses */
+  /* Sidebar */
+  --color-sidebar: #0F1C30;
+  --color-sidebar-raised: #182841;
+  --color-sidebar-border: #22334F;
+  --color-sidebar-text: #B4C0D0;
+  --color-sidebar-text-strong: #FFFFFF;
+
+  /* Status ketersediaan stok dan proses */
+  --color-kritis: #B42318;    --color-kritis-bg: #FEE4E2;    /* < 14 hari, ditolak */
+  --color-waspada: #B54708;   --color-waspada-bg: #FEF0C7;   /* 14–30 hari, menunggu */
+  --color-aman: #067647;      --color-aman-bg: #DCFAE6;      /* > 30 hari, selesai */
+  --color-info: #175CD3;      --color-info-bg: #D1E9FF;      /* diajukan, dalam pengiriman */
   --color-netral: #344054;    --color-netral-bg: #F2F4F7;    /* draf, dibatalkan */
+  --color-netral-border: var(--color-border-strong);
 
   /* Tipografi */
-  --font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-size-xs: 0.75rem;   /* 12px: label kecil */
-  --font-size-sm: 0.875rem;  /* 14px: tabel, caption */
-  --font-size-md: 1rem;      /* 16px: teks isi */
-  --font-size-lg: 1.25rem;   /* 20px: judul kartu */
-  --font-size-xl: 1.5rem;    /* 24px: judul halaman */
-  --font-size-2xl: 2rem;     /* 32px: judul besar */
+  --font-family: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --font-size-xs: 0.75rem;    /* 12px: label kecil */
+  --font-size-sm: 0.875rem;   /* 14px: tabel, form */
+  --font-size-md: 1rem;       /* 16px: teks isi */
+  --font-size-lg: 1.125rem;   /* 18px: judul kartu */
+  --font-size-xl: 1.5rem;     /* 24px: judul halaman */
+  --font-size-2xl: 2rem;      /* 32px: angka besar */
+  --font-size-3xl: 2.75rem;   /* 44px: judul beranda */
   --font-weight-regular: 400;
+  --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-  --line-height: 1.5;
+  --line-height: 1.55;
+  --line-height-tight: 1.15;
+  --tracking-tight: -0.02em;
+  --tracking-wide: 0.06em;
 
   /* Spasi (kelipatan 4px) */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
+  --space-5: 20px;
   --space-6: 24px;
   --space-8: 32px;
+  --space-10: 40px;
   --space-12: 48px;
+  --space-16: 64px;
 
-  /* Sudut dan bayangan */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  /* Sudut: makin luar makin lembut */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
   --radius-full: 999px;
-  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06);
-  --shadow-md: 0 4px 12px rgb(16 24 40 / 0.10);
 
-  /* Breakpoint (acuan media query, PSKE-14) */
-  /* mobile >= 360px, tablet >= 768px, desktop >= 1024px */
+  /* Bayangan bernuansa navy, satu arah cahaya dari atas */
+  --shadow-sm: 0 1px 2px rgb(15 28 48 / 0.06);
+  --shadow-md: 0 6px 20px -6px rgb(15 28 48 / 0.16);
+  --shadow-float: 0 16px 40px -12px rgb(15 28 48 / 0.28);
+
+  /* Gerak */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration: 180ms;
+
+  /* Lapisan */
+  --z-sticky: 30;
+  --z-overlay: 35;
+  --z-sidebar: 40;
+  --z-float: 500;
+
+  /* Ukuran shell */
+  --sidebar-width: 256px;
+  --sidebar-width-collapsed: 72px;
+
+  /* Breakpoint (acuan media query): mobile >= 360px, tablet >= 768px, desktop >= 1024px */
 }
