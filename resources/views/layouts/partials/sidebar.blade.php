@@ -42,9 +42,6 @@
         ];
     }
 
-    $grupMenu['Publik'] = [
-        ['label' => 'Peta ketersediaan', 'ikon' => 'i-layers', 'url' => url('/'), 'aktif' => false],
-    ];
 @endphp
 <nav class="app-sidebar" id="sidebar" aria-label="Menu utama">
     <div class="sidebar-top">
@@ -87,6 +84,12 @@
             </ul>
         @endforeach
         <p class="nav-empty" id="sidebar-empty" hidden>Menu tidak ditemukan.</p>
+    </div>
+
+    <div class="sidebar-promo">
+        <strong>Pantau stok di peta</strong>
+        <p>Status Aman, Waspada, dan Kritis per kecamatan dalam satu layar.</p>
+        <a class="btn btn-sm" href="{{ url('/') }}" title="Buka peta ketersediaan"><svg class="icon icon-sm"><use href="#i-layers"/></svg><span class="nav-text">Buka peta</span></a>
     </div>
 
     <div class="sidebar-foot">
