@@ -105,7 +105,7 @@ code { padding: 1px 6px; border-radius: var(--radius-sm); background: var(--colo
 }
 .textarea { min-height: 96px; resize: vertical; }
 .input:hover, .select:hover, .textarea:hover { border-color: var(--color-text-subtle); }
-.input:focus, .select:focus, .textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgb(19 35 61 / 0.12); }
+.input:focus, .select:focus, .textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-ring); }
 .input:disabled, .select:disabled, .textarea:disabled { background: var(--color-bg); color: var(--color-text-muted); }
 input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary); width: 16px; height: 16px; }
 input[type="file"]::file-selector-button {
@@ -226,9 +226,9 @@ input[type="file"]::file-selector-button {
   transition: background-color var(--duration) var(--ease-out), color var(--duration) var(--ease-out);
 }
 .seg-item:hover { color: var(--color-text); }
-.seg-item[aria-pressed="true"] { background: var(--color-accent); color: var(--color-on-accent); }
-.seg-count { min-width: 20px; padding: 0 5px; border-radius: 5px; background: var(--color-surface); color: var(--color-text); font-variant-numeric: tabular-nums; text-align: center; }
-.seg-item[aria-pressed="true"] .seg-count { background: rgb(255 255 255 / 0.55); }
+.seg-item[aria-pressed="true"] { background: var(--color-surface); color: var(--color-primary); box-shadow: var(--shadow-sm); }
+.seg-count { min-width: 20px; padding: 0 5px; border-radius: 6px; background: var(--color-surface); color: var(--color-text); font-variant-numeric: tabular-nums; text-align: center; }
+.seg-item[aria-pressed="true"] .seg-count { background: var(--color-primary); color: var(--color-on-primary); }
 
 /* Kartu daftar yang bisa dipilih (pasangan peta) */
 .item-card {
@@ -245,7 +245,7 @@ input[type="file"]::file-selector-button {
   transition: border-color var(--duration) var(--ease-out), box-shadow var(--duration) var(--ease-out), transform var(--duration) var(--ease-out);
 }
 .item-card:hover { border-color: var(--color-border-strong); box-shadow: var(--shadow-sm); }
-.item-card[aria-current="true"] { border-color: var(--color-primary); box-shadow: 0 0 0 1px var(--color-primary), var(--shadow-md); }
+.item-card[aria-current="true"] { border-color: var(--color-primary); background: linear-gradient(var(--color-primary-soft), var(--color-surface) 70%); box-shadow: 0 0 0 3px var(--color-primary-ring); }
 .item-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
 .item-card-title { display: block; margin: 0; font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); letter-spacing: var(--tracking-tight); }
 .item-card-sub { display: block; margin: 2px 0 0; font-size: var(--font-size-xs); color: var(--color-text-muted); }
@@ -285,7 +285,7 @@ input[type="file"]::file-selector-button {
   transition: border-color var(--duration) var(--ease-out), box-shadow var(--duration) var(--ease-out), transform var(--duration) var(--ease-out);
 }
 a.tile:hover { border-color: var(--color-border-strong); box-shadow: var(--shadow-md); transform: translateY(-1px); }
-.tile-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-primary); }
+.tile-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--radius-md); background: var(--color-primary-soft); color: var(--color-primary); }
 .tile-title { margin: var(--space-2) 0 0; font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); letter-spacing: var(--tracking-tight); }
 .tile p { margin: 0; font-size: var(--font-size-sm); color: var(--color-text-muted); }
 .tile-foot { margin-top: auto; padding-top: var(--space-3); display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); font-size: var(--font-size-xs); color: var(--color-text-muted); }
