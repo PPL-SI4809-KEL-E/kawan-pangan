@@ -1,38 +1,46 @@
-{{-- PBI-04 · Panel Kepala Wilayah (PSKE-16, PSKE-31) --}}
+{{-- PBI-04 · Panel Kepala Wilayah (PSKE-16, PSKE-31). Tampilan v2: PSKE-92 --}}
 @extends('layouts.panel')
 
 @section('title', 'Panel Kepala Wilayah')
 
 @section('content')
-<div class="stack">
-    <div>
-        <h1>Panel Kepala Wilayah</h1>
-        <p class="text-muted">
-            Selamat datang, <strong>{{ auth()->user()->name }}</strong>. 
-            Cakupan wilayah penugasan: <code>{{ auth()->user()->kode_wilayah ?? 'Belum ditentukan' }}</code>.
-        </p>
-    </div>
+<div class="stack stack-lg">
+    <section class="welcome-card">
+        <div>
+            <p class="eyebrow">Panel Kepala Wilayah</p>
+            <h1>Selamat datang, {{ auth()->user()->name }}</h1>
+        </div>
+        <p>Pantau ketersediaan pangan di wilayah Anda dan ajukan laporan kebutuhan bila stok mulai menipis.</p>
+        <div class="welcome-facts">
+            <span class="welcome-fact"><svg class="icon icon-sm"><use href="#i-pin"/></svg>Wilayah penugasan <strong class="mono">{{ auth()->user()->kode_wilayah ?? 'Belum ditentukan' }}</strong></span>
+        </div>
+    </section>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-4); margin-top: var(--space-4);">
-        <div class="card">
-            <h2 class="card-title">Laporan Kebutuhan Pangan</h2>
-            <p class="text-muted" style="margin-bottom: var(--space-4); font-size: var(--font-size-sm);">
-                Buat dan ajukan laporan kekurangan atau kebutuhan pangan untuk wilayah Anda (Sprint 3 · PBI-18).
-            </p>
-            <div class="card-footer">
-                <button type="button" class="btn btn-primary" disabled title="Akan hadir di Sprint 3">Buat Laporan</button>
+    <section>
+        <div class="section-head">
+            <h2>Fitur wilayah</h2>
+            <p>Fitur di bawah sedang dikembangkan dan akan aktif sesuai jadwal sprint.</p>
+        </div>
+        <div class="tile-grid">
+            <a class="tile" href="{{ url('/') }}">
+                <span class="tile-icon"><svg class="icon"><use href="#i-layers"/></svg></span>
+                <h3 class="tile-title">Peta ketersediaan</h3>
+                <p>Lihat status stok per kecamatan di peta publik.</p>
+                <span class="tile-foot">Buka peta <svg class="icon icon-sm"><use href="#i-arrow-right"/></svg></span>
+            </a>
+            <div class="tile is-soon" aria-disabled="true">
+                <span class="tile-icon"><svg class="icon"><use href="#i-file"/></svg></span>
+                <h3 class="tile-title">Laporan kebutuhan pangan</h3>
+                <p>Ajukan laporan kekurangan atau kebutuhan pangan untuk wilayah Anda.</p>
+                <span class="tile-foot"><span class="badge badge-netral">Sprint 3 · PBI-18</span></span>
+            </div>
+            <div class="tile is-soon" aria-disabled="true">
+                <span class="tile-icon"><svg class="icon"><use href="#i-inbox"/></svg></span>
+                <h3 class="tile-title">Penerimaan bantuan</h3>
+                <p>Konfirmasi jumlah komoditas bantuan yang tiba, selisih, dan bukti foto.</p>
+                <span class="tile-foot"><span class="badge badge-netral">Sprint 3 · PBI-23</span></span>
             </div>
         </div>
-
-        <div class="card">
-            <h2 class="card-title">Penerimaan Bantuan</h2>
-            <p class="text-muted" style="margin-bottom: var(--space-4); font-size: var(--font-size-sm);">
-                Konfirmasi penerimaan komoditas bantuan yang tiba di wilayah Anda (Sprint 3 · PBI-23).
-            </p>
-            <div class="card-footer">
-                <button type="button" class="btn btn-secondary" disabled title="Akan hadir di Sprint 3">Daftar Penerimaan</button>
-            </div>
-        </div>
-    </div>
+    </section>
 </div>
 @endsection

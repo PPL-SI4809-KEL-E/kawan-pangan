@@ -126,7 +126,7 @@
                                         </form>
 
                                         {{-- Hapus Cakupan --}}
-                                        <form method="POST" action="{{ route($routePrefix . '.destroy', [$gudang, $cakupan]) }}" onsubmit="return confirm('Hapus cakupan kecamatan {{ $cakupan->kecamatan?->nama }} dari gudang ini?');">
+                                        <form method="POST" action="{{ route($routePrefix . '.destroy', [$gudang, $cakupan]) }}" data-confirm="Hapus cakupan kecamatan {{ $cakupan->kecamatan?->nama }} dari gudang ini?">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-danger btn-sm" aria-label="Hapus cakupan {{ $cakupan->kecamatan?->nama }}">
