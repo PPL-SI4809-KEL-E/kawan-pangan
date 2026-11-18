@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Gudang extends Model
 {
@@ -24,5 +26,17 @@ class Gudang extends Model
     public function wilayah(): BelongsTo
     {
         return $this->belongsTo(Wilayah::class, 'kode_wilayah', 'kode');
+    }
+
+    public function cakupan(): HasMany
+    {
+        return $this->hasMany(CakupanGudang::class, 'gudang_id');
+    }
+
+    public function kecamatan(): BelongsToMany
+    {
+        return $this->belongsToMany(Wilayah::class, 'cakupan_gudang', 'gudang_id', 'kode_kecamatan', 'id', 'kode')
+            ->withPivot('is_utama')
+            ->withTimestamps();
     }
 }

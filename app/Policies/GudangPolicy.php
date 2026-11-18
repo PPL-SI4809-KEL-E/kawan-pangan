@@ -70,6 +70,17 @@ class GudangPolicy
     }
 
     /**
+     * Badan Resmi dengan peran PENGELOLA boleh mengatur cakupan gudang instansinya (PSKE-48 / PSKE-51).
+     *
+     * @param  Model  $gudang  Model gudang dengan atribut `instansi_id`.
+     */
+    public function kelolaCakupan(User $user, Model $gudang): bool
+    {
+        return $user->isPengelolaInstansi()
+            && $this->instansiCocok($user, $gudang);
+    }
+
+    /**
      * Periksa apakah gudang termasuk instansi pengguna.
      *
      * Jika pengguna tidak memiliki penugasan instansi, akses ditolak.

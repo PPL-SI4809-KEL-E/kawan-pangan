@@ -155,4 +155,64 @@ class GudangPolicyTest extends TestCase
 
         $this->assertFalse($this->policy->updateStok($user, $gudang));
     }
+
+    // ── PSKE-51: Otorisasi kelolaCakupan ──────────────────────────
+
+    #[Test]
+    public function superadmin_boleh_mengelola_cakupan_semua_gudang(): void
+    {
+        $admin = new User(['role' => Role::Superadmin->value]);
+        $this->assertTrue($this->policy->before($admin, 'kelolaCakupan'));
+    }
+
+    #[Test]
+    public function pengelola_instansi_boleh_mengelola_cakupan_gudang_miliknya(): void
+    {
+        $pengelola = new User([
+            'role' => Role::BadanResmi->value,
+            'instansi_id' => 1,
+        ]);
+        $pengelola->forceFill(['jabatan' => User::JABATAN_PENGELOLA]);
+        $gudang = $this->buatGudang(1);
+
+        $this->assertTrue($this->policy->kelolaCakupan($pengelola, $gudang));
+    }
+
+    #[Test]
+    public function petugas_instansi_tidak_boleh_mengelola_cakupan_gudang(): void
+    {
+        $petugas = new User([
+            'role' => Role::BadanResmi->value,
+            'instansi_id' => 1,
+        ]);
+        $petugas->forceFill(['jabatan' => User::JABATAN_PETUGAS]);
+        $gudang = $this->buatGudang(1);
+
+        $this->assertFalse($this->policy->kelolaCakupan($petugas, $gudang));
+    }
+
+    #[Test]
+    public function pengelola_instansi_lain_tidak_boleh_mengelola_cakupan_gudang_berbeda(): void
+    {
+        $pengelola = new User([
+            'role' => Role::BadanResmi->value,
+            'instansi_id' => 1,
+        ]);
+        $pengelola->forceFill(['jabatan' => User::JABATAN_PENGELOLA]);
+        $gudangInstansiLain = $this->buatGudang(2);
+
+        $this->assertFalse($this->policy->kelolaCakupan($pengelola, $gudangInstansiLain));
+    }
+
+    #[Test]
+    public function kepala_wilayah_tidak_boleh_mengelola_cakupan_gudang(): void
+    {
+        $user = new User([
+            'role' => Role::KepalaWilayah->value,
+            'kode_wilayah' => '32.04',
+        ]);
+        $gudang = $this->buatGudang(1);
+
+        $this->assertFalse($this->policy->kelolaCakupan($user, $gudang));
+    }
 }
