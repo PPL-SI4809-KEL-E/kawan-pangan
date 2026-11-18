@@ -84,6 +84,8 @@
 .peta-angka div { padding: var(--space-3); border-radius: var(--radius-md); background: var(--color-bg); }
 .peta-angka dt { font-size: var(--font-size-xs); color: var(--color-text-muted); }
 .peta-angka dd { margin: 2px 0 0; font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); letter-spacing: var(--tracking-tight); font-variant-numeric: tabular-nums; }
+.peta-angka div:first-child { background: var(--color-primary-soft); }
+.peta-angka div:first-child dd { color: var(--color-primary); }
 .peta-detail-label { margin: var(--space-5) 0 var(--space-2); font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); letter-spacing: var(--tracking-wide); text-transform: uppercase; color: var(--color-text-subtle); }
 .peta-komoditas { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; font-size: var(--font-size-sm); }
 .peta-komoditas li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px var(--space-3); }
@@ -108,13 +110,14 @@
 .dot-waspada { background: #D98A1C; }
 .dot-kritis { background: var(--color-kritis); }
 
-/* Leaflet: peta dasar diredam ke abu supaya warna status terbaca; kontrol dan tooltip mengikuti token */
-.peta-canvas .leaflet-tile-pane { filter: grayscale(0.9) brightness(1.05) contrast(0.92); }
+/* Leaflet: peta dasar berwarna hangat tapi sedikit diredam; kontrol, tooltip, dan titik mengikuti token */
+.peta-canvas .leaflet-tile-pane { filter: saturate(0.85) brightness(1.03); }
+.peta-canvas .peta-titik { filter: drop-shadow(0 2px 4px rgb(20 45 90 / 0.35)); }
 .peta-canvas .leaflet-control-zoom { border: 1px solid var(--color-border) !important; border-radius: var(--radius-md) !important; box-shadow: var(--shadow-sm) !important; overflow: hidden; }
 .peta-canvas .leaflet-control-zoom a { width: 34px; height: 34px; line-height: 34px; color: var(--color-text); font-family: var(--font-family); }
 .peta-canvas .leaflet-control-attribution { font-family: var(--font-family); font-size: 10px; background: rgb(255 255 255 / 0.85); }
-.peta-canvas .leaflet-tooltip { padding: 4px 8px; border: 0; border-radius: var(--radius-sm); background: var(--color-sidebar); color: var(--color-sidebar-text-strong); font-family: var(--font-family); font-size: var(--font-size-xs); box-shadow: var(--shadow-md); }
-.peta-canvas .leaflet-tooltip-top::before { border-top-color: var(--color-sidebar); }
+.peta-canvas .leaflet-tooltip { padding: 4px 10px; border: 0; border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); font-family: var(--font-family); font-size: var(--font-size-xs); font-weight: var(--font-weight-medium); box-shadow: var(--shadow-md); }
+.peta-canvas .leaflet-tooltip-top::before { border-top-color: var(--color-surface); }
 .peta-canvas .leaflet-interactive:focus { outline: none; }
 
 /* Cara kerja */
@@ -168,6 +171,6 @@
 }
 
 @keyframes detail-masuk {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: none; }
+  from { transform: translateY(-8px); }
+  to { transform: none; }
 }

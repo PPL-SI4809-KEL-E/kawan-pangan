@@ -3,6 +3,7 @@
 // Kontrak bentuk data ada di docs/design-system.md bagian "Pola layar peta".
 
 const WARNA = { aman: '#12A05C', waspada: '#D98A1C', kritis: '#B42318' };
+const WARNA_UTAMA = '#1D4FAE';
 const LABEL = { aman: 'Aman', waspada: 'Waspada', kritis: 'Kritis' };
 const SKALA_HARI = 60;
 
@@ -102,6 +103,7 @@ const desktop = window.matchMedia('(min-width: 1024px)');
 
 let filter = 'semua';
 let terpilih = null;
+let sorot = null;
 const kartu = new Map();
 const penanda = new Map();
 
@@ -124,11 +126,12 @@ if (peta) {
     const maksStok = Math.max(...data.map((w) => w.stok_kg || 0), 1);
     data.forEach((w) => {
         const titik = L.circleMarker([w.lat, w.lng], {
-            radius: 9 + Math.sqrt((w.stok_kg || 0) / maksStok) * 13,
+            radius: 8 + Math.sqrt((w.stok_kg || 0) / maksStok) * 10,
             color: '#FFFFFF',
-            weight: 2,
-            fillColor: WARNA[w.status] ?? '#556171',
-            fillOpacity: 0.85,
+            weight: 3,
+            fillColor: WARNA[w.status] ?? '#5A6577',
+            fillOpacity: 0.95,
+            className: 'peta-titik',
         }).addTo(peta);
         titik.bindTooltip(`${w.nama} · ${LABEL[w.status] ?? w.status}`, { direction: 'top', offset: [0, -8] });
         titik.on('click', () => pilih(w.id, { dariPeta: true }));
@@ -136,6 +139,9 @@ if (peta) {
     });
 
     peta.fitBounds(L.latLngBounds(data.map((w) => [w.lat, w.lng])), { padding: [48, 48] });
+
+    // Lingkaran sorot biru di bawah titik yang dipilih
+    sorot = L.circleMarker([0, 0], { radius: 30, stroke: false, fillColor: WARNA_UTAMA, fillOpacity: 0.16, interactive: false });
 } else {
     document.getElementById('map').append(el('p', 'peta-kosong', 'Peta belum bisa dimuat. Daftar kecamatan tetap bisa dipakai.'));
 }
@@ -228,7 +234,7 @@ function pilih(id, { dariPeta = false } = {}) {
 
     if (terpilih) {
         kartu.get(terpilih)?.querySelector('.item-card')?.removeAttribute('aria-current');
-        penanda.get(terpilih)?.setStyle({ weight: 2, color: '#FFFFFF' });
+        penanda.get(terpilih)?.setStyle({ color: '#FFFFFF' });
     }
     terpilih = id;
     const tombol = kartu.get(id)?.querySelector('.item-card');
@@ -237,7 +243,8 @@ function pilih(id, { dariPeta = false } = {}) {
 
     const titik = penanda.get(id);
     if (titik && peta) {
-        titik.setStyle({ weight: 3, color: '#0F1C30' }).bringToFront();
+        sorot?.setLatLng([w.lat, w.lng]).addTo(peta).bringToBack();
+        titik.setStyle({ color: WARNA_UTAMA }).bringToFront();
         peta.flyTo([w.lat, w.lng], Math.max(peta.getZoom(), 14), { duration: 0.6 });
     }
 
@@ -251,7 +258,8 @@ function tutupDetail() {
     if (terpilih) {
         const tombol = kartu.get(terpilih)?.querySelector('.item-card');
         tombol?.removeAttribute('aria-current');
-        penanda.get(terpilih)?.setStyle({ weight: 2, color: '#FFFFFF' });
+        penanda.get(terpilih)?.setStyle({ color: '#FFFFFF' });
+        sorot?.remove();
         tombol?.focus();
     }
     terpilih = null;
