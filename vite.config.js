@@ -13,6 +13,8 @@ export default defineConfig({
                 'resources/js/registrasi.js',
                 'resources/css/wilayah.css',
                 'resources/js/admin.js',
+                'resources/css/beranda.css',
+                'resources/js/beranda.js',
             ],
             refresh: true,
         }),
