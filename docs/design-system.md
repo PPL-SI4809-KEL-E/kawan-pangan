@@ -5,23 +5,25 @@ Token ada di `design-system/tokens.css`, komponen di `design-system/components.c
 jarak wajib memakai token, misalnya `color: var(--color-text)`, bukan kode warna langsung.
 
 Versi 2 (PSKE-85) merapikan tiga gaya visual yang sebelumnya berbeda (beranda gelap, admin navy-kuning, panel
-dengan inline style) menjadi satu gaya. Arah desain mengikuti dashboard tracking logistik: sidebar navy, kanvas
-abu netral, panel putih, satu aksen kuning, dan layar yang berpusat pada peta.
+dengan inline style) menjadi satu gaya. Arah desain mengikuti referensi aplikasi pencarian properti berbasis peta:
+panel putih melayang di atas kanvas biru muda, sidebar putih dengan menu aktif biru muda, satu warna utama biru
+royal, sudut membulat lebar, kartu ajakan biru, dan peta berwarna dengan titik bercincin putih.
 
 ## Warna
 | Token | Nilai | Dipakai untuk |
 | --- | --- | --- |
-| `--color-primary` | #13233D | Tombol utama, teks penting |
-| `--color-accent` | #E9B13C | Satu-satunya aksen: menu aktif, tab terpilih, tombol Daftar |
-| `--color-canvas` | #EDF0F3 | Latar di belakang panel |
-| `--color-bg` | #F5F7F9 | Isian halus: kepala tabel, hover |
-| `--color-surface` | #FFFFFF | Kartu, tabel, panel |
-| `--color-border` / `--color-border-strong` | #E2E6EB / #CDD3DA | Garis tipis, garis input |
-| `--color-text` | #0F1B2D | Teks utama |
-| `--color-text-muted` | #556171 | Teks sekunder (kontras 6:1 di atas putih) |
-| `--color-sidebar` | #0F1C30 | Sidebar dan kartu sambutan |
+| `--color-primary` | #1D4FAE | Satu-satunya aksen: tombol utama, tautan, menu aktif, kartu sambutan |
+| `--color-primary-soft` | #E6EEFA | Latar menu aktif, kartu terpilih, ikon tile |
+| `--color-accent` | = primary | Alias supaya kelas lama (`.btn-accent`) ikut biru |
+| `--color-highlight` | #F2B53A | Dekorasi kecil saja, bukan untuk tombol |
+| `--color-canvas` | #E7EDF5 | Latar biru muda di belakang panel |
+| `--color-bg` | #F3F6FA | Isian halus: kepala tabel, hover |
+| `--color-surface` | #FFFFFF | Kartu, tabel, panel, sidebar |
+| `--color-border` / `--color-border-strong` | #E3E8EF / #CBD3DE | Garis tipis, garis input |
+| `--color-text` | #0E1A2B | Teks utama |
+| `--color-text-muted` | #5A6577 | Teks sekunder (kontras 5.9:1 di atas putih) |
 
-Semua abu memakai satu keluarga (abu dingin). Bayangan bernuansa navy dengan satu arah cahaya dari atas.
+Semua abu memakai satu keluarga (abu kebiruan). Bayangan lembut bernuansa biru dengan satu arah cahaya dari atas.
 
 ## Warna status
 | Status | Teks | Latar | Arti |
@@ -41,7 +43,7 @@ Ukuran: 12 / 14 / 16 / 18 / 24 / 32 / 44 px. Ketebalan: 400, 500, 600, 700. Judu
 
 ## Spasi dan sudut
 Spasi kelipatan 4px: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64 (`--space-*`).
-Sudut makin luar makin lembut: 6px (badge, tombol kecil), 10px (input, tombol), 14px (kartu), 20px (panel besar).
+Sudut makin luar makin lembut: 8px (badge, tombol kecil), 12px (input, tombol), 16px (kartu), 24px (panel besar dan sidebar).
 
 ## Komponen
 | Kelas | Fungsi |
@@ -68,11 +70,11 @@ Ikon garis (stroke 1.75) ada di sprite `resources/views/layouts/partials/ikon.bl
 | --- | --- |
 | `layouts/app.blade.php` | Shell untuk semua role yang sudah masuk. `layouts.admin` dan `layouts.panel` meneruskan ke sini |
 | `layouts/partials/sidebar.blade.php` | Menu per role, pencarian menu (Ctrl/Cmd + K), blok pengguna, tombol keluar |
-| `.app-sidebar` | Navy. Di HP berupa laci; di desktop selalu tampil dan bisa diciutkan (pilihan disimpan per perangkat) |
+| `.app-sidebar` | Putih. Di HP berupa laci; di desktop melayang di kiri, bisa diciutkan (pilihan disimpan per perangkat), dengan kartu ajakan biru `.sidebar-promo` |
 | `.page-header`, `.page-actions` | Judul halaman dan tombol aksi |
 | `.welcome-card`, `.tile-grid`, `.section-head` | Dashboard per role |
 | `.grid .grid-2/3/4`, `.grid-main-aside`, `.stack`, `.cluster` | Grid dan tumpukan |
-| `layouts/auth.blade.php` > `.auth-page` | Login dan registrasi: panel navy di kiri (desktop), formulir di kanan |
+| `layouts/auth.blade.php` > `.auth-page` | Login dan registrasi: panel biru di kiri (desktop), formulir di kanan |
 
 Sudah dicek pada lebar 375px, 768px, dan 1440px tanpa scroll ke samping.
 
@@ -81,7 +83,7 @@ Dipakai beranda publik (`welcome.blade.php`, `resources/css/beranda.css`, `resou
 ulang untuk PSKE-69 (choropleth), PSKE-73 (detail stok wilayah), dan alur pengiriman.
 
 - Kiri: judul, pencarian, tab filter status dengan jumlah, lalu daftar `.item-card` diurutkan dari yang paling kritis.
-- Kanan: peta Leaflet penuh (tile OpenStreetMap diredam ke abu), titik berwarna sesuai status dan ukurannya sesuai stok.
+- Kanan: peta Leaflet penuh (tile OpenStreetMap), titik bercincin putih berwarna sesuai status, ukurannya sesuai stok, dan sorotan biru di titik terpilih.
 - Kartu detail melayang di kanan atas peta: status, estimasi habis, stok per komoditas, gudang utama, timeline aktivitas.
 - Di HP urutannya peta, keterangan warna, kartu detail, lalu daftar.
 
