@@ -1,38 +1,41 @@
 /* Design token Kawan Pangan v2 (PSKE-87).
-   Satu keluarga abu dingin, navy untuk sidebar dan tombol utama, satu aksen kuning untuk state aktif.
+   Gaya: panel putih melayang di atas kanvas biru muda, satu warna utama biru royal, sudut membulat lebar.
    Nama token lama tetap dipertahankan supaya halaman yang sudah ada ikut berubah tanpa diedit. */
 :root {
-  /* Brand */
-  --color-primary: #13233D;        /* navy: tombol utama, teks penting */
-  --color-primary-hover: #0B1628;
-  --color-accent: #E9B13C;         /* kuning: state aktif, sorotan, CTA publik */
-  --color-accent-hover: #D9A02B;
-  --color-accent-soft: #FBF1DA;
+  /* Brand: biru royal sebagai satu-satunya aksen */
+  --color-primary: #1D4FAE;        /* tombol utama, menu aktif, tautan */
+  --color-primary-hover: #163E8C;
+  --color-primary-soft: #E6EEFA;   /* latar menu aktif, kartu terpilih */
+  --color-primary-ring: rgb(29 79 174 / 0.18);
+  --color-accent: var(--color-primary);
+  --color-accent-hover: var(--color-primary-hover);
+  --color-accent-soft: var(--color-primary-soft);
   --color-on-primary: #FFFFFF;
-  --color-on-accent: #1B1405;
+  --color-on-accent: #FFFFFF;
+  --color-highlight: #F2B53A;      /* dekorasi kecil saja (bintang, titik sorot), bukan untuk tombol */
 
-  /* Netral (satu keluarga abu dingin) */
-  --color-canvas: #EDF0F3;         /* latar di belakang panel */
-  --color-bg: #F5F7F9;             /* isian halus: kepala tabel, hover */
+  /* Netral (satu keluarga abu kebiruan) */
+  --color-canvas: #E7EDF5;         /* latar di belakang panel */
+  --color-bg: #F3F6FA;             /* isian halus: kepala tabel, hover */
   --color-surface: #FFFFFF;        /* kartu, tabel, panel */
-  --color-border: #E2E6EB;
-  --color-border-strong: #CDD3DA;
-  --color-text: #0F1B2D;           /* teks utama */
-  --color-text-muted: #556171;     /* teks sekunder, kontras 6:1 di atas putih */
-  --color-text-subtle: #7A8594;    /* label kecil non-esensial */
+  --color-border: #E3E8EF;
+  --color-border-strong: #CBD3DE;
+  --color-text: #0E1A2B;           /* teks utama */
+  --color-text-muted: #5A6577;     /* teks sekunder, kontras 5.9:1 di atas putih */
+  --color-text-subtle: #8A94A3;    /* label kecil non-esensial */
 
-  /* Sidebar */
-  --color-sidebar: #0F1C30;
-  --color-sidebar-raised: #182841;
-  --color-sidebar-border: #22334F;
-  --color-sidebar-text: #B4C0D0;
-  --color-sidebar-text-strong: #FFFFFF;
+  /* Sidebar putih */
+  --color-sidebar: #FFFFFF;
+  --color-sidebar-raised: #F3F6FA;
+  --color-sidebar-border: #E3E8EF;
+  --color-sidebar-text: #5A6577;
+  --color-sidebar-text-strong: #0E1A2B;
 
   /* Status ketersediaan stok dan proses */
   --color-kritis: #B42318;    --color-kritis-bg: #FEE4E2;    /* < 14 hari, ditolak */
   --color-waspada: #B54708;   --color-waspada-bg: #FEF0C7;   /* 14–30 hari, menunggu */
   --color-aman: #067647;      --color-aman-bg: #DCFAE6;      /* > 30 hari, selesai */
-  --color-info: #175CD3;      --color-info-bg: #D1E9FF;      /* diajukan, dalam pengiriman */
+  --color-info: #1D4FAE;      --color-info-bg: #E6EEFA;      /* diajukan, dalam pengiriman */
   --color-netral: #344054;    --color-netral-bg: #F2F4F7;    /* draf, dibatalkan */
   --color-netral-border: var(--color-border-strong);
 
@@ -68,16 +71,16 @@
   --space-16: 64px;
 
   /* Sudut: makin luar makin lembut */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
   --radius-full: 999px;
 
-  /* Bayangan bernuansa navy, satu arah cahaya dari atas */
-  --shadow-sm: 0 1px 2px rgb(15 28 48 / 0.06);
-  --shadow-md: 0 6px 20px -6px rgb(15 28 48 / 0.16);
-  --shadow-float: 0 16px 40px -12px rgb(15 28 48 / 0.28);
+  /* Bayangan lembut bernuansa biru, satu arah cahaya dari atas */
+  --shadow-sm: 0 1px 2px rgb(20 45 90 / 0.06);
+  --shadow-md: 0 8px 24px -8px rgb(20 45 90 / 0.14);
+  --shadow-float: 0 18px 44px -14px rgb(20 45 90 / 0.24);
 
   /* Gerak */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -90,8 +93,9 @@
   --z-float: 500;
 
   /* Ukuran shell */
-  --sidebar-width: 256px;
-  --sidebar-width-collapsed: 72px;
+  --sidebar-width: 248px;
+  --sidebar-width-collapsed: 76px;
+  --shell-gap: 16px;
 
   /* Breakpoint (acuan media query): mobile >= 360px, tablet >= 768px, desktop >= 1024px */
 }
