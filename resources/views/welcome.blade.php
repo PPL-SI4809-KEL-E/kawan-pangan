@@ -31,6 +31,10 @@
                 @elseif (auth()->user()->isBadanResmi())
                     <a href="{{ route('panel.instansi') }}" class="btn btn-primary btn-sm">Panel Instansi</a>
                 @endif
+                <form method="POST" action="{{ route('logout') }}" class="pub-keluar">
+                    @csrf
+                    <button type="submit" class="btn btn-ghost btn-sm">Keluar</button>
+                </form>
             @else
                 <a href="{{ route('login') }}" class="btn btn-ghost btn-sm">Masuk</a>
                 <a href="{{ route('registrasi.create') }}" class="btn btn-accent btn-sm">Daftar</a>

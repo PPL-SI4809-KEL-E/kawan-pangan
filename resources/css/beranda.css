@@ -22,6 +22,7 @@
 .pub-nav a { padding: 6px 10px; border-radius: var(--radius-sm); color: var(--color-text-muted); font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); text-decoration: none; }
 .pub-nav a:hover { color: var(--color-text); background: var(--color-bg); }
 .pub-actions { display: flex; align-items: center; gap: var(--space-2); margin-left: auto; }
+.pub-keluar { display: contents; }
 
 /* Area peta */
 .peta { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-3); }
