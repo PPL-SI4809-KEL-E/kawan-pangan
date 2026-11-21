@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 @section('title', 'Ubah Jumlah Penduduk')
 @section('content')
-<div class="page-header"><div><h1>Ubah jumlah penduduk</h1><p class="text-muted">{{ $wilayah->kode }} · {{ $wilayah->nama }}</p></div><a class="btn btn-secondary" href="{{ route('admin.wilayah.index') }}">Kembali ke daftar</a></div>
+<div class="page-header"><div><h1>Ubah jumlah penduduk</h1><p class="text-muted">{{ $wilayah->kode }} · {{ $wilayah->nama }}@if ($wilayah->is_contoh) <span class="badge badge-netral">Data contoh</span>@endif</p></div><a class="btn btn-secondary" href="{{ route('admin.wilayah.index') }}">Kembali ke daftar</a></div>
 <section class="card wilayah-edit" aria-label="Form jumlah penduduk">
     <dl><dt>Tingkat wilayah</dt><dd>{{ \App\Models\Wilayah::LEVEL[$wilayah->level] }}</dd><dt>Induk</dt><dd>{{ $wilayah->induk?->nama ?? 'Tidak ada (provinsi)' }}</dd></dl>
     <form action="{{ route('admin.wilayah.update', $wilayah) }}" method="post">

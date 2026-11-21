@@ -95,7 +95,7 @@ class AmbangStatusTest extends TestCase
     public function test_semua_role_dan_status_tanpa_izin_ditolak(): void
     {
         foreach (['GET', 'PATCH'] as $method) {
-            $this->call($method, '/admin/ambang-status')->assertUnauthorized();
+            $this->call($method, '/admin/ambang-status')->assertRedirect(route('login'));
         }
         foreach ([
             [Role::KepalaWilayah, StatusAkun::Aktif], [Role::BadanResmi, StatusAkun::Aktif],

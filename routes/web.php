@@ -4,9 +4,13 @@ use App\Http\Controllers\Admin\AmbangStatusController;
 use App\Http\Controllers\Admin\GudangController;
 use App\Http\Controllers\Admin\InstansiController;
 use App\Http\Controllers\Admin\KomoditasController;
+use App\Http\Controllers\Admin\AkunController;
 use App\Http\Controllers\Admin\WilayahController;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\OpsiRegistrasiController;
 use App\Http\Controllers\Auth\RegistrasiController;
+use App\Http\Controllers\CakupanGudangController;
+use App\Http\Controllers\PanelController;
 use App\Http\Middleware\SuperadminAktif;
 use Illuminate\Support\Facades\Route;
 
@@ -25,13 +29,44 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// PBI-05 · Registrasi akun dengan surat tugas
+// PBI-04 & PBI-05 · Autentikasi Pengunjung (Tamu)
 Route::middleware('guest')->group(function () {
+    // PBI-04 · Login (PSKE-16, PSKE-31)
+    Route::get('/login', [LoginController::class, 'create'])->name('login');
+    Route::post('/login', [LoginController::class, 'store']);
+
+    // PBI-05 · Registrasi akun dengan surat tugas
     Route::get('/registrasi', [RegistrasiController::class, 'create'])->name('registrasi.create');
     Route::post('/registrasi', [RegistrasiController::class, 'store'])->name('registrasi.store');
     Route::get('/registrasi/terkirim', [RegistrasiController::class, 'terkirim'])->name('registrasi.terkirim');
     Route::get('/registrasi/opsi/wilayah', [OpsiRegistrasiController::class, 'wilayah'])->name('registrasi.opsi.wilayah');
     Route::get('/registrasi/opsi/instansi', [OpsiRegistrasiController::class, 'instansi'])->name('registrasi.opsi.instansi');
+});
+
+// PBI-04 · Logout (PSKE-34)
+Route::post('/logout', [LoginController::class, 'destroy'])
+    ->middleware('auth')
+    ->name('logout');
+
+// PBI-04 · Panel Sederhana per Role (PSKE-31)
+Route::middleware(['auth', 'role:SUPERADMIN'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [PanelController::class, 'admin'])->name('dashboard');
+});
+
+Route::middleware(['auth', 'role:KEPALA_WILAYAH'])->prefix('panel/wilayah')->name('panel.wilayah')->group(function () {
+    Route::get('/', [PanelController::class, 'wilayah']);
+});
+
+Route::middleware(['auth', 'role:BADAN_RESMI'])->prefix('panel/instansi')->group(function () {
+    Route::get('/', [PanelController::class, 'instansi'])->name('panel.instansi');
+
+    // PSKE-48 / Layar M-12 · Atur cakupan gudang oleh pengelola instansi (PSKE-49, PSKE-50, PSKE-51)
+    Route::prefix('gudang/{gudang}/cakupan')->name('panel.instansi.gudang.cakupan.')->group(function () {
+        Route::get('/', [CakupanGudangController::class, 'index'])->name('index');
+        Route::post('/', [CakupanGudangController::class, 'store'])->name('store');
+        Route::patch('/{cakupan}/utama', [CakupanGudangController::class, 'toggleUtama'])->name('toggle-utama');
+        Route::delete('/{cakupan}', [CakupanGudangController::class, 'destroy'])->name('destroy');
+    });
 });
 
 // PBI-08 · Master wilayah Kemendagri (PSKE-19).
@@ -44,11 +79,31 @@ Route::middleware(SuperadminAktif::class)->prefix('admin/wilayah')->name('admin.
 });
 
 Route::middleware(SuperadminAktif::class)->prefix('admin')->name('admin.')->group(function () {
+    // PBI-06 · Verifikasi akun dan penugasan (PSKE-17).
+    Route::prefix('akun')->name('akun.')->group(function () {
+        Route::get('/', [AkunController::class, 'index'])->name('index');
+        Route::get('/cari-wilayah', [AkunController::class, 'cariWilayah'])->name('cari-wilayah');
+        Route::get('/{user}', [AkunController::class, 'show'])->name('show');
+        Route::get('/{user}/surat-tugas', [AkunController::class, 'unduhSuratTugas'])->name('unduh-surat-tugas');
+        Route::post('/{user}/aktivasi', [AkunController::class, 'aktivasi'])->name('aktivasi');
+        Route::post('/{user}/tolak', [AkunController::class, 'tolak'])->name('tolak');
+        Route::post('/{user}/nonaktifkan', [AkunController::class, 'nonaktifkan'])->name('nonaktifkan');
+    });
+
     Route::get('ambang-status', [AmbangStatusController::class, 'edit'])->name('ambang-status.edit');
     Route::patch('ambang-status', [AmbangStatusController::class, 'update'])->name('ambang-status.update');
     Route::resource('komoditas', KomoditasController::class)->parameters(['komoditas' => 'komoditas'])->except('show');
     Route::resource('instansi', InstansiController::class)->except('show');
     Route::get('gudang/opsi-wilayah', [GudangController::class, 'opsiWilayah'])->name('gudang.opsi-wilayah');
     Route::patch('gudang/{gudang}/status', [GudangController::class, 'status'])->name('gudang.status');
+
+    // PSKE-48 / Layar M-12 · Atur cakupan gudang oleh superadmin
+    Route::prefix('gudang/{gudang}/cakupan')->name('gudang.cakupan.')->group(function () {
+        Route::get('/', [CakupanGudangController::class, 'index'])->name('index');
+        Route::post('/', [CakupanGudangController::class, 'store'])->name('store');
+        Route::patch('/{cakupan}/utama', [CakupanGudangController::class, 'toggleUtama'])->name('toggle-utama');
+        Route::delete('/{cakupan}', [CakupanGudangController::class, 'destroy'])->name('destroy');
+    });
+
     Route::resource('gudang', GudangController::class)->except('show');
 });

@@ -38,7 +38,7 @@
             <tbody>
             @forelse ($wilayah as $item)
                 <tr>
-                    <td class="wilayah-kode">{{ $item->kode }}</td><td>{{ $item->nama }}</td><td>{{ \App\Models\Wilayah::LEVEL[$item->level] }}</td>
+                    <td class="wilayah-kode">{{ $item->kode }}</td><td>{{ $item->nama }}@if ($item->is_contoh) <span class="badge badge-netral">Data contoh</span>@endif</td><td>{{ \App\Models\Wilayah::LEVEL[$item->level] }}</td>
                     <td>{{ $item->induk?->nama ?? '—' }}</td><td class="num">{{ $item->jumlah_penduduk === null ? 'Belum diisi' : number_format($item->jumlah_penduduk, 0, ',', '.') }}</td>
                     <td><div class="page-actions"><a class="btn btn-secondary btn-sm" href="{{ route('admin.wilayah.edit', $item) }}" aria-label="Ubah penduduk {{ $item->nama }}">Ubah penduduk</a>@if ($item->level < 4)<a class="btn btn-ghost btn-sm" href="{{ route('admin.wilayah.index', ['induk' => $item->kode]) }}" aria-label="Lihat anak wilayah {{ $item->nama }}">Lihat anak</a>@endif</div></td>
                 </tr>

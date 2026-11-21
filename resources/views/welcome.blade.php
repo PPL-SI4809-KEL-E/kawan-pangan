@@ -1,482 +1,170 @@
+{{-- Beranda publik v2: peta ketersediaan pangan per kecamatan (PSKE-90, PSKE-91).
+     Data diambil dari $petaWilayah bila controller sudah mengirimnya; tanpa itu dipakai data simulasi di beranda.js.
+     Kontrak data ada di docs/design-system.md bagian "Pola layar peta". --}}
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Kawan Pangan — Platform Pemetaan & Penyaluran Pangan</title>
-
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-
-    <style>
-        :root {
-            --bg-canvas: #090a0f;
-            --bg-surface: #0f1118;
-            --bg-surface-elevated: #161822;
-            --border-subtle: rgba(255, 255, 255, 0.08);
-            --border-highlight: rgba(255, 255, 255, 0.16);
-            --text-primary: #f3f4f6;
-            --text-secondary: #9ca3af;
-            --text-muted: #6b7280;
-            --accent-emerald: #10b981;
-            --accent-amber: #f59e0b;
-            --accent-blue: #3b82f6;
-            --accent-rose: #f43f5e;
-            --accent-purple: #8b5cf6;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background-color: var(--bg-canvas);
-            color: var(--text-primary);
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .font-mono {
-            font-family: 'JetBrains Mono', monospace;
-            font-feature-settings: "tnum";
-            font-variant-numeric: tabular-nums;
-        }
-
-        /* Top Navbar */
-        .navbar {
-            background-color: rgba(15, 17, 24, 0.85);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border-subtle);
-            padding: 0.85rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .nav-brand {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            text-decoration: none;
-            color: var(--text-primary);
-            font-weight: 700;
-            font-size: 1.15rem;
-            letter-spacing: -0.02em;
-        }
-
-        .nav-logo-icon {
-            width: 32px;
-            height: 32px;
-            background: linear-gradient(135deg, #10b981, #059669);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            color: #ffffff;
-            font-size: 1rem;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
-        }
-
-        .nav-badge {
-            background: rgba(139, 92, 246, 0.15);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            color: #c4b5fd;
-            font-size: 0.72rem;
-            padding: 0.25rem 0.6rem;
-            border-radius: 9999px;
-            font-weight: 600;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-
-        .nav-link {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.875rem;
-            font-weight: 500;
-            transition: color 0.15s ease;
-        }
-
-        .nav-link:hover {
-            color: var(--text-primary);
-        }
-
-        /* Hero Container */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 3rem 1.5rem;
-            flex: 1;
-        }
-
-        .hero-header {
-            margin-bottom: 2.5rem;
-        }
-
-        .hero-title {
-            font-size: 2.5rem;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            line-height: 1.2;
-            margin-bottom: 0.75rem;
-            background: linear-gradient(180deg, #ffffff 0%, #9ca3af 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .hero-subtitle {
-            font-size: 1.05rem;
-            color: var(--text-secondary);
-            max-width: 750px;
-        }
-
-        /* Bento Grid */
-        .grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        @media (max-width: 900px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .card {
-            background: var(--bg-surface);
-            border: 1px solid var(--border-subtle);
-            border-radius: 14px;
-            padding: 1.5rem;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .card-title {
-            font-size: 0.95rem;
-            font-weight: 700;
-            letter-spacing: -0.01em;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .pill-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            background: rgba(16, 185, 129, 0.12);
-            border: 1px solid rgba(16, 185, 129, 0.25);
-            color: #34d399;
-            font-size: 0.75rem;
-            padding: 0.2rem 0.55rem;
-            border-radius: 9999px;
-            font-weight: 600;
-        }
-
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            background-color: var(--accent-emerald);
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        /* Leaflet Map */
-        #map {
-            width: 100%;
-            height: 380px;
-            border-radius: 10px;
-            border: 1px solid var(--border-subtle);
-            background: #1a1e29;
-            z-index: 10;
-        }
-
-        /* Stat Ribbon */
-        .stat-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .stat-box {
-            background: var(--bg-surface-elevated);
-            border: 1px solid var(--border-subtle);
-            border-radius: 10px;
-            padding: 1rem;
-        }
-
-        .stat-label {
-            font-size: 0.72rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 600;
-            margin-bottom: 0.35rem;
-        }
-
-        .stat-value {
-            font-size: 1.35rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        /* Code/API Test Box */
-        .api-terminal {
-            background: #08090d;
-            border: 1px solid var(--border-subtle);
-            border-radius: 10px;
-            padding: 1rem;
-            font-size: 0.8rem;
-            color: #d1d5db;
-            overflow-x: auto;
-            margin-top: 1rem;
-        }
-
-        .api-terminal pre {
-            margin: 0;
-            font-family: inherit;
-        }
-
-        /* Team Roster */
-        .team-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            margin-top: 0.75rem;
-        }
-
-        .team-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.6rem 0.8rem;
-            background: var(--bg-surface-elevated);
-            border: 1px solid var(--border-subtle);
-            border-radius: 8px;
-            font-size: 0.85rem;
-        }
-
-        .team-name {
-            font-weight: 600;
-            color: #f3f4f6;
-        }
-
-        .team-role {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-        }
-
-        .badge-pic {
-            background: rgba(59, 130, 246, 0.15);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            color: #93c5fd;
-            font-size: 0.68rem;
-            padding: 0.15rem 0.45rem;
-            border-radius: 4px;
-            font-weight: 600;
-        }
-
-        /* Footer */
-        footer {
-            border-top: 1px solid var(--border-subtle);
-            padding: 1.5rem 2rem;
-            text-align: center;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            background: var(--bg-surface);
-        }
-    </style>
+    @include('layouts.partials.head')
+    <title>Kawan Pangan · Peta ketersediaan pangan</title>
+    <meta name="description" content="Peta status ketersediaan pangan per kecamatan: Aman, Waspada, dan Kritis, beserta stok dan mutasi terakhir.">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+    @vite(['resources/css/design-system.css', 'resources/css/beranda.css'])
 </head>
-<body>
+<body class="beranda">
+    @include('layouts.partials.ikon')
+    <a class="sr-only" href="#peta">Lewati ke peta</a>
 
-    <!-- Header Navbar -->
-    <header class="navbar">
-        <a href="/" class="nav-brand">
-            <div class="nav-logo-icon">KP</div>
-            <span>Kawan Pangan</span>
-            <span class="nav-badge">Sprint 1 • PBI-01</span>
+    <header class="pub-bar">
+        <a class="app-brand" href="{{ url('/') }}">
+            <span class="app-brand-mark" aria-hidden="true">KP</span>Kawan Pangan
         </a>
-        <nav class="nav-links">
-            <a href="#peta" class="nav-link">Peta Wilayah</a>
-            <a href="#status" class="nav-link">Status API</a>
-            <a href="#tim" class="nav-link">Tim Pengembang</a>
+        <nav class="pub-nav" aria-label="Navigasi beranda">
+            <a href="#peta">Peta</a>
+            <a href="#cara-kerja">Cara kerja</a>
         </nav>
+        <div class="pub-actions">
+            @auth
+                @if (auth()->user()->isSuperadmin())
+                    <a href="{{ route('admin.dashboard') }}" class="btn btn-primary btn-sm">Panel Admin</a>
+                @elseif (auth()->user()->isKepalaWilayah())
+                    <a href="{{ route('panel.wilayah') }}" class="btn btn-primary btn-sm">Panel Wilayah</a>
+                @elseif (auth()->user()->isBadanResmi())
+                    <a href="{{ route('panel.instansi') }}" class="btn btn-primary btn-sm">Panel Instansi</a>
+                @endif
+                <form method="POST" action="{{ route('logout') }}" class="pub-keluar">
+                    @csrf
+                    <button type="submit" class="btn btn-ghost btn-sm">Keluar</button>
+                </form>
+            @else
+                <a href="{{ route('login') }}" class="btn btn-ghost btn-sm">Masuk</a>
+                <a href="{{ route('registrasi.create') }}" class="btn btn-accent btn-sm">Daftar</a>
+            @endauth
+        </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="container">
-        <section class="hero-header">
-            <h1 class="hero-title">Platform Pemetaan & Penyaluran Pangan Kota</h1>
-            <p class="hero-subtitle">
-                Repositori, struktur proyek, dan pipeline deploy demo siap. Fondasi sistem untuk pencatatan ketersediaan stok, pelaporan kebutuhan pangan, dan penyaluran bantuan terintegrasi.
-            </p>
+    <main>
+        <section class="peta" id="peta" aria-labelledby="peta-judul">
+            <aside class="peta-panel">
+                <div class="peta-head">
+                    <p class="eyebrow">Peta ketersediaan pangan</p>
+                    <h1 id="peta-judul">Status stok pangan per kecamatan</h1>
+                    <p class="text-muted">Pilih kecamatan untuk melihat stok, estimasi habis, dan mutasi terakhir.</p>
+                    <p class="peta-sumber" id="peta-sumber">
+                        <span class="badge badge-info">Data simulasi</span>
+                        <span>Angka contoh sampai stok gudang tersambung.</span>
+                    </p>
+                </div>
+
+                <div class="peta-tools">
+                    <label class="peta-cari">
+                        <span class="sr-only">Cari kecamatan</span>
+                        <svg class="icon icon-sm"><use href="#i-search"/></svg>
+                        <input class="input" type="search" id="peta-cari" placeholder="Cari kecamatan" autocomplete="off">
+                    </label>
+                    <div class="seg" role="group" aria-label="Saring status">
+                        <button type="button" class="seg-item" data-filter="semua" aria-pressed="true">Semua <span class="seg-count" data-count="semua">0</span></button>
+                        <button type="button" class="seg-item" data-filter="kritis" aria-pressed="false">Kritis <span class="seg-count" data-count="kritis">0</span></button>
+                        <button type="button" class="seg-item" data-filter="waspada" aria-pressed="false">Waspada <span class="seg-count" data-count="waspada">0</span></button>
+                        <button type="button" class="seg-item" data-filter="aman" aria-pressed="false">Aman <span class="seg-count" data-count="aman">0</span></button>
+                    </div>
+                </div>
+
+                <ul class="peta-list" id="peta-list" aria-label="Daftar kecamatan">
+                    <li><div class="skeleton peta-skeleton"></div></li>
+                    <li><div class="skeleton peta-skeleton"></div></li>
+                    <li><div class="skeleton peta-skeleton"></div></li>
+                </ul>
+                <p class="peta-kosong" id="peta-kosong" hidden>Tidak ada kecamatan yang cocok dengan pencarian.</p>
+            </aside>
+
+            <div class="peta-map">
+                <div id="map" class="peta-canvas" role="region" aria-label="Peta kecamatan"></div>
+
+                <article class="peta-detail" id="peta-detail" aria-live="polite" hidden>
+                    <div class="peta-detail-head">
+                        <div>
+                            <h2 class="peta-detail-title" data-detail="nama"></h2>
+                            <p class="peta-detail-sub" data-detail="lokasi"></p>
+                        </div>
+                        <button type="button" class="btn btn-ghost btn-icon btn-sm" id="peta-tutup" aria-label="Tutup detail">
+                            <svg class="icon icon-sm"><use href="#i-x"/></svg>
+                        </button>
+                    </div>
+                    <div class="peta-detail-status">
+                        <span data-detail="badge"></span>
+                        <span class="text-muted" data-detail="diperbarui"></span>
+                    </div>
+                    <dl class="peta-angka">
+                        <div><dt>Estimasi habis</dt><dd data-detail="hari"></dd></div>
+                        <div><dt>Total stok</dt><dd data-detail="stok"></dd></div>
+                    </dl>
+                    <h3 class="peta-detail-label">Stok per komoditas</h3>
+                    <ul class="peta-komoditas" data-detail="komoditas"></ul>
+                    <h3 class="peta-detail-label">Gudang utama</h3>
+                    <p class="peta-gudang" data-detail="gudang"></p>
+                    <h3 class="peta-detail-label">Aktivitas terakhir</h3>
+                    <ol class="timeline" data-detail="aktivitas"></ol>
+                </article>
+
+                <div class="peta-legend" aria-label="Keterangan warna">
+                    <span><i class="dot dot-aman"></i>Aman &gt; 30 hari</span>
+                    <span><i class="dot dot-waspada"></i>Waspada 14–30</span>
+                    <span><i class="dot dot-kritis"></i>Kritis &lt; 14</span>
+                </div>
+            </div>
         </section>
 
-        <!-- Bento Grid: Map + Side Overview -->
-        <div class="grid">
-            <!-- Left: Interactive Map Preview (Leaflet) -->
-            <div class="card" id="peta">
-                <div class="card-header">
-                    <div class="card-title">
-                        <span>Peta Ketersediaan Pangan (Choropleth GIS)</span>
-                    </div>
-                    <span class="pill-status">
-                        <span class="status-dot"></span>
-                        Leaflet OpenStreetMap Ready
-                    </span>
-                </div>
-                <div id="map"></div>
-                <div class="stat-grid">
-                    <div class="stat-box">
-                        <div class="stat-label">Cakupan Wilayah</div>
-                        <div class="stat-value font-mono">4 Level Kemendagri</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-label">Status Fondasi Sistem</div>
-                        <div class="stat-value font-mono" style="color: var(--accent-emerald);">PBI-01 Verified</div>
-                    </div>
-                </div>
+        <section class="alur" id="cara-kerja" aria-labelledby="alur-judul">
+            <div class="alur-intro">
+                <p class="eyebrow">Cara kerja</p>
+                <h2 id="alur-judul">Dari stok gudang sampai bantuan diterima warga</h2>
+                <p class="text-muted">Setiap peran mengisi bagiannya, dan peta di atas dihitung dari catatan mereka.</p>
             </div>
-
-            <!-- Right: Health Check & System Specs -->
-            <div class="card" id="status">
-                <div class="card-header">
-                    <div class="card-title">Health Check API Demo</div>
-                    <span class="pill-status" id="api-status-pill">
-                        <span class="status-dot"></span>
-                        <span id="api-status-text">Checking...</span>
-                    </span>
-                </div>
-                <p style="font-size: 0.85rem; color: var(--text-secondary);">
-                    Endpoint live API health check untuk monitoring kesiapan backend Laravel:
-                </p>
-                <div class="api-terminal font-mono">
-                    <pre id="api-response-data">// Memuat data API health...</pre>
-                </div>
-
-                <div style="margin-top: 1.5rem;">
-                    <div class="card-title" style="margin-bottom: 0.5rem;" id="tim">Tim Pengembang (SI-48-09 Kel. E)</div>
-                    <ul class="team-list">
-                        <li class="team-item">
-                            <div>
-                                <div class="team-name">Naufan Rae Rasyad Torick</div>
-                                <div class="team-role">102022400283 • Peta & Pengiriman Lapangan</div>
-                            </div>
-                            <span class="badge-pic">PIC PBI-01</span>
-                        </li>
-                        <li class="team-item">
-                            <div>
-                                <div class="team-name">Hadid Hamar</div>
-                                <div class="team-role">102022400126 • Scrum Master / UI/UX</div>
-                            </div>
-                            <span class="nav-badge" style="font-size: 0.65rem;">PM</span>
-                        </li>
-                        <li class="team-item">
-                            <div>
-                                <div class="team-name">Ahmad Rizky Ivanzya</div>
-                                <div class="team-role">102022400004 • Backend Layanan Stok</div>
-                            </div>
-                        </li>
-                        <li class="team-item">
-                            <div>
-                                <div class="team-name">Hafizh Rafi Maulana Suyufi</div>
-                                <div class="team-role">102022400210 • Frontend & Antarmuka</div>
-                            </div>
-                        </li>
-                        <li class="team-item">
-                            <div>
-                                <div class="team-name">Muhammad Syamsul Arifin</div>
-                                <div class="team-role">102022400117 • Database & Master Data</div>
-                            </div>
-                        </li>
-                        <li class="team-item">
-                            <div>
-                                <div class="team-name">Yudha Pamungkas</div>
-                                <div class="team-role">102022400337 • Autentikasi, Akses & QA</div>
-                            </div>
-                        </li>
-                        <li class="team-item">
-                            <div>
-                                <div class="team-name">Calista Aurelia Putri</div>
-                                <div class="team-role">102022400289 • Alur Laporan & Analisis</div>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
+            <ol class="alur-list">
+                <li>
+                    <span class="alur-no">01</span>
+                    <div>
+                        <h3>Petugas mendaftar dengan surat tugas</h3>
+                        <p>Kepala wilayah dan staf badan resmi diverifikasi dulu sebelum bisa masuk, lalu ditugaskan ke wilayah atau instansinya.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="alur-no">02</span>
+                    <div>
+                        <h3>Gudang mencatat setiap mutasi stok</h3>
+                        <p>Barang masuk, keluar, retur, dan rusak tercatat sampai milidetik, jadi saldo selalu bisa ditelusuri.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="alur-no">03</span>
+                    <div>
+                        <h3>Status dihitung dari ketahanan stok</h3>
+                        <p>Stok dibandingkan dengan kebutuhan penduduk per hari, lalu diberi status Aman, Waspada, atau Kritis.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="alur-no">04</span>
+                    <div>
+                        <h3>Bantuan dikirim dan dikonfirmasi</h3>
+                        <p>Laporan kebutuhan diverifikasi, pengiriman dibuat, dan wilayah penerima mencatat jumlah yang benar-benar tiba.</p>
+                    </div>
+                </li>
+            </ol>
+        </section>
     </main>
 
-    <!-- Footer -->
-    <footer>
-        &copy; 2026 Kawan Pangan • S1 Sistem Informasi Telkom University (SI-48-09 Kelompok E). Dibuat untuk pemenuhan PBI-01 Sprint 1.
+    <footer class="pub-foot">
+        <span>© 2026 Kawan Pangan · Proyek PPL SI4809 Kelompok E, Telkom University</span>
+        <span class="cluster">
+            @guest
+                <a href="{{ route('login') }}">Masuk</a>
+                <a href="{{ route('registrasi.create') }}">Daftar akun</a>
+            @endguest
+        </span>
     </footer>
 
-    <!-- Leaflet JS -->
+    <script type="application/json" id="peta-data">@json($petaWilayah ?? null)</script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script>
-        // Inisialisasi Peta Leaflet (Koordinat Bandung / Jawa Barat)
-        const map = L.map('map').setView([-6.9175, 107.6191], 12);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
-
-        // Marker Contoh Gudang Pangan
-        const marker = L.marker([-6.9175, 107.6191]).addTo(map)
-            .bindPopup('<b>Gudang Pangan Utama</b><br>Kapasitas: 50.000 kg • Status: Aman')
-            .openPopup();
-
-        // Fetch Live Health Check API
-        fetch('/api/health')
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('api-response-data').textContent = JSON.stringify(data, null, 2);
-                document.getElementById('api-status-text').textContent = '200 OK • Healthy';
-            })
-            .catch(err => {
-                document.getElementById('api-status-text').textContent = 'API Ready (Local)';
-                document.getElementById('api-response-data').textContent = JSON.stringify({
-                    status: "healthy",
-                    service: "Laravel 10 Backend",
-                    endpoint: "/api/health"
-                }, null, 2);
-            });
-    </script>
+    @vite('resources/js/beranda.js')
 </body>
 </html>

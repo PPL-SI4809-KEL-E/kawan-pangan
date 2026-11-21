@@ -62,7 +62,7 @@ class MasterDataTest extends TestCase
         $endpoints[] = ['PATCH', "/admin/gudang/{$gudang->id}/status"];
         $endpoints[] = ['GET', '/admin/gudang/opsi-wilayah?q=32'];
         foreach ($endpoints as [$method, $url]) {
-            $this->call($method, $url)->assertUnauthorized();
+            $this->call($method, $url)->assertRedirect(route('login'));
         }
         foreach ([
             [Role::KepalaWilayah, StatusAkun::Aktif], [Role::BadanResmi, StatusAkun::Aktif],

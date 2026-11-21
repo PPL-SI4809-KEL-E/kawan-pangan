@@ -134,7 +134,6 @@ class UserOtorisasiHelperTest extends TestCase
         $userValid = new User(['kode_wilayah' => '32.04']);
         $this->assertFalse($userValid->menguasaiWilayah(''));
     }
-    
 
     #[Test]
     public function pengelola_dan_petugas_instansi_dibedakan_berdasarkan_jabatan(): void

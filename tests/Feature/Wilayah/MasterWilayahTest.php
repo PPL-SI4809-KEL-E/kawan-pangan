@@ -50,7 +50,8 @@ class MasterWilayahTest extends TestCase
             ['POST', '/admin/wilayah/impor'], ['GET', '/admin/wilayah/32/edit'], ['PATCH', '/admin/wilayah/32'],
         ];
         foreach ($endpoints as [$method, $url]) {
-            $this->call($method, $url)->assertUnauthorized();
+            // PSKE-16: Tamu diarahkan ke rute login (menggantikan 401 saat login belum tersedia).
+            $this->call($method, $url)->assertRedirect(route('login'));
         }
         foreach ([
             [Role::KepalaWilayah, StatusAkun::Aktif], [Role::BadanResmi, StatusAkun::Aktif],

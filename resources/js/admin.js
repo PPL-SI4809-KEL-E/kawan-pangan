@@ -21,6 +21,69 @@ document.addEventListener('keydown', (event) => {
 mobile.addEventListener('change', () => setMenu(false));
 setMenu(false);
 
+// Sidebar bisa diciutkan di desktop; pilihan disimpan per perangkat (PSKE-88).
+const collapse = document.getElementById('sidebar-collapse');
+const KUNCI_CIUT = 'kp-sidebar-ciut';
+
+function setCiut(ciut) {
+    app.classList.toggle('is-collapsed', ciut);
+    collapse?.setAttribute('aria-pressed', String(ciut));
+    collapse?.setAttribute('aria-label', ciut ? 'Lebarkan menu' : 'Ciutkan menu');
+}
+
+try {
+    setCiut(window.localStorage.getItem(KUNCI_CIUT) === '1');
+} catch {
+    setCiut(false);
+}
+
+collapse?.addEventListener('click', () => {
+    const ciut = !app.classList.contains('is-collapsed');
+    setCiut(ciut);
+    try {
+        window.localStorage.setItem(KUNCI_CIUT, ciut ? '1' : '0');
+    } catch {
+        // Penyimpanan diblokir: pilihan berlaku sampai halaman dimuat ulang.
+    }
+});
+
+// Cari menu di sidebar; Ctrl/Cmd + K untuk fokus ke kolom cari.
+const cariMenu = document.getElementById('sidebar-search');
+if (cariMenu) {
+    const itemMenu = [...sidebar.querySelectorAll('[data-nav-item]')];
+    const kosong = document.getElementById('sidebar-empty');
+
+    cariMenu.addEventListener('input', () => {
+        const kata = cariMenu.value.trim().toLowerCase();
+        let tampil = 0;
+        itemMenu.forEach((item) => {
+            const cocok = !kata || item.textContent.toLowerCase().includes(kata);
+            item.hidden = !cocok;
+            if (cocok) tampil += 1;
+        });
+        sidebar.querySelectorAll('[data-nav-group]').forEach((judul) => {
+            const daftar = judul.nextElementSibling;
+            judul.hidden = daftar ? [...daftar.children].every((item) => item.hidden) : false;
+        });
+        if (kosong) kosong.hidden = tampil > 0;
+    });
+
+    cariMenu.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            sidebar.querySelector('[data-nav-item]:not([hidden]) a.nav-link')?.click();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+            event.preventDefault();
+            if (mobile.matches) setMenu(true);
+            if (app.classList.contains('is-collapsed')) setCiut(false);
+            cariMenu.focus();
+        }
+    });
+}
+
 document.querySelectorAll('form[data-confirm]').forEach((form) => {
     form.addEventListener('submit', (event) => {
         if (!window.confirm(form.dataset.confirm)) event.preventDefault();
