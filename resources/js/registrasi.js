@@ -40,16 +40,32 @@ if (form) {
         select.replaceChildren(new Option(label, ''), ...daftar.map((d) => new Option(d[teks], d[nilai])));
     };
 
+    // Pesan di bawah dropdown saat data master kosong atau gagal dimuat,
+    // supaya dropdown yang terkunci tidak terlihat seperti halaman rusak.
+    const aturStatus = (id, pesan) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = pesan;
+        el.hidden = !pesan;
+    };
+
     async function muatWilayah(level, induk) {
         const sel = selWilayah[level];
         sel.disabled = true;
         sel.replaceChildren(new Option('Memuat…', ''));
+        if (level === 0) aturStatus('wilayah-status', '');
         try {
             const url = new URL(grupWilayah.dataset.url, location.origin);
             if (induk) url.searchParams.set('induk', induk);
             const daftar = await ambil(url);
             isiOpsi(sel, daftar, 'kode', 'nama');
             sel.disabled = daftar.length === 0;
+            if (daftar.length === 0) {
+                sel.replaceChildren(new Option(`Belum ada data ${sel.dataset.label.toLowerCase()}`, ''));
+                if (level === 0) {
+                    aturStatus('wilayah-status', 'Data wilayah belum tersedia, jadi wilayah tugas belum bisa dipilih. Hubungi admin Kawan Pangan, lalu coba lagi nanti.');
+                }
+            }
             // Kembalikan pilihan lama setelah validasi server gagal
             const lama = sel.dataset.old;
             if (lama && daftar.some((d) => String(d.kode) === lama)) {
@@ -59,6 +75,7 @@ if (form) {
             }
         } catch {
             sel.replaceChildren(new Option(`Gagal memuat ${sel.dataset.label}`, ''));
+            aturStatus('wilayah-status', 'Data wilayah gagal dimuat. Periksa koneksi internet, lalu muat ulang halaman.');
         }
     }
 
@@ -74,12 +91,20 @@ if (form) {
 
     async function muatInstansi() {
         selInstansi.replaceChildren(new Option('Memuat…', ''));
+        aturStatus('instansi-status', '');
         try {
-            isiOpsi(selInstansi, await ambil(grupInstansi.dataset.url), 'id', 'nama');
+            const daftar = await ambil(grupInstansi.dataset.url);
+            isiOpsi(selInstansi, daftar, 'id', 'nama');
             instansiDimuat = true;
+            selInstansi.disabled = daftar.length === 0;
+            if (daftar.length === 0) {
+                selInstansi.replaceChildren(new Option('Belum ada data instansi', ''));
+                aturStatus('instansi-status', 'Data instansi belum tersedia. Hubungi admin Kawan Pangan, lalu coba lagi nanti.');
+            }
             if (selInstansi.dataset.old) selInstansi.value = selInstansi.dataset.old;
         } catch {
             selInstansi.replaceChildren(new Option('Gagal memuat instansi', ''));
+            aturStatus('instansi-status', 'Data instansi gagal dimuat. Periksa koneksi internet, lalu muat ulang halaman.');
         }
     }
 

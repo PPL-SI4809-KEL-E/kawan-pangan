@@ -80,6 +80,7 @@
                     </select>
                 @endforeach
             </div>
+            <p class="reg-note" id="wilayah-status" role="status" hidden></p>
             <span class="field-error" data-error="kode_wilayah">@error('kode_wilayah'){{ $message }}@enderror</span>
         </fieldset>
 
@@ -90,6 +91,7 @@
             <select class="select" id="instansi_id" name="instansi_id" data-old="{{ old('instansi_id') }}">
                 <option value="">Pilih instansi</option>
             </select>
+            <p class="reg-note" id="instansi-status" role="status" hidden></p>
             <span class="field-error" data-error="instansi_id">@error('instansi_id'){{ $message }}@enderror</span>
         </div>
 
