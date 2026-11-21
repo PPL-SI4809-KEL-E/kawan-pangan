@@ -22,7 +22,7 @@ class GudangPolicyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->policy = new GudangPolicy();
+        $this->policy = new GudangPolicy;
     }
 
     private function buatGudang(int $instansiId): Model
@@ -34,6 +34,17 @@ class GudangPolicyTest extends TestCase
         $model->forceFill(['instansi_id' => $instansiId]);
 
         return $model;
+    }
+
+    private function buatPengelola(int $instansiId): User
+    {
+        $user = new User([
+            'role' => Role::BadanResmi->value,
+            'instansi_id' => $instansiId,
+        ]);
+        $user->forceFill(['jabatan' => User::JABATAN_PENGELOLA]);
+
+        return $user;
     }
 
     // ── Superadmin ────────────────────────────────────────────────
@@ -53,10 +64,7 @@ class GudangPolicyTest extends TestCase
     #[Test]
     public function pengelola_boleh_melihat_gudang_instansinya(): void
     {
-        $user = new User([
-            'role' => Role::BadanResmi->value,
-            'instansi_id' => 1,
-        ]);
+        $user = $this->buatPengelola(1);
         $gudang = $this->buatGudang(1);
 
         $this->assertTrue($this->policy->view($user, $gudang));
@@ -65,14 +73,40 @@ class GudangPolicyTest extends TestCase
     #[Test]
     public function pengelola_boleh_mengubah_stok_gudang_instansinya(): void
     {
+        $user = $this->buatPengelola(1);
+        $gudang = $this->buatGudang(1);
+
+        $this->assertTrue($this->policy->update($user, $gudang));
+        $this->assertTrue($this->policy->updateStok($user, $gudang));
+    }
+
+    #[Test]
+    public function petugas_boleh_melihat_tetapi_tidak_boleh_mengubah_stok_gudang_instansinya(): void
+    {
+        $petugas = new User([
+            'role' => Role::BadanResmi->value,
+            'instansi_id' => 1,
+        ]);
+        $petugas->forceFill(['jabatan' => User::JABATAN_PETUGAS]);
+        $gudang = $this->buatGudang(1);
+
+        $this->assertTrue($this->policy->view($petugas, $gudang));
+        $this->assertFalse($this->policy->update($petugas, $gudang));
+        $this->assertFalse($this->policy->updateStok($petugas, $gudang));
+        $this->assertFalse($this->policy->kelolaCakupan($petugas, $gudang));
+    }
+
+    #[Test]
+    public function badan_resmi_tanpa_jabatan_pengelola_tidak_boleh_mengubah_stok(): void
+    {
         $user = new User([
             'role' => Role::BadanResmi->value,
             'instansi_id' => 1,
         ]);
         $gudang = $this->buatGudang(1);
 
-        $this->assertTrue($this->policy->update($user, $gudang));
-        $this->assertTrue($this->policy->updateStok($user, $gudang));
+        $this->assertFalse($this->policy->update($user, $gudang));
+        $this->assertFalse($this->policy->updateStok($user, $gudang));
     }
 
     // ── Badan Resmi: instansi lain → ditolak ──────────────────────
@@ -80,10 +114,7 @@ class GudangPolicyTest extends TestCase
     #[Test]
     public function pengelola_tidak_boleh_melihat_gudang_instansi_lain(): void
     {
-        $user = new User([
-            'role' => Role::BadanResmi->value,
-            'instansi_id' => 1,
-        ]);
+        $user = $this->buatPengelola(1);
         $gudang = $this->buatGudang(2);
 
         $this->assertFalse($this->policy->view($user, $gudang));
@@ -92,10 +123,7 @@ class GudangPolicyTest extends TestCase
     #[Test]
     public function pengelola_tidak_boleh_mengubah_stok_gudang_instansi_lain(): void
     {
-        $user = new User([
-            'role' => Role::BadanResmi->value,
-            'instansi_id' => 1,
-        ]);
+        $user = $this->buatPengelola(1);
         $gudang = $this->buatGudang(2);
 
         $this->assertFalse($this->policy->update($user, $gudang));
@@ -105,10 +133,7 @@ class GudangPolicyTest extends TestCase
     #[Test]
     public function manipulasi_id_gudang_tetap_ditolak(): void
     {
-        $user = new User([
-            'role' => Role::BadanResmi->value,
-            'instansi_id' => 1,
-        ]);
+        $user = $this->buatPengelola(1);
 
         // Seolah-olah pengguna mengirim ID gudang instansi lain lewat request.
         $gudangInstansiLain = $this->buatGudang(3);
@@ -125,10 +150,12 @@ class GudangPolicyTest extends TestCase
             'role' => Role::BadanResmi->value,
             'instansi_id' => null,
         ]);
+        $user->forceFill(['jabatan' => User::JABATAN_PENGELOLA]);
         $gudang = $this->buatGudang(1);
 
         $this->assertFalse($this->policy->updateStok($user, $gudang));
         $this->assertFalse($this->policy->view($user, $gudang));
+        $this->assertFalse($this->policy->viewAny($user));
     }
 
     // ── Kepala Wilayah: tidak boleh mengelola gudang ──────────────
@@ -154,5 +181,15 @@ class GudangPolicyTest extends TestCase
         $gudang = $this->buatGudang(1);
 
         $this->assertFalse($this->policy->updateStok($user, $gudang));
+    }
+
+    #[Test]
+    public function pengelola_instansi_boleh_mengelola_cakupan_gudang_miliknya(): void
+    {
+        $pengelola = $this->buatPengelola(1);
+        $gudang = $this->buatGudang(1);
+
+        $this->assertTrue($this->policy->kelolaCakupan($pengelola, $gudang));
+        $this->assertFalse($this->policy->kelolaCakupan($pengelola, $this->buatGudang(2)));
     }
 }
