@@ -7,6 +7,7 @@ use App\Enums\Role;
 use App\Enums\StatusAkun;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -67,6 +68,21 @@ class User extends Authenticatable
         return $this->hasMany(DokumenPendukung::class);
     }
 
+    public function wilayah(): BelongsTo
+    {
+        return $this->belongsTo(Wilayah::class, 'kode_wilayah', 'kode');
+    }
+
+    public function instansi(): BelongsTo
+    {
+        return $this->belongsTo(Instansi::class, 'instansi_id');
+    }
+
+    public function verifikator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'verifikator_id');
+    }
+
     /**
      * PSKE-6: hanya akun AKTIF yang boleh login.
      */
@@ -114,6 +130,8 @@ class User extends Authenticatable
      */
     public const JABATAN_PENGELOLA = 'PENGELOLA';
 
+    public const JABATAN_PETUGAS = 'PETUGAS';
+
     /**
      * Periksa apakah pengguna adalah pengelola instansi.
      *
@@ -129,6 +147,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Periksa apakah pengguna adalah petugas lapangan instansi.
+     */
+    public function isPetugasInstansi(): bool
+    {
+        return $this->isBadanResmi()
+            && $this->instansi_id !== null
+            && $this->getAttribute('jabatan') === self::JABATAN_PETUGAS;
+    }
+
+    /**
      * Periksa apakah kode wilayah tertentu berada dalam cakupan pengguna ini.
      * Menggunakan pencocokan prefix hierarki: kode_wilayah `32.04` mencakup
      * `32.04`, `32.04.12`, `32.04.12.2001`, dan seterusnya.
@@ -137,12 +165,15 @@ class User extends Authenticatable
      */
     public function menguasaiWilayah(string $kodeWilayah): bool
     {
-        if ($this->kode_wilayah === null) {
+        $kodeUser = trim((string) $this->kode_wilayah);
+        $target = trim($kodeWilayah);
+
+        if ($kodeUser === '' || $target === '') {
             return false;
         }
 
-        return $kodeWilayah === $this->kode_wilayah
-            || str_starts_with($kodeWilayah, $this->kode_wilayah.'.');
+        return $target === $kodeUser
+            || str_starts_with($target, $kodeUser.'.');
     }
 
     /**
@@ -152,7 +183,7 @@ class User extends Authenticatable
      */
     public function menguasaiInstansi(int $instansiId): bool
     {
-        if ($this->instansi_id === null) {
+        if ($this->instansi_id === null || $instansiId <= 0) {
             return false;
         }
 

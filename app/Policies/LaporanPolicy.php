@@ -33,20 +33,27 @@ class LaporanPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->role === Role::KepalaWilayah
-            || $user->role === Role::BadanResmi;
+        if ($user->role === Role::KepalaWilayah) {
+            return trim((string) $user->kode_wilayah) !== '';
+        }
+
+        if ($user->role === Role::BadanResmi) {
+            return $user->instansi_id !== null;
+        }
+
+        return false;
     }
 
     /**
      * Kepala Wilayah hanya boleh melihat laporan yang wilayahnya cocok.
      * Badan Resmi boleh melihat laporan untuk proses verifikasi.
      *
-     * @param  Model  $laporan  Model laporan dengan atribut `wilayah_kode`.
+     * @param  Model  $laporan  Model laporan dengan atribut `kode_wilayah` (atau `wilayah_kode`).
      */
     public function view(User $user, Model $laporan): bool
     {
         if ($user->role === Role::BadanResmi) {
-            return true;
+            return $user->instansi_id !== null;
         }
 
         return $user->role === Role::KepalaWilayah
@@ -60,18 +67,36 @@ class LaporanPolicy
     public function create(User $user): bool
     {
         return $user->role === Role::KepalaWilayah
-            && $user->kode_wilayah !== null;
+            && trim((string) $user->kode_wilayah) !== '';
     }
 
     /**
      * Kepala Wilayah hanya boleh mengubah laporan di wilayahnya sendiri.
      *
-     * @param  Model  $laporan  Model laporan dengan atribut `wilayah_kode`.
+     * @param  Model  $laporan  Model laporan dengan atribut `kode_wilayah` (atau `wilayah_kode`).
      */
     public function update(User $user, Model $laporan): bool
     {
         return $user->role === Role::KepalaWilayah
             && $this->wilayahCocok($user, $laporan);
+    }
+
+    /**
+     * Kepala Wilayah hanya boleh menghapus/membatalkan laporan di wilayahnya sendiri.
+     */
+    public function delete(User $user, Model $laporan): bool
+    {
+        return $user->role === Role::KepalaWilayah
+            && $this->wilayahCocok($user, $laporan);
+    }
+
+    /**
+     * Badan Resmi yang memiliki penugasan instansi boleh memverifikasi laporan.
+     */
+    public function verifikasi(User $user, Model $laporan): bool
+    {
+        return $user->role === Role::BadanResmi
+            && $user->instansi_id !== null;
     }
 
     /**
@@ -83,16 +108,13 @@ class LaporanPolicy
      */
     private function wilayahCocok(User $user, Model $laporan): bool
     {
-        $kodeUser = $user->kode_wilayah;
-        $kodeLaporan = $laporan->getAttribute('wilayah_kode');
+        $kodeLaporan = $laporan->getAttribute('kode_wilayah')
+            ?? $laporan->getAttribute('wilayah_kode');
 
-        if ($kodeUser === null || $kodeLaporan === null) {
+        if ($kodeLaporan === null) {
             return false;
         }
 
-        // Wilayah cocok jika kode laporan sama persis atau berada di bawah
-        // hierarki wilayah pengguna (prefix match dengan pemisah titik).
-        return $kodeLaporan === $kodeUser
-            || str_starts_with($kodeLaporan, $kodeUser.'.');
+        return $user->menguasaiWilayah((string) $kodeLaporan);
     }
 }

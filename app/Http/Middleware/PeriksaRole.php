@@ -5,6 +5,8 @@ namespace App\Http\Middleware;
 use App\Enums\Role;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -32,6 +34,30 @@ class PeriksaRole
         // Pengguna belum login ditangani oleh middleware `auth` sebelum middleware ini.
         if (! $user) {
             abort(403);
+        }
+
+        // Pastikan hanya akun berstatus AKTIF yang boleh mengakses sistem.
+        if (! $user->bolehLogin()) {
+            $pesan = $user->pesanLoginDitolak() ?? 'Akun Anda tidak dapat mengakses sistem.';
+
+            Auth::logout();
+
+            if ($request->hasSession()) {
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
+
+            if ($request->expectsJson()) {
+                abort(403, $pesan);
+            }
+
+            if (Route::has('login')) {
+                return redirect()->route('login')->withErrors([
+                    'email' => $pesan,
+                ]);
+            }
+
+            abort(403, $pesan);
         }
 
         // Bandingkan nilai enum role pengguna dengan daftar yang diizinkan.
