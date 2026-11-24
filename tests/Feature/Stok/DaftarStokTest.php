@@ -168,6 +168,17 @@ class DaftarStokTest extends TestCase
             ->assertDontSee('Gudang Bulog Gedebage');
     }
 
+    public function test_filter_gudang_instansi_lain_tidak_membocorkan_data(): void
+    {
+        $this->buatStok($this->gudangLain, $this->minyak, '20');
+
+        $respons = $this->actingAs($this->pengelola())
+            ->get(route('panel.instansi.stok.index', ['gudang' => $this->gudangLain->id]))
+            ->assertOk()
+            ->assertSee('Tidak ada stok yang sesuai filter.');
+        $this->assertSame(0, $respons->viewData('stok')->total());
+    }
+
     public function test_akun_tanpa_instansi_melihat_pesan_bukan_data(): void
     {
         $this->buatStok($this->gudangA, $this->beras, '10');
@@ -178,6 +189,50 @@ class DaftarStokTest extends TestCase
             ->assertOk()
             ->assertSee('belum ditugaskan ke instansi')
             ->assertDontSee('Gudang Soreang');
+    }
+
+    public function test_filter_gudang_dan_komoditas(): void
+    {
+        $this->buatStok($this->gudangA, $this->beras, '10');
+        $this->buatStok($this->gudangA, $this->minyak, '20');
+        $this->buatStok($this->gudangB, $this->beras, '30');
+        $user = $this->pengelola();
+
+        $perGudang = $this->actingAs($user)->get(route('panel.instansi.stok.index', ['gudang' => $this->gudangB->id]));
+        $this->assertSame(1, $perGudang->viewData('stok')->total());
+
+        $perKomoditas = $this->actingAs($user)->get(route('panel.instansi.stok.index', ['komoditas' => $this->beras->id]));
+        $this->assertSame(2, $perKomoditas->viewData('stok')->total());
+
+        $keduanya = $this->actingAs($user)->get(route('panel.instansi.stok.index', ['gudang' => $this->gudangA->id, 'komoditas' => $this->minyak->id]));
+        $this->assertSame(1, $keduanya->viewData('stok')->total());
+        $this->assertSame($this->minyak->id, $keduanya->viewData('stok')->first()->komoditas_id);
+    }
+
+    public function test_filter_bukan_angka_ditolak(): void
+    {
+        $this->actingAs($this->pengelola())
+            ->get(route('panel.instansi.stok.index', ['gudang' => 'abc']))
+            ->assertSessionHasErrors('gudang');
+    }
+
+    public function test_paginasi_50_baris_dan_filter_ikut_ke_halaman_berikutnya(): void
+    {
+        for ($i = 1; $i <= 51; $i++) {
+            $komoditas = Komoditas::create(['nama' => sprintf('Komoditas %02d', $i), 'satuan' => 'kg']);
+            $this->buatStok($this->gudangA, $komoditas, (string) $i);
+        }
+
+        $user = $this->pengelola();
+        $halaman1 = $this->actingAs($user)->get(route('panel.instansi.stok.index', ['gudang' => $this->gudangA->id]));
+        $paginator = $halaman1->viewData('stok');
+
+        $this->assertSame(50, $paginator->count());
+        $this->assertSame(51, $paginator->total());
+        $this->assertStringContainsString('gudang='.$this->gudangA->id, $paginator->nextPageUrl());
+
+        $halaman2 = $this->actingAs($user)->get($paginator->nextPageUrl());
+        $this->assertSame(1, $halaman2->viewData('stok')->count());
     }
 
     public function test_waktu_pembaruan_ditampilkan(): void

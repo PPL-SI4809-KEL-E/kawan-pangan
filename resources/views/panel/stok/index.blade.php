@@ -9,6 +9,7 @@
         $teks = number_format((float) $nilai, 3, ',', '.');
         return rtrim(rtrim($teks, '0'), ',');
     };
+    $adaFilter = filled($filter['gudang'] ?? null) || filled($filter['komoditas'] ?? null);
 @endphp
 
 @section('content')
@@ -29,6 +30,33 @@
         Penggunaan harian, hari tersisa, perkiraan habis, status, periode hitung, dan kelengkapan data akan tampil setelah layanan estimasi stok (PBI-12) aktif.
     </div>
 @endif
+
+<form class="card" method="get" action="{{ route('panel.instansi.stok.index') }}">
+    <div class="grid grid-3">
+        <div class="field">
+            <label for="gudang">Gudang</label>
+            <select class="select" id="gudang" name="gudang">
+                <option value="">Semua gudang</option>
+                @foreach ($pilihanGudang as $gdg)
+                    <option value="{{ $gdg->id }}" @selected((string) ($filter['gudang'] ?? '') === (string) $gdg->id)>{{ $gdg->nama }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="field">
+            <label for="komoditas">Komoditas</label>
+            <select class="select" id="komoditas" name="komoditas">
+                <option value="">Semua komoditas</option>
+                @foreach ($pilihanKomoditas as $kmd)
+                    <option value="{{ $kmd->id }}" @selected((string) ($filter['komoditas'] ?? '') === (string) $kmd->id)>{{ $kmd->nama }}</option>
+                @endforeach
+            </select>
+        </div>
+    </div>
+    <div class="page-actions">
+        <button class="btn btn-primary" type="submit">Terapkan</button>
+        <a class="btn btn-secondary" href="{{ route('panel.instansi.stok.index') }}">Reset</a>
+    </div>
+</form>
 
 <div class="table-wrap" tabindex="0" role="region" aria-label="Daftar stok, geser untuk melihat semua kolom">
     <table class="table">
@@ -68,6 +96,8 @@
                     <td colspan="11">
                         @if (! auth()->user()->instansi_id)
                             Akun Anda belum ditugaskan ke instansi. Hubungi Superadmin.
+                        @elseif ($adaFilter)
+                            Tidak ada stok yang sesuai filter.
                         @else
                             Belum ada stok tercatat di gudang instansi Anda.
                         @endif
@@ -77,4 +107,6 @@
         </tbody>
     </table>
 </div>
+
+@include('admin.partials.pagination', ['paginator' => $stok, 'label' => 'baris stok'])
 @endsection
