@@ -10,6 +10,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\OpsiRegistrasiController;
 use App\Http\Controllers\Auth\RegistrasiController;
 use App\Http\Controllers\CakupanGudangController;
+use App\Http\Controllers\DaftarStokController;
 use App\Http\Controllers\PanelController;
 use App\Http\Middleware\SuperadminAktif;
 use Illuminate\Support\Facades\Route;
@@ -59,6 +60,9 @@ Route::middleware(['auth', 'role:KEPALA_WILAYAH'])->prefix('panel/wilayah')->nam
 
 Route::middleware(['auth', 'role:BADAN_RESMI'])->prefix('panel/instansi')->group(function () {
     Route::get('/', [PanelController::class, 'instansi'])->name('panel.instansi');
+
+    // PBI-13 · Layar M-11 daftar stok per gudang dan komoditas
+    Route::get('/stok', [DaftarStokController::class, 'index'])->name('panel.instansi.stok.index');
 
     // PSKE-48 / Layar M-12 · Atur cakupan gudang oleh pengelola instansi (PSKE-49, PSKE-50, PSKE-51)
     Route::prefix('gudang/{gudang}/cakupan')->name('panel.instansi.gudang.cakupan.')->group(function () {
