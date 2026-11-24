@@ -17,6 +17,11 @@
         <h1>Daftar stok</h1>
         <p>Stok fisik, cadangan, dan stok tersedia per komoditas di setiap gudang instansi Anda.</p>
     </div>
+    <p class="text-muted">
+        <svg class="icon icon-sm"><use href="#i-clock"/></svg>
+        Terakhir diperbarui:
+        <strong>{{ $terakhirDiperbarui ? \Illuminate\Support\Carbon::parse($terakhirDiperbarui)->translatedFormat('d M Y H:i') : 'belum ada mutasi' }}</strong>
+    </p>
 </div>
 
 @if (empty($estimasi))
@@ -39,6 +44,7 @@
                 <th scope="col" class="num">Hari tersisa</th>
                 <th scope="col">Perkiraan habis</th>
                 <th scope="col">Status</th>
+                <th scope="col">Diperbarui</th>
             </tr>
         </thead>
         <tbody>
@@ -55,10 +61,11 @@
                     <td class="num">{{ $est['hari_tersisa'] ?? '–' }}</td>
                     <td>{{ $est['perkiraan_habis'] ?? '–' }}</td>
                     <td>{{ $est['status'] ?? '–' }}</td>
+                    <td class="text-muted">{{ $baris->diperbarui_pada ? $baris->diperbarui_pada->translatedFormat('d M Y H:i') : 'Belum ada mutasi' }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="10">
+                    <td colspan="11">
                         @if (! auth()->user()->instansi_id)
                             Akun Anda belum ditugaskan ke instansi. Hubungi Superadmin.
                         @else

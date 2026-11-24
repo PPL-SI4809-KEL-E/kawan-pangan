@@ -180,6 +180,19 @@ class DaftarStokTest extends TestCase
             ->assertDontSee('Gudang Soreang');
     }
 
+    public function test_waktu_pembaruan_ditampilkan(): void
+    {
+        $this->buatStok($this->gudangA, $this->beras, '10', '2026-11-20 08:30:00');
+        $this->buatStok($this->gudangB, $this->beras, '10', '2026-11-22 14:05:00');
+        $this->buatStok($this->gudangB, $this->minyak, '10', null);
+
+        $this->actingAs($this->pengelola())->get(route('panel.instansi.stok.index'))
+            ->assertOk()
+            ->assertSee('Terakhir diperbarui')
+            ->assertSee('22 Nov 2026 14:05')
+            ->assertSee('Belum ada mutasi');
+    }
+
     public function test_menu_daftar_stok_ada_di_sidebar_badan_resmi(): void
     {
         $this->actingAs($this->pengelola())->get(route('panel.instansi'))

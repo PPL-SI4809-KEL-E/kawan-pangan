@@ -43,8 +43,15 @@ class DaftarStokController extends Controller
             $baris->setAttribute('tersedia', max(0.0, (float) $baris->jumlah_fisik_layak - $cadangan));
         });
 
+        $terakhirDiperbarui = $instansiId
+            ? Stok::join('gudang', 'gudang.id', '=', 'stok.gudang_id')
+                ->where('gudang.instansi_id', $instansiId)
+                ->max('stok.diperbarui_pada')
+            : null;
+
         return view('panel.stok.index', [
             'stok' => $stok,
+            'terakhirDiperbarui' => $terakhirDiperbarui,
             // Diisi layanan estimasi PBI-12: [stok_id => [...]]. Kosong sampai layanan tersedia.
             'estimasi' => [],
         ]);
