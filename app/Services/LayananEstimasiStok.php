@@ -165,7 +165,14 @@ class LayananEstimasiStok
 
             return $hasil + ['status' => self::STATUS_TANPA_DATA, 'tanpa_data' => true];
         }
-        if ($fisik > 0 && $riwayat < self::MINIMUM_HARI_RIWAYAT) {
+        if ($tersedia <= 0.0) {
+            $hasil['hari'] = 0.0;
+            $hasil['perkiraan_habis'] = $acuan->toDateString();
+            $hasil['pesan'] = 'Stok habis atau seluruh stok sudah dicadangkan.';
+
+            return $hasil + ['status' => self::STATUS_KRITIS];
+        }
+        if ($riwayat < self::MINIMUM_HARI_RIWAYAT) {
             $hasil['pesan'] = "Estimasi belum dapat dihitung. Riwayat penyaluran baru {$riwayat} dari 30 hari.";
 
             return $hasil + ['status' => self::STATUS_RIWAYAT_KURANG, 'riwayat_kurang' => true];

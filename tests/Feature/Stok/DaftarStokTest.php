@@ -6,6 +6,7 @@ use App\Models\Cadangan;
 use App\Models\Gudang;
 use App\Models\Instansi;
 use App\Models\Komoditas;
+use App\Models\MutasiStok;
 use App\Models\Stok;
 use App\Models\User;
 use App\Models\Wilayah;
@@ -157,6 +158,37 @@ class DaftarStokTest extends TestCase
         $this->assertSame(0.0, $baris->tersedia);
     }
 
+    public function test_estimasi_pske_60_membedakan_hari_stok_fisik_dan_jumlah_tersedia(): void
+    {
+        $this->travelTo(Carbon::parse('2026-11-25 12:00:00'));
+        $user = $this->pengelola();
+        $stok = $this->buatStok($this->gudangA, $this->beras, '300');
+        $stok->update(['mulai_pencatatan_lengkap' => today()->subDays(29)]);
+        $this->buatCadangan($stok, '60', Cadangan::STATUS_AKTIF, $user);
+
+        foreach ([
+            [MutasiStok::JENIS_PENYALURAN, '2026-10-27 00:00:00.000', 200],
+            [MutasiStok::JENIS_PENYALURAN, '2026-11-25 11:59:59.999', 250],
+            [MutasiStok::JENIS_PENYALURAN, '2026-10-26 23:59:59.999', 20],
+            [MutasiStok::JENIS_PENYALURAN, '2026-11-26 00:00:00.000', 20],
+            [MutasiStok::JENIS_RETUR, '2026-11-24', 20],
+            [MutasiStok::JENIS_RUSAK, '2026-11-24', 20],
+            [MutasiStok::JENIS_PENYESUAIAN, '2026-11-24', 20],
+        ] as [$jenis, $waktu, $jumlah]) {
+            $stok->mutasi()->create([
+                'jenis' => $jenis, 'waktu' => $waktu, 'jumlah' => $jumlah,
+                'saldo_setelah' => 300, 'pencatat_id' => $user->id, 'ref_operasi' => $jenis.$waktu,
+            ]);
+        }
+
+        $respons = $this->actingAs($user)->get(route('panel.instansi.stok.index'))->assertOk()
+            ->assertSeeInOrder(['300', '60', '240', '15', '20', '2026-12-15', 'Waspada']);
+        $hasil = $respons->viewData('estimasi')[$stok->id];
+        $this->assertSame(240.0, $hasil['stok_tersedia']);
+        $this->assertSame(15.0, $hasil['pemakaian_harian']);
+        $this->assertSame(20.0, $hasil['hari']);
+    }
+
     public function test_hanya_stok_gudang_instansi_sendiri_yang_tampil(): void
     {
         $this->buatStok($this->gudangA, $this->beras, '10');
@@ -166,6 +198,18 @@ class DaftarStokTest extends TestCase
             ->assertOk()
             ->assertSee('Gudang Soreang')
             ->assertDontSee('Gudang Bulog Gedebage');
+    }
+
+    public function test_stok_positif_tanpa_penggunaan_menghasilkan_estimasi_json_dengan_hari_null(): void
+    {
+        $stok = $this->buatStok($this->gudangA, $this->beras, '300');
+        $stok->update(['mulai_pencatatan_lengkap' => today()->subDays(29)]);
+        $respons = $this->actingAs($this->pengelola())->get(route('panel.instansi.stok.index'))
+            ->assertOk()->assertSee('Tidak ada penyaluran dalam 30 hari terakhir.');
+        $hasil = json_decode($respons->viewData('estimasi')->toJson(JSON_THROW_ON_ERROR), true, flags: JSON_THROW_ON_ERROR);
+        $this->assertNull($hasil[$stok->id]['hari']);
+        $this->assertNull($hasil[$stok->id]['perkiraan_habis']);
+        $this->assertSame('AMAN', $hasil[$stok->id]['status']);
     }
 
     public function test_filter_gudang_instansi_lain_tidak_membocorkan_data(): void
