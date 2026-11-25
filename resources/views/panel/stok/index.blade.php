@@ -25,12 +25,6 @@
     </p>
 </div>
 
-@if (empty($estimasi))
-    <div class="alert alert-info" role="status">
-        Penggunaan harian, hari tersisa, perkiraan habis, status, periode hitung, dan kelengkapan data akan tampil setelah layanan estimasi stok (PBI-12) aktif.
-    </div>
-@endif
-
 <form class="card" method="get" action="{{ route('panel.instansi.stok.index') }}">
     <div class="grid grid-2">
         <div class="field">
@@ -68,7 +62,7 @@
                 <th scope="col" class="num">Stok fisik</th>
                 <th scope="col" class="num">Cadangan</th>
                 <th scope="col" class="num">Tersedia</th>
-                <th scope="col" class="num">Penggunaan harian</th>
+                <th scope="col" class="num">Penggunaan harian (30 hari)</th>
                 <th scope="col" class="num">Hari tersisa</th>
                 <th scope="col">Perkiraan habis</th>
                 <th scope="col">Status</th>
@@ -77,7 +71,7 @@
         </thead>
         <tbody>
             @forelse ($stok as $baris)
-                @php $est = $estimasi[$baris->id] ?? null; @endphp
+                @php $est = $estimasi[$baris->id]; @endphp
                 <tr data-stok-id="{{ $baris->id }}">
                     <td><strong>{{ $baris->komoditas->nama }}</strong> <x-badge-data-contoh :contoh="$baris->is_contoh" /></td>
                     <td>{{ $baris->gudang->nama }}</td>
@@ -85,10 +79,12 @@
                     <td class="num">{{ $angka($baris->jumlah_fisik_layak) }}</td>
                     <td class="num">{{ $angka($baris->cadangan_aktif) }}</td>
                     <td class="num"><strong>{{ $angka($baris->tersedia) }}</strong></td>
-                    <td class="num">{{ $est['penggunaan_harian'] ?? '–' }}</td>
-                    <td class="num">{{ $est['hari_tersisa'] ?? '–' }}</td>
+                    <td class="num">{{ $angka($est['pemakaian_harian']) }}</td>
+                    <td class="num">{{ $est['hari'] === null ? '–' : $angka($est['hari']) }}</td>
                     <td>{{ $est['perkiraan_habis'] ?? '–' }}</td>
-                    <td>{{ $est['status'] ?? '–' }}</td>
+                    <td>{{ ucfirst(strtolower(str_replace('_', ' ', $est['status']))) }}
+                        @if ($est['pesan']) <small>{{ $est['pesan'] }}</small> @endif
+                    </td>
                     <td class="text-muted">{{ $baris->diperbarui_pada ? $baris->diperbarui_pada->translatedFormat('d M Y H:i') : 'Belum ada mutasi' }}</td>
                 </tr>
             @empty

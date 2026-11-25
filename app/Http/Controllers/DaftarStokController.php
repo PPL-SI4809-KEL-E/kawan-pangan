@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Cadangan;
+use App\Models\AmbangStatus;
 use App\Models\Gudang;
 use App\Models\Komoditas;
 use App\Models\Stok;
+use App\Services\LayananEstimasiStok;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
@@ -13,15 +14,13 @@ use Illuminate\View\View;
 /**
  * PBI-13 · Layar M-11: daftar stok per gudang dan komoditas untuk Badan Resmi.
  *
- * Hanya gudang milik instansi pengguna yang ditampilkan. Kolom estimasi
- * (penggunaan harian, hari tersisa, perkiraan habis, status, periode, kelengkapan)
- * diisi dari layanan estimasi PBI-12 setelah layanan itu masuk ke main.
+ * Hanya gudang milik instansi pengguna yang ditampilkan.
  */
 class DaftarStokController extends Controller
 {
     public const PER_HALAMAN = 50;
 
-    public function index(Request $request): View
+    public function index(Request $request, LayananEstimasiStok $layanan): View
     {
         Gate::authorize('viewAny', Gudang::class);
 
@@ -37,7 +36,8 @@ class DaftarStokController extends Controller
             : collect();
         $pilihanKomoditas = Komoditas::orderBy('nama')->get(['id', 'nama']);
 
-        $stok = Stok::query()
+        $acuan = today();
+        $query = Stok::query()
             ->select('stok.*')
             ->join('gudang', 'gudang.id', '=', 'stok.gudang_id')
             ->join('komoditas', 'komoditas.id', '=', 'stok.komoditas_id')
@@ -46,17 +46,19 @@ class DaftarStokController extends Controller
             ->when($filter['gudang'] ?? null, fn ($q, $id) => $q->where('stok.gudang_id', $id))
             ->when($filter['komoditas'] ?? null, fn ($q, $id) => $q->where('stok.komoditas_id', $id))
             ->with(['gudang:id,nama', 'komoditas:id,nama,satuan'])
-            ->withSum(['cadangan as cadangan_aktif' => fn ($q) => $q->where('status', Cadangan::STATUS_AKTIF)], 'jumlah')
             ->orderBy('komoditas.nama')
             ->orderBy('gudang.nama')
-            ->orderBy('stok.id')
+            ->orderBy('stok.id');
+        $stok = $layanan->denganTotalPeriode($query, $acuan)
             ->paginate(self::PER_HALAMAN)
             ->withQueryString();
 
-        $stok->getCollection()->each(function (Stok $baris) {
-            $cadangan = (float) ($baris->cadangan_aktif ?? 0);
-            $baris->setAttribute('cadangan_aktif', $cadangan);
-            $baris->setAttribute('tersedia', max(0.0, (float) $baris->jumlah_fisik_layak - $cadangan));
+        $ambang = AmbangStatus::aktif();
+        $estimasi = $stok->getCollection()->mapWithKeys(function (Stok $baris) use ($layanan, $acuan, $ambang) {
+            $hasil = $layanan->ringkas([$baris], $acuan, $ambang);
+            $baris->setAttribute('tersedia', $hasil['stok_tersedia']);
+
+            return [$baris->id => $hasil];
         });
 
         $terakhirDiperbarui = $instansiId
@@ -71,8 +73,7 @@ class DaftarStokController extends Controller
             'pilihanKomoditas' => $pilihanKomoditas,
             'filter' => $filter,
             'terakhirDiperbarui' => $terakhirDiperbarui,
-            // Diisi layanan estimasi PBI-12: [stok_id => [...]]. Kosong sampai layanan tersedia.
-            'estimasi' => [],
+            'estimasi' => $estimasi,
         ]);
     }
 }

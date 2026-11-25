@@ -35,7 +35,7 @@ Seluruh tabel dirancang kompatibel untuk SQLite (pengembangan lokal & pengujian 
 
 1. **Stok tersedia:** `tersedia = stok.jumlah_fisik_layak - SUM(cadangan.jumlah WHERE status = 'AKTIF')`.
 2. **Pemakaian harian:** total keluar `mutasi_stok` berjenis `PENYALURAN` selama 30 hari terakhir dibagi 30 (`RETUR`, `RUSAK`, dan `PENYESUAIAN` tidak dihitung).
-3. **Ketahanan (hari):** `tersedia / pemakaian_harian`, dibandingkan sebelum pembulatan terhadap `AmbangStatus::aktif()` (**Kritis < 14**, **Waspada 14–30**, **Aman > 30**).
+3. **Ketahanan pada simulasi PBI-03:** tabel simulasi di bawah memakai `tersedia / pemakaian_harian`. Untuk estimasi habis PBI-12, PSKE-60 menetapkan `jumlah_fisik_layak / pemakaian_harian` selama stok tersedia positif. Contoh 300 kg fisik, 60 kg cadangan aktif, dan 450 kg penyaluran selama 30 hari menghasilkan 15 kg/hari, 20 hari tersisa, dan 240 kg tersedia. Layanan membandingkan hari sebelum pembulatan terhadap `AmbangStatus::aktif()`. Tanggal habis memakai tanggal acuan ditambah jumlah hari yang dibulatkan ke atas. Stok tersedia nol menghasilkan 0 hari dan Kritis. Dengan stok positif dan riwayat lengkap, penggunaan nol menghasilkan Aman, dengan hari dan tanggal habis bernilai `null`.
 4. **Integritas saldo:** `stok.jumlah_fisik_layak` dan `mutasi_stok.saldo_setelah` dilindungi di tingkat model dan basis data (trigger SQLite & `CHECK` constraint MySQL 8) agar tidak pernah bernilai negatif, serta `ref_operasi` wajib unik.
 
 ## Cara Menjalankan Migrasi dan Seeder Simulasi
