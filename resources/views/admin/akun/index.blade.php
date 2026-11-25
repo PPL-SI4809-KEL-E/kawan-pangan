@@ -5,13 +5,15 @@
 
 @section('content')
 <div class="stack">
-    <div>
-        <h1>Verifikasi & Manajemen Akun</h1>
-        <p class="text-muted">Kelola persetujuan pendaftar Kepala Wilayah dan staf Badan Resmi beserta surat tugasnya.</p>
+    <div class="page-header">
+        <div>
+            <h1>Verifikasi & Manajemen Akun</h1>
+            <p>Kelola persetujuan pendaftar Kepala Wilayah dan staf Badan Resmi beserta surat tugasnya.</p>
+        </div>
     </div>
 
     {{-- Tab Filter Status --}}
-    <div style="display: flex; gap: var(--space-2); border-bottom: 1px solid var(--color-border); padding-bottom: var(--space-2); overflow-x: auto;">
+    <div class="tab-bar">
         @php
             $daftarTab = [
                 'MENUNGGU' => ['label' => 'Menunggu Verifikasi', 'badge' => 'badge-waspada'],
@@ -23,14 +25,13 @@
         @endphp
 
         @foreach ($daftarTab as $key => $tab)
-            <a 
-                href="{{ route('admin.akun.index', ['status' => $key, 'q' => $pencarian]) }}" 
+            <a
+                href="{{ route('admin.akun.index', ['status' => $key, 'q' => $pencarian]) }}"
                 class="btn btn-sm {{ $statusDipilih === $key ? 'btn-primary' : 'btn-ghost' }}"
-                style="white-space: nowrap;"
             >
                 {{ $tab['label'] }}
                 @if ($key !== 'SEMUA')
-                    <span class="badge {{ $tab['badge'] }}" style="margin-left: var(--space-1); font-size: 0.7rem;">
+                    <span class="badge {{ $tab['badge'] }} num">
                         {{ $jumlahStatus[$key] ?? 0 }}
                     </span>
                 @endif
@@ -39,13 +40,13 @@
     </div>
 
     {{-- Form Pencarian --}}
-    <form method="GET" action="{{ route('admin.akun.index') }}" style="display: flex; gap: var(--space-2); max-width: 450px;">
+    <form method="GET" action="{{ route('admin.akun.index') }}" class="search-bar">
         <input type="hidden" name="status" value="{{ $statusDipilih }}">
-        <input 
-            type="search" 
-            name="q" 
-            value="{{ $pencarian }}" 
-            placeholder="Cari nama, email, atau no. telepon..." 
+        <input
+            type="search"
+            name="q"
+            value="{{ $pencarian }}"
+            placeholder="Cari nama, email, atau no. telepon..."
             class="input"
         >
         <button type="submit" class="btn btn-secondary">Cari</button>
@@ -55,53 +56,53 @@
     </form>
 
     {{-- Tabel Pengguna --}}
-    <div class="card" style="padding: 0; overflow-x: auto;">
-        <table class="table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: var(--font-size-sm);">
+    <div class="table-wrap" tabindex="0" role="region" aria-label="Daftar verifikasi akun pengguna">
+        <table class="table">
             <thead>
-                <tr style="border-bottom: 1px solid var(--color-border); background: var(--color-netral-bg);">
-                    <th style="padding: var(--space-3) var(--space-4);">Nama & Kontak</th>
-                    <th style="padding: var(--space-3) var(--space-4);">Peran</th>
-                    <th style="padding: var(--space-3) var(--space-4);">Status</th>
-                    <th style="padding: var(--space-3) var(--space-4);">Penugasan Saat Ini</th>
-                    <th style="padding: var(--space-3) var(--space-4); text-align: right;">Aksi</th>
+                <tr>
+                    <th scope="col">Nama & Kontak</th>
+                    <th scope="col">Peran</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Penugasan Saat Ini</th>
+                    <th scope="col" class="actions">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($akun as $item)
-                    <tr style="border-bottom: 1px solid var(--color-border);">
-                        <td style="padding: var(--space-3) var(--space-4);">
+                    <tr>
+                        <td>
                             <strong>{{ $item->name }}</strong>
-                            <div class="text-muted" style="font-size: var(--font-size-xs);">{{ $item->email }}</div>
-                            <div class="text-muted" style="font-size: var(--font-size-xs);">{{ $item->no_hp ?? '-' }}</div>
+                            <div class="text-muted text-xs">{{ $item->email }}</div>
+                            <div class="text-muted text-xs num">{{ $item->no_hp ?? '-' }}</div>
                         </td>
-                        <td style="padding: var(--space-3) var(--space-4);">
+                        <td>
                             <span class="badge {{ $item->isKepalaWilayah() ? 'badge-info' : 'badge-waspada' }}">
                                 {{ $item->role->label() }}
                             </span>
                         </td>
-                        <td style="padding: var(--space-3) var(--space-4);">
+                        <td>
                             <span class="badge {{ $item->status->badge() }}">
                                 {{ $item->status->label() }}
                             </span>
                         </td>
-                        <td style="padding: var(--space-3) var(--space-4);">
+                        <td>
                             @if ($item->isKepalaWilayah())
                                 @if ($item->kode_wilayah)
-                                    <div><code>{{ $item->kode_wilayah }}</code></div>
-                                    <div class="text-muted" style="font-size: var(--font-size-xs);">{{ $item->wilayah->nama ?? 'Wilayah ID' }}</div>
+                                    <div><code class="num">{{ $item->kode_wilayah }}</code></div>
+                                    <div class="text-muted text-xs">{{ $item->wilayah->nama ?? 'Wilayah ID' }}</div>
                                 @else
-                                    <span class="text-muted" style="font-style: italic;">Belum ditugaskan</span>
+                                    <span class="text-muted text-italic">Belum ditugaskan</span>
                                 @endif
                             @elseif ($item->isBadanResmi())
                                 @if ($item->instansi_id)
                                     <div><strong>{{ $item->instansi->nama ?? 'Instansi #' . $item->instansi_id }}</strong></div>
-                                    <div class="text-muted" style="font-size: var(--font-size-xs);">Peran: <strong>{{ $item->getAttribute('jabatan') ?? 'PETUGAS' }}</strong></div>
+                                    <div class="text-muted text-xs">Peran: <strong>{{ $item->getAttribute('jabatan') ?? 'PETUGAS' }}</strong></div>
                                 @else
-                                    <span class="text-muted" style="font-style: italic;">Belum ditugaskan</span>
+                                    <span class="text-muted text-italic">Belum ditugaskan</span>
                                 @endif
                             @endif
                         </td>
-                        <td style="padding: var(--space-3) var(--space-4); text-align: right;">
+                        <td class="actions">
                             <a href="{{ route('admin.akun.show', $item) }}" class="btn btn-secondary btn-sm">
                                 Periksa & Verifikasi
                             </a>
@@ -109,7 +110,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" style="padding: var(--space-6); text-align: center;" class="text-muted">
+                        <td colspan="5" class="table-empty">
                             Tidak ada akun yang sesuai dengan filter.
                         </td>
                     </tr>
@@ -120,7 +121,7 @@
 
     {{-- Paginasi --}}
     @if ($akun->hasPages())
-        <div style="margin-top: var(--space-4);">
+        <div class="form-actions">
             {{ $akun->links() }}
         </div>
     @endif
