@@ -18,7 +18,7 @@
         <h1>Daftar stok</h1>
         <p>Stok fisik, cadangan, dan stok tersedia per komoditas di setiap gudang instansi Anda.</p>
     </div>
-    <p class="text-muted">
+    <p class="text-muted cluster">
         <svg class="icon icon-sm"><use href="#i-clock"/></svg>
         Terakhir diperbarui:
         <strong>{{ $terakhirDiperbarui ? \Illuminate\Support\Carbon::parse($terakhirDiperbarui)->translatedFormat('d M Y H:i') : 'belum ada mutasi' }}</strong>
@@ -32,7 +32,7 @@
 @endif
 
 <form class="card" method="get" action="{{ route('panel.instansi.stok.index') }}">
-    <div class="grid grid-3">
+    <div class="grid grid-2">
         <div class="field">
             <label for="gudang">Gudang</label>
             <select class="select" id="gudang" name="gudang">
