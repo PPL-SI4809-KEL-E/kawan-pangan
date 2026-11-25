@@ -196,6 +196,27 @@ class PengirimanPolicyTest extends TestCase
     }
 
     #[Test]
+    public function hanya_pengelola_instansi_yang_boleh_membuat_pengiriman(): void
+    {
+        $pengelola = $this->buatPengelola(id: 5, instansiId: 1);
+
+        $petugas = new User([
+            'role' => Role::BadanResmi->value,
+            'instansi_id' => 1,
+        ]);
+        $petugas->forceFill(['jabatan' => User::JABATAN_PETUGAS]);
+
+        $tanpaJabatan = new User([
+            'role' => Role::BadanResmi->value,
+            'instansi_id' => 1,
+        ]);
+
+        $this->assertTrue($this->policy->create($pengelola));
+        $this->assertFalse($this->policy->create($petugas));
+        $this->assertFalse($this->policy->create($tanpaJabatan));
+    }
+
+    #[Test]
     public function badan_resmi_tanpa_instansi_tidak_boleh_update(): void
     {
         $user = new User([

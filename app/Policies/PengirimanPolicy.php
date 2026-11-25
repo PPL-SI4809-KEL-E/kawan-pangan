@@ -72,13 +72,11 @@ class PengirimanPolicy
     }
 
     /**
-     * Hanya Badan Resmi (selain petugas lapangan murni) yang memiliki instansi yang boleh membuat pengiriman.
+     * Hanya Pengelola instansi (Badan Resmi dengan jabatan PENGELOLA) yang boleh membuat pengiriman.
      */
     public function create(User $user): bool
     {
-        return $user->role === Role::BadanResmi
-            && $user->instansi_id !== null
-            && $user->getAttribute('jabatan') !== User::JABATAN_PETUGAS;
+        return $user->isPengelolaInstansi();
     }
 
     /**
