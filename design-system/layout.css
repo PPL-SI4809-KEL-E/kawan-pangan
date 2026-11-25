@@ -198,9 +198,13 @@
 
 /* Grid */
 .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+.grid-align-start { align-items: start; }
 .stack { display: flex; flex-direction: column; gap: var(--space-4); }
+.stack-sm { gap: var(--space-3); }
+.stack-md { gap: var(--space-6); }
 .stack-lg { gap: var(--space-8); }
 .cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.breadcrumb-bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-bottom: var(--space-1); }
 .section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-2); margin: 0 0 var(--space-3); }
 .section-head h2 { margin: 0; font-size: var(--font-size-md); }
 .section-head p { margin: 0; font-size: var(--font-size-sm); color: var(--color-text-muted); }
@@ -254,7 +258,7 @@
   .app-main { padding: var(--space-6) var(--space-6) var(--space-12); }
   .page-header { flex-direction: row; align-items: flex-end; justify-content: space-between; }
   .page-header h1 { font-size: 1.75rem; }
-  .grid-2, .grid-3, .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-2, .grid-3, .grid-4, .meta-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .welcome-card { padding: var(--space-8); }
 }
@@ -273,8 +277,8 @@
   .sidebar-collapse { display: grid; }
   .app-main { margin-left: calc(var(--sidebar-width) + var(--shell-gap)); padding: var(--space-8) var(--space-8) var(--space-12); transition: margin-left 240ms var(--ease-out); }
   .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .grid-main-aside { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  .grid-4, .meta-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .grid-main-aside { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--space-6); }
   .tile-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
   .app.is-collapsed .app-sidebar { width: var(--sidebar-width-collapsed); }

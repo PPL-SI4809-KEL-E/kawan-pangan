@@ -10,21 +10,21 @@
 @section('title', 'Atur Cakupan Gudang · ' . $gudang->nama)
 
 @section('content')
-<div class="stack" style="gap: var(--space-6);">
+<div class="stack stack-md">
     {{-- Header Layar M-12 --}}
-    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: var(--space-4);">
+    <div class="page-header">
         <div>
-            <div style="display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-1);">
-                <a href="{{ $backRoute }}" class="btn btn-ghost btn-sm" style="padding-left: 0;">← Kembali</a>
+            <div class="breadcrumb-bar">
+                <a href="{{ $backRoute }}" class="btn btn-ghost btn-sm btn-back">← Kembali</a>
                 <span class="text-muted">·</span>
-                <span class="text-muted" style="font-size: var(--font-size-xs); font-family: monospace;">Layar M-12 (PBI-10)</span>
+                <span class="text-muted text-xs mono">Layar M-12 (PBI-10)</span>
             </div>
             <h1>Atur Cakupan Wilayah Gudang</h1>
-            <p class="text-muted" style="margin: 0;">
+            <p>
                 Menetapkan kecamatan yang dilayani gudang distribusi pangan agar batas layanan dan gudang utama terdefinisi jelas.
             </p>
         </div>
-        <div style="display: flex; align-items: center; gap: var(--space-2);">
+        <div class="cluster">
             <span class="badge {{ $gudang->aktif ? 'badge-aman' : 'badge-netral' }}">
                 {{ $gudang->aktif ? 'Gudang Aktif' : 'Gudang Nonaktif' }}
             </span>
@@ -32,67 +32,67 @@
     </div>
 
     {{-- Kartu Ringkasan Informasi Gudang --}}
-    <div class="card" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4); background: var(--color-surface);">
-        <div>
-            <span class="text-muted" style="font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 0.05em; font-weight: var(--font-weight-semibold);">Nama Gudang</span>
-            <div style="font-size: var(--font-size-md); font-weight: var(--font-weight-bold); margin-top: var(--space-1);">{{ $gudang->nama }}</div>
-            <div class="text-muted" style="font-size: var(--font-size-xs);">Kode: <code>{{ $gudang->kode_gudang ?? 'GDG-' . str_pad($gudang->id, 3, '0', STR_PAD_LEFT) }}</code></div>
+    <div class="card meta-grid">
+        <div class="meta-item">
+            <span class="meta-label">Nama Gudang</span>
+            <div class="meta-value">{{ $gudang->nama }}</div>
+            <div class="meta-sub">Kode: <code class="num">{{ $gudang->kode_gudang ?? 'GDG-' . str_pad($gudang->id, 3, '0', STR_PAD_LEFT) }}</code></div>
         </div>
-        <div>
-            <span class="text-muted" style="font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 0.05em; font-weight: var(--font-weight-semibold);">Instansi Pengelola</span>
-            <div style="font-size: var(--font-size-md); font-weight: var(--font-weight-semibold); margin-top: var(--space-1);">{{ $gudang->instansi->nama }}</div>
-            <div class="text-muted" style="font-size: var(--font-size-xs);">{{ $gudang->instansi->jenis ?? 'Badan Resmi Pemerintah' }}</div>
+        <div class="meta-item">
+            <span class="meta-label">Instansi Pengelola</span>
+            <div class="meta-value">{{ $gudang->instansi->nama }}</div>
+            <div class="meta-sub">{{ $gudang->instansi->jenis ?? 'Badan Resmi Pemerintah' }}</div>
         </div>
-        <div>
-            <span class="text-muted" style="font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 0.05em; font-weight: var(--font-weight-semibold);">Lokasi Gudang</span>
-            <div style="font-size: var(--font-size-md); margin-top: var(--space-1);">{{ $gudang->wilayah ? $gudang->wilayah->nama : '-' }}</div>
-            <div class="text-muted" style="font-size: var(--font-size-xs);">{{ $gudang->alamat }}</div>
+        <div class="meta-item">
+            <span class="meta-label">Lokasi Gudang</span>
+            <div class="meta-value">{{ $gudang->wilayah ? $gudang->wilayah->nama : '-' }}</div>
+            <div class="meta-sub">{{ $gudang->alamat }}</div>
         </div>
-        <div>
-            <span class="text-muted" style="font-size: var(--font-size-xs); text-transform: uppercase; letter-spacing: 0.05em; font-weight: var(--font-weight-semibold);">Statistik Cakupan</span>
-            <div style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); margin-top: var(--space-1); font-variant-numeric: tabular-nums;">
-                {{ $daftarCakupan->count() }} <span style="font-size: var(--font-size-xs); font-weight: normal; color: var(--color-text-muted);">kecamatan dilayani</span>
+        <div class="meta-item">
+            <span class="meta-label">Statistik Cakupan</span>
+            <div class="meta-value-lg">
+                {{ $daftarCakupan->count() }} <span class="meta-sub">kecamatan dilayani</span>
             </div>
-            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted);">
+            <div class="meta-sub">
                 {{ $daftarCakupan->where('is_utama', true)->count() }} sebagai gudang utama
             </div>
         </div>
     </div>
 
     {{-- Grid Dua Kolom: Daftar Cakupan Saat Ini & Form Tambah Cakupan --}}
-    <div style="display: grid; grid-template-columns: 1fr 340px; gap: var(--space-6); align-items: start;">
+    <div class="grid grid-main-aside grid-align-start">
         {{-- Kolom Kiri: Tabel Kecamatan yang Dilayani --}}
-        <div class="stack" style="gap: var(--space-4);">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="stack">
+            <div class="card-head">
                 <div>
-                    <h2>Kecamatan yang Dilayani</h2>
-                    <p class="text-muted" style="font-size: var(--font-size-xs); margin: 0;">
+                    <h2 class="card-title">Kecamatan yang Dilayani</h2>
+                    <p class="text-muted text-xs">
                         Kecamatan yang menerima pasokan distribusi dari gudang ini (PSKE-49).
                     </p>
                 </div>
-                <span class="badge badge-info">{{ $daftarCakupan->count() }} Terdaftar</span>
+                <span class="badge badge-info num">{{ $daftarCakupan->count() }} Terdaftar</span>
             </div>
 
             <div class="table-wrap" tabindex="0" role="region" aria-label="Daftar cakupan kecamatan">
                 <table class="table">
                     <thead>
                         <tr>
-                            <th scope="col" style="width: 120px;">Kode</th>
+                            <th scope="col" class="col-kode">Kode</th>
                             <th scope="col">Nama Kecamatan</th>
-                            <th scope="col" style="width: 140px;">Status Peran</th>
-                            <th scope="col" style="width: 160px; text-align: right;">Aksi</th>
+                            <th scope="col" class="col-status">Status Peran</th>
+                            <th scope="col" class="actions col-aksi">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($daftarCakupan as $cakupan)
                             <tr>
                                 <td>
-                                    <code style="font-variant-numeric: tabular-nums;">{{ $cakupan->kode_kecamatan }}</code>
+                                    <code class="num">{{ $cakupan->kode_kecamatan }}</code>
                                 </td>
                                 <td>
                                     <strong>{{ $cakupan->kecamatan->nama ?? $cakupan->kode_kecamatan }}</strong>
                                     @if ($cakupan->kecamatan && $cakupan->kecamatan->jumlah_penduduk)
-                                        <div class="text-muted" style="font-size: var(--font-size-xs); font-variant-numeric: tabular-nums;">
+                                        <div class="text-muted text-xs num">
                                             Populasi: {{ number_format($cakupan->kecamatan->jumlah_penduduk, 0, ',', '.') }} jiwa
                                         </div>
                                     @endif
@@ -108,8 +108,8 @@
                                         </span>
                                     @endif
                                 </td>
-                                <td style="text-align: right;">
-                                    <div style="display: inline-flex; gap: var(--space-2); justify-content: flex-end;">
+                                <td class="actions">
+                                    <div class="table-actions">
                                         {{-- Toggle Status Gudang Utama (PSKE-50) --}}
                                         <form method="POST" action="{{ route($routePrefix . '.toggle-utama', [$gudang, $cakupan]) }}">
                                             @csrf
@@ -138,7 +138,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" style="text-align: center; padding: var(--space-6); color: var(--color-text-muted);">
+                                <td colspan="4" class="table-empty">
                                     Belum ada kecamatan yang ditugaskan ke gudang ini. Tambahkan melalui form di samping.
                                 </td>
                             </tr>
@@ -149,15 +149,15 @@
         </div>
 
         {{-- Kolom Kanan: Form Tambah Cakupan Kecamatan --}}
-        <div class="card stack" style="gap: var(--space-4);">
+        <div class="card stack">
             <div>
-                <h3>Tambah Cakupan</h3>
-                <p class="text-muted" style="font-size: var(--font-size-xs); margin: 0;">
+                <h3 class="card-title">Tambah Cakupan</h3>
+                <p class="text-muted text-xs">
                     Pilih kecamatan untuk dihubungkan ke gudang {{ $gudang->nama }}.
                 </p>
             </div>
 
-            <form method="POST" action="{{ route($routePrefix . '.store', $gudang) }}" class="stack" style="gap: var(--space-3);">
+            <form method="POST" action="{{ route($routePrefix . '.store', $gudang) }}" class="stack stack-sm">
                 @csrf
                 <div class="field @error('kode_kecamatan') has-error @enderror">
                     <label for="kode_kecamatan">Pilih Kecamatan <span class="required">*</span></label>
@@ -174,20 +174,20 @@
                     @enderror
                 </div>
 
-                <div style="display: flex; align-items: flex-start; gap: var(--space-2); margin-top: var(--space-1);">
-                    <input type="checkbox" id="is_utama" name="is_utama" value="1" @checked(old('is_utama')) style="margin-top: 3px; cursor: pointer;">
-                    <label for="is_utama" style="font-size: var(--font-size-xs); line-height: 1.4; cursor: pointer;">
+                <label class="check-stack" for="is_utama">
+                    <input type="checkbox" id="is_utama" name="is_utama" value="1" @checked(old('is_utama'))>
+                    <span>
                         <strong>Tetapkan sebagai Gudang Utama</strong><br>
                         <span class="text-muted">Hanya boleh ada 1 gudang utama per kecamatan (PSKE-50).</span>
-                    </label>
-                </div>
+                    </span>
+                </label>
                 @error('is_utama')
-                    <div class="alert alert-error" style="font-size: var(--font-size-xs); padding: var(--space-2);">
+                    <div class="alert alert-error text-xs">
                         {{ $message }}
                     </div>
                 @enderror
 
-                <button type="submit" class="btn btn-primary btn-block" style="margin-top: var(--space-2);">
+                <button type="submit" class="btn btn-primary btn-block">
                     Tambahkan ke Cakupan
                 </button>
             </form>
@@ -195,18 +195,18 @@
     </div>
 
     {{-- PSKE-51: Penanda Kecamatan Tanpa Cakupan --}}
-    <div class="card stack" style="gap: var(--space-4); border-left: 4px solid var(--color-kritis);">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: var(--space-2);">
-            <div>
-                <div style="display: flex; align-items: center; gap: var(--space-2);">
+    <div class="card card-alert-kritis">
+        <div class="card-head">
+            <div class="stack stack-sm">
+                <div class="cluster">
                     <span class="badge badge-kritis">Perhatian Operasional</span>
-                    <h2 style="margin: 0; font-size: var(--font-size-lg);">Kecamatan Tanpa Cakupan Gudang</h2>
+                    <h2 class="card-title">Kecamatan Tanpa Cakupan Gudang</h2>
                 </div>
-                <p class="text-muted" style="font-size: var(--font-size-xs); margin-top: var(--space-1); margin-bottom: 0;">
+                <p class="text-muted text-xs">
                     Kecamatan di wilayah {{ $wilayahKabupaten ? $wilayahKabupaten->nama : 'operasional' }} yang belum dilayani oleh gudang mana pun. Segera tetapkan cakupan agar ketahanan pangan desa dapat dipantau (PSKE-51).
                 </p>
             </div>
-            <span class="badge badge-kritis" style="font-variant-numeric: tabular-nums;">
+            <span class="badge badge-kritis num">
                 {{ $kecamatanTanpaCakupan->count() }} Kecamatan Belum Tercover
             </span>
         </div>
@@ -216,20 +216,20 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th scope="col" style="width: 120px;">Kode</th>
+                            <th scope="col" class="col-kode">Kode</th>
                             <th scope="col">Nama Kecamatan</th>
                             <th scope="col">Status Cakupan</th>
-                            <th scope="col" style="width: 180px; text-align: right;">Aksi Cepat</th>
+                            <th scope="col" class="actions col-aksi">Aksi Cepat</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($kecamatanTanpaCakupan as $kecTanpa)
                             <tr>
-                                <td><code style="font-variant-numeric: tabular-nums;">{{ $kecTanpa->kode }}</code></td>
+                                <td><code class="num">{{ $kecTanpa->kode }}</code></td>
                                 <td>
                                     <strong>{{ $kecTanpa->nama }}</strong>
                                     @if ($kecTanpa->jumlah_penduduk)
-                                        <span class="text-muted" style="font-size: var(--font-size-xs); margin-left: var(--space-2); font-variant-numeric: tabular-nums;">
+                                        <span class="text-muted text-xs num">
                                             ({{ number_format($kecTanpa->jumlah_penduduk, 0, ',', '.') }} jiwa)
                                         </span>
                                     @endif
@@ -239,8 +239,8 @@
                                         Tanpa Cakupan
                                     </span>
                                 </td>
-                                <td style="text-align: right;">
-                                    <form method="POST" action="{{ route($routePrefix . '.store', $gudang) }}" style="display: inline;">
+                                <td class="actions">
+                                    <form method="POST" action="{{ route($routePrefix . '.store', $gudang) }}">
                                         @csrf
                                         <input type="hidden" name="kode_kecamatan" value="{{ $kecTanpa->kode }}">
                                         <input type="hidden" name="is_utama" value="1">
@@ -255,7 +255,7 @@
                 </table>
             </div>
         @else
-            <div class="alert alert-success" style="margin: 0;">
+            <div class="alert alert-success">
                 Semua kecamatan di wilayah ini sudah terhubung dengan gudang distribusi logistik pangan.
             </div>
         @endif
