@@ -3,6 +3,7 @@
 namespace Tests\Unit\Otorisasi;
 
 use App\Enums\Role;
+use App\Models\Laporan;
 use App\Models\User;
 use App\Policies\LaporanPolicy;
 use Illuminate\Database\Eloquent\Model;
@@ -22,7 +23,7 @@ class LaporanPolicyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->policy = new LaporanPolicy();
+        $this->policy = new LaporanPolicy;
     }
 
     /**
@@ -195,5 +196,39 @@ class LaporanPolicyTest extends TestCase
         // '321' bukan anak dari '32' — hanya '32.xx' yang cocok.
         $laporan = $this->buatLaporan('321');
         $this->assertFalse($this->policy->view($user, $laporan));
+    }
+
+    #[Test]
+    public function kolom_erd_kode_wilayah_pada_model_laporan_didukung(): void
+    {
+        $kepalaA = new User([
+            'role' => Role::KepalaWilayah->value,
+            'kode_wilayah' => '32.04.12',
+        ]);
+        $kepalaB = new User([
+            'role' => Role::KepalaWilayah->value,
+            'kode_wilayah' => '32.73.01',
+        ]);
+
+        $laporan = new Laporan(['kode_wilayah' => '32.04.12.2001']);
+
+        $this->assertTrue($this->policy->view($kepalaA, $laporan));
+        $this->assertTrue($this->policy->update($kepalaA, $laporan));
+        $this->assertFalse($this->policy->view($kepalaB, $laporan));
+        $this->assertFalse($this->policy->update($kepalaB, $laporan));
+    }
+
+    #[Test]
+    public function badan_resmi_tanpa_instansi_tidak_boleh_melihat_atau_memverifikasi_laporan(): void
+    {
+        $user = new User([
+            'role' => Role::BadanResmi->value,
+            'instansi_id' => null,
+        ]);
+        $laporan = $this->buatLaporan('32.04');
+
+        $this->assertFalse($this->policy->viewAny($user));
+        $this->assertFalse($this->policy->view($user, $laporan));
+        $this->assertFalse($this->policy->verifikasi($user, $laporan));
     }
 }

@@ -129,6 +129,7 @@ class User extends Authenticatable
      * pengelola instansi. Akun Badan Resmi lain diperlakukan sebagai petugas.
      */
     public const JABATAN_PENGELOLA = 'PENGELOLA';
+
     public const JABATAN_PETUGAS = 'PETUGAS';
 
     /**
@@ -146,6 +147,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Periksa apakah pengguna adalah petugas lapangan instansi.
+     */
+    public function isPetugasInstansi(): bool
+    {
+        return $this->isBadanResmi()
+            && $this->instansi_id !== null
+            && $this->getAttribute('jabatan') === self::JABATAN_PETUGAS;
+    }
+
+    /**
      * Periksa apakah kode wilayah tertentu berada dalam cakupan pengguna ini.
      * Menggunakan pencocokan prefix hierarki: kode_wilayah `32.04` mencakup
      * `32.04`, `32.04.12`, `32.04.12.2001`, dan seterusnya.
@@ -154,12 +165,15 @@ class User extends Authenticatable
      */
     public function menguasaiWilayah(string $kodeWilayah): bool
     {
-        if ($this->kode_wilayah === null) {
+        $kodeUser = trim((string) $this->kode_wilayah);
+        $target = trim($kodeWilayah);
+
+        if ($kodeUser === '' || $target === '') {
             return false;
         }
 
-        return $kodeWilayah === $this->kode_wilayah
-            || str_starts_with($kodeWilayah, $this->kode_wilayah.'.');
+        return $target === $kodeUser
+            || str_starts_with($target, $kodeUser.'.');
     }
 
     /**
@@ -169,7 +183,7 @@ class User extends Authenticatable
      */
     public function menguasaiInstansi(int $instansiId): bool
     {
-        if ($this->instansi_id === null) {
+        if ($this->instansi_id === null || $instansiId <= 0) {
             return false;
         }
 

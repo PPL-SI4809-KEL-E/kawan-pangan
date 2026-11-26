@@ -28,6 +28,16 @@ class Gudang extends Model
         return $this->belongsTo(Wilayah::class, 'kode_wilayah', 'kode');
     }
 
+    public function stok(): HasMany
+    {
+        return $this->hasMany(Stok::class, 'gudang_id');
+    }
+
+    public function pengiriman(): HasMany
+    {
+        return $this->hasMany(Pengiriman::class, 'gudang_asal_id');
+    }
+
     public function cakupan(): HasMany
     {
         return $this->hasMany(CakupanGudang::class, 'gudang_id');

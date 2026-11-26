@@ -4,12 +4,13 @@ namespace Database\Factories;
 
 use App\Enums\Role;
 use App\Enums\StatusAkun;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
+ * @extends Factory<User>
  */
 class UserFactory extends Factory
 {
@@ -73,13 +74,30 @@ class UserFactory extends Factory
     /**
      * Badan Resmi (pengelola) dengan instansi_id tertentu.
      */
-    public function badanResmi(int $instansiId = 1): static
+    public function badanResmi(int $instansiId = 1, string $jabatan = User::JABATAN_PENGELOLA): static
     {
         return $this->aktif()->state(fn () => [
             'role' => Role::BadanResmi->value,
             'instansi_id' => $instansiId,
+            'jabatan' => $jabatan,
             'kode_wilayah' => null,
         ]);
+    }
+
+    /**
+     * Badan Resmi dengan jabatan Pengelola Instansi.
+     */
+    public function pengelola(int $instansiId = 1): static
+    {
+        return $this->badanResmi($instansiId, User::JABATAN_PENGELOLA);
+    }
+
+    /**
+     * Badan Resmi dengan jabatan Petugas Instansi.
+     */
+    public function petugas(int $instansiId = 1): static
+    {
+        return $this->badanResmi($instansiId, User::JABATAN_PETUGAS);
     }
 
     /**
