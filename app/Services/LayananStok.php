@@ -55,11 +55,15 @@ class LayananStok
     /**
      * Hitung total jumlah cadangan berstatus AKTIF pada baris stok.
      */
-    public function totalCadanganAktif(Stok|int $stok): string
+    public function totalCadanganAktif(Stok|int $stok, ?int $kecualikanPengirimanId = null): string
     {
         $stokId = $stok instanceof Stok ? $stok->id : $stok;
         $daftarJumlah = Cadangan::where('stok_id', $stokId)
             ->where('status', Cadangan::STATUS_AKTIF)
+            ->when(
+                $kecualikanPengirimanId !== null,
+                fn ($query) => $query->where('pengiriman_id', '!=', $kecualikanPengirimanId),
+            )
             ->pluck('jumlah');
 
         $total = '0.000';
@@ -73,13 +77,13 @@ class LayananStok
     /**
      * Hitung stok tersedia (saldo fisik layak dikurangi total cadangan aktif).
      */
-    public function hitungStokTersedia(Stok|int $stok): string
+    public function hitungStokTersedia(Stok|int $stok, ?int $kecualikanPengirimanId = null): string
     {
         $stokId = $stok instanceof Stok ? $stok->id : $stok;
         $stokSegar = Stok::findOrFail($stokId);
 
         $fisik = $this->formatKuantitas($stokSegar->jumlah_fisik_layak, 'jumlah_fisik_layak');
-        $cadanganAktif = $this->totalCadanganAktif($stokId);
+        $cadanganAktif = $this->totalCadanganAktif($stokId, $kecualikanPengirimanId);
         $tersedia = bcsub($fisik, $cadanganAktif, 3);
 
         return bccomp($tersedia, '0.000', 3) < 0 ? '0.000' : $tersedia;
@@ -300,6 +304,8 @@ class LayananStok
         DateTimeInterface|string|null $waktu = null,
     ): MutasiStok {
         $targetFormatted = $this->formatKuantitas($saldoFisikBaru, 'saldo_setelah');
+        $this->pastikanSaldoTidakNegatif($targetFormatted, 'saldo_setelah');
+
         $stokId = $stok instanceof Stok ? $stok->id : $stok;
         $pencatatId = $pencatat instanceof User ? $pencatat->id : $pencatat;
 
@@ -322,6 +328,17 @@ class LayananStok
             }
 
             $jumlahAbsolut = str_starts_with($selisih, '-') ? substr($selisih, 1) : $selisih;
+
+            if (bccomp($selisih, '0.000', 3) < 0) {
+                $this->validasiBatasPenguranganStok(
+                    stokId: $stokTerkunci->id,
+                    saldoAwal: $saldoAwal,
+                    jumlahPengurangan: $jumlahAbsolut,
+                    saldoSetelah: $targetFormatted,
+                    pengirimanId: null,
+                    namaField: 'saldo_setelah',
+                );
+            }
 
             return $this->simpanPerubahanSaldo(
                 stokTerkunci: $stokTerkunci,
@@ -467,7 +484,22 @@ class LayananStok
             MutasiStok::JENIS_PENYESUAIAN => bcadd($saldoAwal, $jumlahFormatted, 3),
         };
 
-        $this->pastikanSaldoTidakNegatif($saldoSetelah);
+        $adalahPengurangan = in_array($jenis, [MutasiStok::JENIS_PENYALURAN, MutasiStok::JENIS_RUSAK], true)
+            || ($jenis === MutasiStok::JENIS_PENYESUAIAN && bccomp($jumlahFormatted, '0.000', 3) < 0);
+
+        if ($adalahPengurangan) {
+            $kecualikanPengirimanId = $jenis === MutasiStok::JENIS_PENYALURAN ? $pengirimanId : null;
+            $this->validasiBatasPenguranganStok(
+                stokId: $stokTerkunci->id,
+                saldoAwal: $saldoAwal,
+                jumlahPengurangan: $jumlahTersimpan,
+                saldoSetelah: $saldoSetelah,
+                pengirimanId: $kecualikanPengirimanId,
+                namaField: 'jumlah',
+            );
+        } else {
+            $this->pastikanSaldoTidakNegatif($saldoSetelah);
+        }
 
         return $this->simpanPerubahanSaldo(
             stokTerkunci: $stokTerkunci,
@@ -480,6 +512,38 @@ class LayananStok
             pengirimanId: $pengirimanId,
             waktu: $waktu,
         );
+    }
+
+    /**
+     * Pastikan pengurangan saldo tidak menghasilkan saldo negatif dan tidak melebihi stok tersedia.
+     */
+    private function validasiBatasPenguranganStok(
+        int $stokId,
+        string $saldoAwal,
+        string $jumlahPengurangan,
+        string $saldoSetelah,
+        ?int $pengirimanId = null,
+        string $namaField = 'jumlah',
+    ): void {
+        $this->pastikanSaldoTidakNegatif($saldoSetelah, $namaField);
+
+        $cadanganAktif = $this->totalCadanganAktif($stokId, $pengirimanId);
+        $stokTersedia = bcsub($saldoAwal, $cadanganAktif, 3);
+        if (bccomp($stokTersedia, '0.000', 3) < 0) {
+            $stokTersedia = '0.000';
+        }
+
+        if (bccomp($jumlahPengurangan, $stokTersedia, 3) > 0) {
+            throw ValidationException::withMessages([
+                $namaField => [
+                    sprintf(
+                        'Jumlah mutasi keluar (%s) melebihi stok tersedia (%s).',
+                        $jumlahPengurangan,
+                        $stokTersedia,
+                    ),
+                ],
+            ]);
+        }
     }
 
     /**
