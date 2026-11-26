@@ -1,4 +1,4 @@
-{{-- PBI-04 · M-07 Halaman login akun (PSKE-16, PSKE-31). Tampilan v2: PSKE-92 --}}
+{{-- PBI-04 · M-07 Halaman login akun (PSKE-16, PSKE-31). Tampilan v3: PSKE-96 --}}
 @extends('layouts.auth')
 
 @section('title', 'Masuk')
@@ -6,9 +6,8 @@
 
 @section('content')
 <section class="card auth-form" role="region" aria-label="Formulir Masuk">
-    <p class="eyebrow">Ruang kerja petugas</p>
     <h1 class="auth-title">Masuk ke Kawan Pangan</h1>
-    <p class="auth-sub text-muted">Gunakan alamat email dan kata sandi akun Anda yang telah terverifikasi.</p>
+    <p class="auth-sub text-muted">Pakai email dan kata sandi akun yang sudah diverifikasi Superadmin.</p>
 
     @if (session('status'))
         <div class="alert alert-success auth-alert" role="status">{{ session('status') }}</div>

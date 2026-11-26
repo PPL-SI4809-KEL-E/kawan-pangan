@@ -9,9 +9,9 @@
 @endpush
 
 @section('content')
-<section class="card">
-    <h1 class="reg-title">Daftar Akun</h1>
-    <p class="text-muted reg-sub">
+<section class="card auth-form">
+    <h1 class="auth-title reg-title">Daftar Akun</h1>
+    <p class="text-muted auth-sub reg-sub">
         Untuk Kepala Wilayah (kepala desa, lurah, camat) dan staf Badan Resmi.
         Masyarakat tidak perlu mendaftar untuk melihat peta dan informasi.
     </p>
@@ -113,7 +113,11 @@
             <label class="dropzone" id="dropzone">
                 <input id="surat_tugas" name="surat_tugas" type="file"
                        accept=".pdf,.jpg,.jpeg,application/pdf,image/jpeg" data-maks-kb="{{ \App\Models\DokumenPendukung::MAKS_KB }}">
-                <span class="dropzone-empty" id="dz-empty"><strong>Pilih berkas</strong> atau seret ke sini</span>
+                <span class="dropzone-empty" id="dz-empty">
+                    <svg class="icon" aria-hidden="true"><use href="#i-file"/></svg>
+                    <span class="dropzone-title">Pilih surat tugas</span>
+                    <span class="dropzone-hint">atau seret berkasnya ke sini</span>
+                </span>
                 <span class="dropzone-file" id="dz-file" hidden>
                     <span class="file-badge" id="dz-ext">PDF</span>
                     <span class="file-meta"><strong id="dz-nama"></strong><small class="text-muted" id="dz-ukuran"></small></span>
@@ -136,7 +140,7 @@
         </div>
 
         <button class="btn btn-primary btn-block" type="submit" id="btn-daftar">Daftar</button>
-        <p class="text-muted reg-foot">Sudah punya akun? Masuk lewat halaman login.</p>
+        <p class="auth-foot reg-foot"><span class="text-muted">Sudah punya akun?</span> <a href="{{ route('login') }}">Masuk</a></p>
     </form>
 </section>
 @endsection
