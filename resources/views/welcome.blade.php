@@ -1,25 +1,25 @@
-{{-- Beranda publik v2: peta ketersediaan pangan per kecamatan (PSKE-90, PSKE-91).
+{{-- Beranda publik v3: atlas stok pangan per kecamatan (PSKE-96, lanjutan PSKE-90/91).
      Data diambil dari $petaWilayah bila controller sudah mengirimnya; tanpa itu dipakai data simulasi di beranda.js.
      Kontrak data ada di docs/design-system.md bagian "Pola layar peta". --}}
 <!DOCTYPE html>
 <html lang="id">
 <head>
     @include('layouts.partials.head')
-    <title>Kawan Pangan · Peta ketersediaan pangan</title>
+    <title>Peta stok pangan per kecamatan | Kawan Pangan</title>
     <meta name="description" content="Peta status ketersediaan pangan per kecamatan: Aman, Waspada, dan Kritis, beserta stok dan mutasi terakhir.">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
     @vite(['resources/css/design-system.css', 'resources/css/beranda.css'])
 </head>
 <body class="beranda">
     @include('layouts.partials.ikon')
-    <a class="sr-only" href="#peta">Lewati ke peta</a>
+    <a class="skip-link" href="#peta-list">Lewati ke daftar kecamatan</a>
 
     <header class="pub-bar">
         <a class="app-brand" href="{{ url('/') }}">
             <span class="app-brand-mark" aria-hidden="true">KP</span>Kawan Pangan
         </a>
         <nav class="pub-nav" aria-label="Navigasi beranda">
-            <a href="#peta">Peta</a>
+            <a href="#peta" aria-current="page">Peta</a>
             <a href="#cara-kerja">Cara kerja</a>
         </nav>
         <div class="pub-actions">
@@ -37,130 +37,153 @@
                 </form>
             @else
                 <a href="{{ route('login') }}" class="btn btn-ghost btn-sm">Masuk</a>
-                <a href="{{ route('registrasi.create') }}" class="btn btn-accent btn-sm">Daftar</a>
+                <a href="{{ route('registrasi.create') }}" class="btn btn-primary btn-sm"><span>Daftar<span class="pub-lebar"> petugas</span></span></a>
             @endauth
         </div>
     </header>
 
     <main>
-        <section class="peta" id="peta" aria-labelledby="peta-judul">
-            <aside class="peta-panel">
-                <div class="peta-head">
-                    <p class="eyebrow">Peta ketersediaan pangan</p>
-                    <h1 id="peta-judul">Status stok pangan per kecamatan</h1>
-                    <p class="text-muted">Pilih kecamatan untuk melihat stok, estimasi habis, dan mutasi terakhir.</p>
-                    <p class="peta-sumber" id="peta-sumber">
-                        <span class="badge badge-info">Data simulasi</span>
-                        <span>Angka contoh sampai stok gudang tersambung.</span>
-                    </p>
+        <section class="atlas" id="peta" aria-labelledby="peta-judul">
+            <div class="atlas-panel">
+                <div class="atlas-head">
+                    <h1 id="peta-judul">Stok pangan per kecamatan</h1>
+                    <p class="atlas-lead" id="peta-cakupan">Berapa hari stok gudang cukup untuk penyaluran warga.</p>
+                    <p class="atlas-sumber" id="peta-sumber"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-alert"/></svg>Angka contoh. Data gudang belum tersambung.</p>
                 </div>
 
-                <div class="peta-tools">
-                    <label class="peta-cari">
-                        <span class="sr-only">Cari kecamatan</span>
-                        <svg class="icon icon-sm"><use href="#i-search"/></svg>
-                        <input class="input" type="search" id="peta-cari" placeholder="Cari kecamatan" autocomplete="off">
-                    </label>
-                    <div class="seg" role="group" aria-label="Saring status">
-                        <button type="button" class="seg-item" data-filter="semua" aria-pressed="true">Semua <span class="seg-count" data-count="semua">0</span></button>
-                        <button type="button" class="seg-item" data-filter="kritis" aria-pressed="false">Kritis <span class="seg-count" data-count="kritis">0</span></button>
-                        <button type="button" class="seg-item" data-filter="waspada" aria-pressed="false">Waspada <span class="seg-count" data-count="waspada">0</span></button>
-                        <button type="button" class="seg-item" data-filter="aman" aria-pressed="false">Aman <span class="seg-count" data-count="aman">0</span></button>
+                <div class="sebaran" role="group" aria-labelledby="sebaran-judul">
+                    <p class="sebaran-judul" id="sebaran-judul">Saring menurut status</p>
+                    <div class="sebaran-bar" id="sebaran-bar" aria-hidden="true">
+                        <span class="sebaran-seg" data-status="kritis" data-bar="kritis"></span>
+                        <span class="sebaran-seg" data-status="waspada" data-bar="waspada"></span>
+                        <span class="sebaran-seg" data-status="aman" data-bar="aman"></span>
+                        <span class="sebaran-seg" data-status="netral" data-bar="netral"></span>
                     </div>
-                </div>
-
-                <ul class="peta-list" id="peta-list" aria-label="Daftar kecamatan">
-                    <li><div class="skeleton peta-skeleton"></div></li>
-                    <li><div class="skeleton peta-skeleton"></div></li>
-                    <li><div class="skeleton peta-skeleton"></div></li>
-                </ul>
-                <p class="peta-kosong" id="peta-kosong" hidden>Tidak ada kecamatan yang cocok dengan pencarian.</p>
-            </aside>
-
-            <div class="peta-map">
-                <div id="map" class="peta-canvas" role="region" aria-label="Peta kecamatan"></div>
-
-                <article class="peta-detail" id="peta-detail" aria-live="polite" hidden>
-                    <div class="peta-detail-head">
-                        <div>
-                            <h2 class="peta-detail-title" data-detail="nama"></h2>
-                            <p class="peta-detail-sub" data-detail="lokasi"></p>
-                        </div>
-                        <button type="button" class="btn btn-ghost btn-icon btn-sm" id="peta-tutup" aria-label="Tutup detail">
-                            <svg class="icon icon-sm"><use href="#i-x"/></svg>
+                    <div class="sebaran-opsi">
+                        <button type="button" class="sebaran-opt" data-filter="semua" aria-pressed="true">
+                            <span class="swatch" aria-hidden="true" style="--swatch: var(--color-text)"></span>
+                            <span class="sebaran-opt-label">Semua</span>
+                            <span class="sebaran-opt-count" data-count="semua">0</span>
+                            <span class="sebaran-opt-hint">Semua status</span>
+                        </button>
+                        <button type="button" class="sebaran-opt" data-filter="kritis" aria-pressed="false">
+                            <span class="swatch swatch-kritis" aria-hidden="true"></span>
+                            <span class="sebaran-opt-label">Kritis</span>
+                            <span class="sebaran-opt-count" data-count="kritis">0</span>
+                            <span class="sebaran-opt-hint">Kurang dari 14 hari</span>
+                        </button>
+                        <button type="button" class="sebaran-opt" data-filter="waspada" aria-pressed="false">
+                            <span class="swatch swatch-waspada" aria-hidden="true"></span>
+                            <span class="sebaran-opt-label">Waspada</span>
+                            <span class="sebaran-opt-count" data-count="waspada">0</span>
+                            <span class="sebaran-opt-hint">14 sampai 30 hari</span>
+                        </button>
+                        <button type="button" class="sebaran-opt" data-filter="aman" aria-pressed="false">
+                            <span class="swatch swatch-aman" aria-hidden="true"></span>
+                            <span class="sebaran-opt-label">Aman</span>
+                            <span class="sebaran-opt-count" data-count="aman">0</span>
+                            <span class="sebaran-opt-hint">Lebih dari 30 hari</span>
                         </button>
                     </div>
-                    <div class="peta-detail-status">
-                        <span data-detail="badge"></span>
-                        <span class="text-muted" data-detail="diperbarui"></span>
-                    </div>
-                    <dl class="peta-angka">
-                        <div><dt>Estimasi habis</dt><dd data-detail="hari"></dd></div>
-                        <div><dt>Total stok</dt><dd data-detail="stok"></dd></div>
-                    </dl>
-                    <h3 class="peta-detail-label">Stok per komoditas</h3>
-                    <ul class="peta-komoditas" data-detail="komoditas"></ul>
-                    <h3 class="peta-detail-label">Gudang utama</h3>
-                    <p class="peta-gudang" data-detail="gudang"></p>
-                    <h3 class="peta-detail-label">Aktivitas terakhir</h3>
-                    <ol class="timeline" data-detail="aktivitas"></ol>
-                </article>
-
-                <div class="peta-legend" aria-label="Keterangan warna">
-                    <span><i class="dot dot-aman"></i>Aman &gt; 30 hari</span>
-                    <span><i class="dot dot-waspada"></i>Waspada 14–30</span>
-                    <span><i class="dot dot-kritis"></i>Kritis &lt; 14</span>
+                    <p class="sebaran-catatan" id="sebaran-netral" hidden></p>
                 </div>
+
+                <label class="atlas-cari">
+                    <span class="sr-only">Cari kecamatan</span>
+                    <svg class="icon icon-sm" aria-hidden="true"><use href="#i-search"/></svg>
+                    <input class="input" type="search" id="peta-cari" placeholder="Cari kecamatan" autocomplete="off">
+                </label>
+
+                <ul class="wil-list atlas-list" id="peta-list" aria-label="Daftar kecamatan, urut dari stok paling cepat habis" tabindex="-1">
+                    <li><div class="skeleton atlas-skeleton"></div></li>
+                    <li><div class="skeleton atlas-skeleton"></div></li>
+                    <li><div class="skeleton atlas-skeleton"></div></li>
+                </ul>
+                <div class="state atlas-kosong" id="peta-kosong" hidden>
+                    <span class="state-icon" aria-hidden="true"><svg class="icon"><use href="#i-search"/></svg></span>
+                    <div class="state-content">
+                        <p class="state-title" id="peta-kosong-judul">Tidak ada kecamatan yang cocok</p>
+                        <p class="state-text" id="peta-kosong-teks">Coba nama lain, atau pilih status Semua.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="atlas-map">
+                <div id="map" class="atlas-canvas" role="region" aria-label="Peta kecamatan"></div>
+
+                <article class="atlas-detail" id="peta-detail" aria-labelledby="detail-judul" hidden>
+                    <header class="detail-head">
+                        <div class="detail-title-wrap">
+                            <h2 class="detail-title" id="detail-judul" data-detail="nama"></h2>
+                            <p class="detail-sub" data-detail="lokasi"></p>
+                        </div>
+                        <button type="button" class="btn btn-ghost btn-icon detail-close" id="peta-tutup" aria-label="Tutup detail">
+                            <svg class="icon" aria-hidden="true"><use href="#i-x"/></svg>
+                        </button>
+                    </header>
+
+                    <div class="detail-figure" data-detail="figure">
+                        <span data-detail="badge"></span>
+                        <p class="detail-figure-label" data-detail="hari-label">Perkiraan stok habis dalam</p>
+                        <p class="detail-figure-value" data-detail="hari"></p>
+                        <p class="detail-figure-meta"><span data-detail="stok"></span><span data-detail="diperbarui"></span></p>
+                    </div>
+
+                    <section class="detail-section" aria-labelledby="detail-komoditas">
+                        <h3 id="detail-komoditas">Per komoditas</h3>
+                        <table class="detail-table">
+                            <thead class="sr-only"><tr><th scope="col">Komoditas</th><th scope="col">Stok</th><th scope="col">Cukup untuk</th></tr></thead>
+                            <tbody data-detail="komoditas"></tbody>
+                        </table>
+                    </section>
+
+                    <section class="detail-section" aria-labelledby="detail-gudang">
+                        <h3 id="detail-gudang">Gudang</h3>
+                        <p class="detail-gudang" data-detail="gudang"></p>
+                    </section>
+
+                    <section class="detail-section" aria-labelledby="detail-mutasi">
+                        <h3 id="detail-mutasi">Mutasi terakhir</h3>
+                        <ol class="ledger" data-detail="aktivitas"></ol>
+                    </section>
+                </article>
             </div>
         </section>
 
         <section class="alur" id="cara-kerja" aria-labelledby="alur-judul">
             <div class="alur-intro">
-                <p class="eyebrow">Cara kerja</p>
-                <h2 id="alur-judul">Dari stok gudang sampai bantuan diterima warga</h2>
-                <p class="text-muted">Setiap peran mengisi bagiannya, dan peta di atas dihitung dari catatan mereka.</p>
+                <h2 id="alur-judul">Cara angka di peta dihitung</h2>
+                <p>Peta ini tidak diisi tangan. Setiap angka berasal dari catatan petugas di empat tahap berikut.</p>
             </div>
             <ol class="alur-list">
                 <li>
-                    <span class="alur-no">01</span>
-                    <div>
-                        <h3>Petugas mendaftar dengan surat tugas</h3>
-                        <p>Kepala wilayah dan staf badan resmi diverifikasi dulu sebelum bisa masuk, lalu ditugaskan ke wilayah atau instansinya.</p>
-                    </div>
+                    <h3>Petugas mendaftar dengan surat tugas</h3>
+                    <p>Kepala wilayah dan staf badan resmi diverifikasi dulu, lalu ditugaskan ke wilayah atau instansinya.</p>
                 </li>
                 <li>
-                    <span class="alur-no">02</span>
-                    <div>
-                        <h3>Gudang mencatat setiap mutasi stok</h3>
-                        <p>Barang masuk, keluar, retur, dan rusak tercatat sampai milidetik, jadi saldo selalu bisa ditelusuri.</p>
-                    </div>
+                    <h3>Gudang mencatat setiap mutasi</h3>
+                    <p>Barang masuk, keluar, retur, dan rusak tercatat sampai milidetik, jadi saldo selalu bisa ditelusuri.</p>
                 </li>
                 <li>
-                    <span class="alur-no">03</span>
-                    <div>
-                        <h3>Status dihitung dari ketahanan stok</h3>
-                        <p>Stok dibandingkan dengan kebutuhan penduduk per hari, lalu diberi status Aman, Waspada, atau Kritis.</p>
-                    </div>
+                    <h3>Status dihitung dari ketahanan stok</h3>
+                    <p>Stok tersedia dibagi rata-rata penyaluran harian 30 hari terakhir, lalu diberi status Aman, Waspada, atau Kritis.</p>
                 </li>
                 <li>
-                    <span class="alur-no">04</span>
-                    <div>
-                        <h3>Bantuan dikirim dan dikonfirmasi</h3>
-                        <p>Laporan kebutuhan diverifikasi, pengiriman dibuat, dan wilayah penerima mencatat jumlah yang benar-benar tiba.</p>
-                    </div>
+                    <h3>Penerima mengonfirmasi bantuan</h3>
+                    <p>Wilayah penerima mencatat jumlah yang benar-benar tiba, beserta selisih dan foto surat jalan.</p>
                 </li>
             </ol>
         </section>
     </main>
 
     <footer class="pub-foot">
-        <span>© 2026 Kawan Pangan · Proyek PPL SI4809 Kelompok E, Telkom University</span>
-        <span class="cluster">
+        <p>Kawan Pangan, proyek PPL SI4809 Kelompok E, Telkom University. 2026.</p>
+        <p class="pub-foot-links">
             @guest
                 <a href="{{ route('login') }}">Masuk</a>
-                <a href="{{ route('registrasi.create') }}">Daftar akun</a>
+                <a href="{{ route('registrasi.create') }}">Daftar petugas</a>
             @endguest
-        </span>
+        </p>
     </footer>
 
     <script type="application/json" id="peta-data">@json($petaWilayah ?? null)</script>
