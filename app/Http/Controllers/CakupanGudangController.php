@@ -8,6 +8,7 @@ use App\Models\Wilayah;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 /**
@@ -34,17 +35,7 @@ class CakupanGudangController extends Controller
             ->get();
 
         // Cari kode kabupaten/kota induk dari lokasi gudang
-        $kabupatenKode = null;
-        if ($gudang->wilayah) {
-            if ((int) $gudang->wilayah->level === 3) {
-                $kabupatenKode = $gudang->wilayah->kode_induk;
-            } elseif ((int) $gudang->wilayah->level === 2) {
-                $kabupatenKode = $gudang->wilayah->kode;
-            } elseif ((int) $gudang->wilayah->level === 4) {
-                $kecamatan = Wilayah::where('kode', $gudang->wilayah->kode_induk)->first();
-                $kabupatenKode = $kecamatan?->kode_induk;
-            }
-        }
+        $kabupatenKode = $this->kabupatenGudang($gudang);
 
         // Ambil semua kecamatan dalam kabupaten terkait (atau seluruh kecamatan jika gudang di tingkat provinsi)
         $semuaKecamatanQuery = Wilayah::where('level', 3);
@@ -100,13 +91,52 @@ class CakupanGudangController extends Controller
             'kode_kecamatan.exists' => 'Kecamatan yang dipilih tidak valid dalam master wilayah.',
         ]);
 
+        $gudang->loadMissing('wilayah');
+        $kecamatan = Wilayah::where('kode', $request->input('kode_kecamatan'))->first();
+        if (! $kecamatan || (int) $kecamatan->level !== 3) {
+            throw ValidationException::withMessages([
+                'kode_kecamatan' => 'Wilayah cakupan wajib berupa tingkat kecamatan (level 3).',
+            ]);
+        }
+
+        $kabupatenGudang = $this->kabupatenGudang($gudang);
+        if ($kabupatenGudang !== null && $kecamatan->kode_induk !== $kabupatenGudang) {
+            throw ValidationException::withMessages([
+                'kode_kecamatan' => 'Kecamatan harus berada dalam kabupaten/kota yang sama dengan gudang.',
+            ]);
+        }
+
+        if ($kabupatenGudang === null && $gudang->wilayah && (int) $gudang->wilayah->level === 1
+            && ! str_starts_with($kecamatan->kode, $gudang->wilayah->kode.'.')) {
+            throw ValidationException::withMessages([
+                'kode_kecamatan' => 'Kecamatan harus berada dalam provinsi yang sama dengan gudang.',
+            ]);
+        }
+
         CakupanGudang::create([
             'gudang_id' => $gudang->id,
-            'kode_kecamatan' => $request->input('kode_kecamatan'),
+            'kode_kecamatan' => $kecamatan->kode,
             'is_utama' => $request->boolean('is_utama'),
         ]);
 
         return back()->with('sukses', 'Kecamatan berhasil ditambahkan ke cakupan gudang.');
+    }
+
+    /**
+     * Ambil kode kabupaten/kota induk dari lokasi gudang.
+     */
+    private function kabupatenGudang(Gudang $gudang): ?string
+    {
+        if (! $gudang->wilayah) {
+            return null;
+        }
+
+        return match ((int) $gudang->wilayah->level) {
+            3 => $gudang->wilayah->kode_induk,
+            2 => $gudang->wilayah->kode,
+            4 => Wilayah::where('kode', $gudang->wilayah->kode_induk)->value('kode_induk'),
+            default => null,
+        };
     }
 
     /**
