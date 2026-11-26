@@ -1,4 +1,4 @@
-{{-- Sidebar navy bersama untuk Superadmin, Kepala Wilayah, dan Badan Resmi (PSKE-88).
+{{-- Sidebar bersama untuk Superadmin, Kepala Wilayah, dan Badan Resmi (PSKE-88).
      Menu mengikuti role; route dan nama route tidak diubah. --}}
 @php
     $pengguna = auth()->user();
