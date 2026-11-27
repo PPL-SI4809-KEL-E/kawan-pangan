@@ -10,13 +10,9 @@
 
 @section('content')
 <section class="card reg-terkirim" role="status">
-    <span class="reg-ikon" aria-hidden="true">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
-        </svg>
-    </span>
-    <h1 class="reg-title">Pendaftaran Terkirim</h1>
+    <span class="state-icon reg-ikon" aria-hidden="true"><svg class="icon"><use href="#i-clock"/></svg></span>
     <span class="badge {{ $status->badge() }}">{{ $status->label() }}</span>
+    <h1 class="auth-title reg-title">Pendaftaran Terkirim</h1>
     <p class="text-muted">
         Akun <strong>{{ $email }}</strong> sedang diperiksa Superadmin.
         Anda belum dapat masuk sampai akun diaktifkan.
@@ -26,6 +22,6 @@
         <li>Bila sah, akun diaktifkan dan dikaitkan dengan wilayah atau instansi Anda.</li>
         <li>Bila ditolak, alasannya ditampilkan saat Anda mencoba masuk.</li>
     </ol>
-    <a class="btn btn-secondary" href="{{ url('/') }}">Kembali ke Beranda</a>
+    <a class="btn btn-secondary" href="{{ url('/') }}">Kembali ke peta</a>
 </section>
 @endsection

@@ -3,105 +3,164 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Keadaan Khusus · Kawan Pangan</title>
+  <title>Keadaan Khusus | Kawan Pangan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="tokens.css">
   <link rel="stylesheet" href="components.css">
   <link rel="stylesheet" href="layout.css">
   <style>
-    /* tata letak halaman contoh keadaan khusus (PSKE-67) */
-    .kk { max-width: 1040px; margin: 0 auto; padding: var(--space-8) var(--space-4); }
-    .kk-label { margin-bottom: var(--space-2); font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
-    .kk-kosong { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding: var(--space-8) var(--space-4); text-align: center; }
-    .kk-kosong h3, .kk-kosong p { margin: 0; }
-    .kk-ikon { display: grid; place-items: center; width: 48px; height: 48px; border-radius: var(--radius-full); background: var(--color-netral-bg); color: var(--color-netral); font-weight: var(--font-weight-bold); }
-    .kk-ikon-kritis { background: var(--color-kritis-bg); color: var(--color-kritis); }
-    .kk-ikon-info { background: var(--color-info-bg); color: var(--color-info); }
-    .kk-baris { display: flex; justify-content: space-between; gap: var(--space-3); font-size: var(--font-size-sm); }
-    .kk .card > :last-child { margin-bottom: 0; }
+    /* Halaman contoh keadaan khusus (PSKE-67, v3: PSKE-96) */
+    .kk { max-width: 1120px; margin: 0 auto; padding: var(--space-10) var(--space-4) var(--space-16); }
+    .kk-intro { max-width: 60ch; margin-bottom: var(--space-10); }
+    .kk-intro h1 { margin: 0 0 var(--space-3); font-size: 2rem; letter-spacing: -0.02em; }
+    .kk-intro p { margin: 0; color: var(--color-text-muted); }
+    .kk-grid { display: grid; gap: var(--space-8) var(--space-6); }
+    .kk-item h2 { margin: 0 0 var(--space-1); font-size: var(--font-size-md); }
+    .kk-item > p { margin: 0 0 var(--space-3); font-size: var(--font-size-sm); color: var(--color-text-muted); }
+    .kk-baris { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-2) 0; border-top: 1px solid var(--color-border); font-size: var(--font-size-sm); }
+    .kk-baris:first-of-type { border-top: 0; }
+    .kk-baris .num { font-weight: var(--font-weight-medium); }
+    .kk-catatan { margin-top: var(--space-4); padding: var(--space-4); border-radius: var(--radius-md); background: var(--color-waspada-bg); }
+    .kk-catatan .state-icon { width: 32px; height: 32px; background: var(--color-surface); }
+    .kk-catatan .state-icon .icon { width: 18px; height: 18px; }
+    .kk-catatan .state-text { color: var(--color-waspada); }
+    .kk-catatan .state-title { color: var(--color-waspada); font-size: var(--font-size-sm); }
+    .kk .field:last-child { margin-bottom: 0; }
+    @media (min-width: 768px) {
+      .kk { padding: var(--space-16) var(--space-6); }
+      .kk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .kk-lebar { grid-row: span 2; }
+    }
+    @media (min-width: 1024px) {
+      .kk-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
   </style>
 </head>
 <body>
+<svg xmlns="http://www.w3.org/2000/svg" hidden aria-hidden="true">
+  <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M3 13h5l1.5 3h5L16 13h5"/><path d="M5 5h14l2 8v6H3v-6l2-8Z"/></symbol>
+  <symbol id="i-history" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7L4 8.5"/><path d="M4 4v4.5h4.5M12 8v4l3 2"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l1.5-2.5h7L17 8h3v11H4V8Z"/><circle cx="12" cy="13.5" r="3.5"/></symbol>
+</svg>
+
 <main class="kk">
-  <header style="margin-bottom: var(--space-8)">
+  <header class="kk-intro">
     <h1>Keadaan khusus</h1>
-    <p class="text-muted">Pesan yang tampil saat data kosong, riwayat kurang, validasi gagal, akun menunggu verifikasi, dan akses ditolak (PSKE-67).
-      Salin HTML-nya, jangan buat ulang gaya sendiri. Semua contoh memakai komponen dari <a href="styleguide.html">styleguide</a>.</p>
+    <p>Pesan yang tampil saat data kosong, riwayat kurang, validasi gagal, akun menunggu verifikasi, dan akses ditolak (PSKE-67).
+      Salin HTML-nya ke halaman; semua contoh memakai komponen dari <a href="styleguide.html">styleguide</a>.</p>
   </header>
 
-  <div class="grid grid-2" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))">
+  <div class="kk-grid">
 
-    <!-- 1. Data kosong: jelaskan kenapa kosong dan apa yang bisa dilakukan -->
-    <section aria-labelledby="kk-1">
-      <p class="kk-label" id="kk-1">1 · Data kosong</p>
-      <div class="card kk-kosong">
-        <span class="kk-ikon" aria-hidden="true">0</span>
-        <h3>Belum ada pengiriman masuk</h3>
-        <p class="text-muted">Pengiriman bantuan ke wilayah Anda akan tampil di sini setelah dikirim oleh Badan Resmi.</p>
-        <a class="btn btn-secondary btn-sm" href="#">Lihat status stok wilayah</a>
-      </div>
-    </section>
-
-    <!-- 2. Riwayat kurang: stok tetap tampil, ketahanan tidak dihitung -->
-    <section aria-labelledby="kk-2">
-      <p class="kk-label" id="kk-2">2 · Riwayat kurang</p>
-      <div class="card stack" style="gap: var(--space-3)">
-        <div class="kk-baris"><strong>Beras · Desa Contoh</strong><span class="badge badge-netral">Riwayat kurang</span></div>
-        <div class="kk-baris"><span class="text-muted">Stok tersedia</span><span>2.400 kg</span></div>
-        <div class="kk-baris"><span class="text-muted">Ketahanan</span><span>&mdash;</span></div>
-        <div class="alert alert-warning">
-          <strong>Estimasi belum dapat dihitung.</strong>
-          Riwayat penyaluran baru 12 dari 30 hari. Estimasi muncul otomatis setelah riwayat 30 hari tersedia.
+    <!-- Data kosong: jelaskan kenapa kosong dan apa yang bisa dilakukan -->
+    <section class="kk-item" aria-labelledby="kk-1">
+      <h2 id="kk-1">Data kosong</h2>
+      <p>Daftar belum punya isi. Arahkan ke tempat yang berguna.</p>
+      <div class="sheet"><div class="sheet-section">
+        <div class="state">
+          <span class="state-icon" aria-hidden="true"><svg class="icon"><use href="#i-inbox"/></svg></span>
+          <div class="state-content">
+            <p class="state-title">Belum ada pengiriman masuk</p>
+            <p class="state-text">Pengiriman bantuan ke wilayah Anda muncul di sini setelah dikirim Badan Resmi.</p>
+            <div class="state-actions"><a class="btn btn-secondary btn-sm" href="#">Lihat stok wilayah</a></div>
+          </div>
         </div>
-      </div>
+      </div></div>
     </section>
 
-    <!-- 3. Validasi gagal: ringkasan di atas form + pesan per field -->
-    <section aria-labelledby="kk-3">
-      <p class="kk-label" id="kk-3">3 · Validasi gagal</p>
-      <form class="card" novalidate>
-        <div class="alert alert-error" role="alert" style="margin-bottom: var(--space-4)">
-          <strong>Konfirmasi belum dapat dikirim.</strong>
-          Periksa kembali isian yang ditandai merah.
+    <!-- Validasi gagal: ringkasan di atas form + pesan per field -->
+    <section class="kk-item kk-lebar" aria-labelledby="kk-3">
+      <h2 id="kk-3">Validasi gagal</h2>
+      <p>Ringkasan di atas menautkan ke setiap isian yang salah.</p>
+      <form class="sheet" novalidate><div class="sheet-section">
+        <div class="alert alert-error" role="alert" style="margin-bottom: var(--space-5)">
+          <strong>Konfirmasi belum bisa dikirim. Perbaiki 3 isian:</strong>
+          <ul class="alert-list">
+            <li><a href="#kk-jumlah">Jumlah diterima</a></li>
+            <li><a href="#kk-alasan">Alasan selisih</a></li>
+            <li><a href="#kk-foto">Bukti foto</a></li>
+          </ul>
         </div>
         <div class="field has-error">
-          <label for="kk-jumlah">Jumlah diterima (kg) <span class="required">*</span></label>
-          <input class="input" id="kk-jumlah" type="number" aria-invalid="true" aria-describedby="kk-jumlah-error">
-          <span class="field-error" id="kk-jumlah-error">Jumlah diterima wajib diisi. Isi 0 bila barang tidak diterima.</span>
+          <label for="kk-jumlah">Jumlah diterima <span class="required">*</span></label>
+          <div class="qty">
+            <input class="input" id="kk-jumlah" type="number" aria-invalid="true" aria-describedby="kk-jumlah-error">
+            <span class="qty-unit">kg</span>
+          </div>
+          <span class="field-error" id="kk-jumlah-error">Isi jumlah yang diterima. Tulis 0 bila barang tidak tiba.</span>
         </div>
         <div class="field has-error">
           <label for="kk-alasan">Alasan selisih <span class="required">*</span></label>
           <select class="select" id="kk-alasan" aria-invalid="true" aria-describedby="kk-alasan-error"><option>Pilih alasan</option></select>
-          <span class="field-error" id="kk-alasan-error">Pilih alasan karena jumlah diterima berbeda dari jumlah dikirim.</span>
+          <span class="field-error" id="kk-alasan-error">Pilih alasan, karena jumlah diterima berbeda dari yang dikirim.</span>
         </div>
         <div class="field has-error">
-          <label for="kk-foto">Bukti foto <span class="required">*</span></label>
-          <input class="input" id="kk-foto" type="file" aria-invalid="true" aria-describedby="kk-foto-error">
-          <span class="field-error" id="kk-foto-error">Unggah minimal 1 foto barang dan surat jalan (JPG/PNG, maks. 5 MB).</span>
+          <span class="text-sm" style="font-weight: var(--font-weight-medium)">Bukti foto <span class="required">*</span></span>
+          <label class="dropzone">
+            <input id="kk-foto" type="file" aria-invalid="true" aria-describedby="kk-foto-error">
+            <svg class="icon" aria-hidden="true"><use href="#i-camera"/></svg>
+            <span class="dropzone-title">Foto barang dan surat jalan</span>
+          </label>
+          <span class="field-error" id="kk-foto-error">Unggah minimal 1 foto (JPG atau PNG, maksimal 5 MB).</span>
         </div>
-      </form>
+      </div></form>
     </section>
 
-    <!-- 4. Menunggu verifikasi: kalimat sama dengan pesan login (StatusAkun) -->
-    <section aria-labelledby="kk-4">
-      <p class="kk-label" id="kk-4">4 · Menunggu verifikasi</p>
-      <div class="card kk-kosong">
-        <span class="kk-ikon kk-ikon-info" aria-hidden="true">i</span>
-        <h3>Akun sedang diperiksa</h3>
-        <p class="text-muted">Akun Anda masih menunggu verifikasi Superadmin. Anda belum dapat masuk.</p>
-        <span class="badge badge-info">Menunggu verifikasi</span>
-        <p class="field-help">Pemeriksaan surat tugas biasanya selesai dalam 1&ndash;2 hari kerja.</p>
-      </div>
+    <!-- Riwayat kurang: stok tetap tampil, ketahanan tidak dihitung -->
+    <section class="kk-item" aria-labelledby="kk-2">
+      <h2 id="kk-2">Riwayat kurang</h2>
+      <p>Stok tetap tampil, ketahanan menunggu 30 hari data.</p>
+      <div class="sheet"><div class="sheet-section">
+        <div class="sheet-head" style="margin-bottom: var(--space-2)">
+          <h3>Beras di Desa Contoh</h3>
+          <span class="badge badge-netral">Riwayat kurang</span>
+        </div>
+        <div class="kk-baris"><span class="text-muted">Stok tersedia</span><span class="num">2.400 kg</span></div>
+        <div class="kk-baris"><span class="text-muted">Ketahanan</span><span>Belum bisa dihitung</span></div>
+        <div class="state kk-catatan">
+          <span class="state-icon state-waspada" aria-hidden="true"><svg class="icon" style="color: var(--color-waspada)"><use href="#i-history"/></svg></span>
+          <div class="state-content">
+            <p class="state-title">Riwayat penyaluran baru 12 dari 30 hari</p>
+            <p class="state-text">Estimasi muncul otomatis setelah 30 hari tercatat.</p>
+          </div>
+        </div>
+      </div></div>
     </section>
 
-    <!-- 5. Akses ditolak (403): jangan bocorkan isi data wilayah lain -->
-    <section aria-labelledby="kk-5">
-      <p class="kk-label" id="kk-5">5 · Akses ditolak</p>
-      <div class="card kk-kosong">
-        <span class="kk-ikon kk-ikon-kritis" aria-hidden="true">!</span>
-        <h3>Anda tidak memiliki akses</h3>
-        <p class="text-muted">Halaman ini hanya untuk wilayah atau instansi yang ditugaskan kepada Anda.</p>
-        <a class="btn btn-primary btn-sm" href="#">Kembali ke beranda saya</a>
-      </div>
+    <!-- Menunggu verifikasi: kalimat sama dengan pesan login (StatusAkun) -->
+    <section class="kk-item" aria-labelledby="kk-4">
+      <h2 id="kk-4">Menunggu verifikasi</h2>
+      <p>Akun sudah dikirim, belum bisa masuk.</p>
+      <div class="sheet"><div class="sheet-section">
+        <div class="state state-info">
+          <span class="state-icon" aria-hidden="true"><svg class="icon"><use href="#i-clock"/></svg></span>
+          <div class="state-content">
+            <p class="state-title">Akun sedang diperiksa</p>
+            <p class="state-text">Akun Anda masih menunggu verifikasi Superadmin. Anda belum dapat masuk.</p>
+            <p class="field-help" style="margin: var(--space-1) 0 0">Pemeriksaan surat tugas biasanya selesai dalam 1 sampai 2 hari kerja.</p>
+          </div>
+        </div>
+      </div></div>
+    </section>
+
+    <!-- Akses ditolak (403): jangan bocorkan isi data wilayah lain -->
+    <section class="kk-item" aria-labelledby="kk-5">
+      <h2 id="kk-5">Akses ditolak</h2>
+      <p>Halaman milik wilayah lain. Jangan tampilkan isinya.</p>
+      <div class="sheet"><div class="sheet-section">
+        <div class="state state-kritis">
+          <span class="state-icon" aria-hidden="true"><svg class="icon"><use href="#i-lock"/></svg></span>
+          <div class="state-content">
+            <p class="state-title">Halaman ini di luar penugasan Anda</p>
+            <p class="state-text">Anda hanya bisa membuka data wilayah atau instansi yang ditugaskan kepada Anda.</p>
+            <div class="state-actions"><a class="btn btn-primary btn-sm" href="#">Kembali ke panel saya</a></div>
+          </div>
+        </div>
+      </div></div>
     </section>
 
   </div>

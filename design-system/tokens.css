@@ -1,62 +1,70 @@
-/* Design token Kawan Pangan v2 (PSKE-87).
-   Gaya: panel putih melayang di atas kanvas biru muda, satu warna utama biru royal, sudut membulat lebar.
-   Nama token lama tetap dipertahankan supaya halaman yang sudah ada ikut berubah tanpa diedit. */
+/* Design token Kawan Pangan v3 (PSKE-96).
+   Arah: kertas dan tinta. Latar abu kehijauan yang tenang, teks tinta gelap, satu warna utama hijau laut,
+   dan warna status yang paling keras di halaman supaya Kritis/Waspada/Aman langsung terbaca.
+   Nama token v2 tetap ada supaya halaman lama ikut berubah tanpa diedit. */
 :root {
-  /* Brand: biru royal sebagai satu-satunya aksen */
-  --color-primary: #1D4FAE;        /* tombol utama, menu aktif, tautan */
-  --color-primary-hover: #163E8C;
-  --color-primary-soft: #E6EEFA;   /* latar menu aktif, kartu terpilih */
-  --color-primary-ring: rgb(29 79 174 / 0.18);
+  /* Warna utama: hijau laut. Tidak dipakai untuk status, supaya tidak tertukar dengan Aman. */
+  --color-primary: #0E5E6F;        /* tombol utama, tautan, menu aktif */
+  --color-primary-hover: #0A4A58;
+  --color-primary-soft: #E3EFF0;   /* latar menu aktif, baris terpilih */
+  --color-primary-ring: rgb(14 94 111 / 0.22);
   --color-accent: var(--color-primary);
   --color-accent-hover: var(--color-primary-hover);
   --color-accent-soft: var(--color-primary-soft);
   --color-on-primary: #FFFFFF;
   --color-on-accent: #FFFFFF;
-  --color-highlight: #F2B53A;      /* dekorasi kecil saja (bintang, titik sorot), bukan untuk tombol */
+  --color-highlight: #E9B949;      /* sorot kecil saja, bukan untuk tombol */
 
-  /* Netral (satu keluarga abu kebiruan) */
-  --color-canvas: #E7EDF5;         /* latar di belakang panel */
-  --color-bg: #F3F6FA;             /* isian halus: kepala tabel, hover */
-  --color-surface: #FFFFFF;        /* kartu, tabel, panel */
-  --color-border: #E3E8EF;
-  --color-border-strong: #CBD3DE;
-  --color-text: #0E1A2B;           /* teks utama */
-  --color-text-muted: #5A6577;     /* teks sekunder, kontras 5.9:1 di atas putih */
-  --color-text-subtle: #8A94A3;    /* label kecil non-esensial */
+  /* Netral: satu keluarga abu kehijauan */
+  --color-canvas: #F2F3EF;         /* latar halaman */
+  --color-bg: #F7F8F5;             /* isian halus: kepala tabel, hover */
+  --color-surface: #FFFFFF;        /* panel, tabel, form */
+  --color-border: #E2E5DF;
+  --color-border-strong: #C9CEC6;
+  --color-text: #17201C;           /* tinta */
+  --color-text-muted: #56605B;     /* teks sekunder, kontras 6.3:1 di atas putih */
+  --color-text-subtle: #848D88;    /* keterangan kecil non-esensial */
 
-  /* Sidebar putih */
+  /* Sidebar */
   --color-sidebar: #FFFFFF;
-  --color-sidebar-raised: #F3F6FA;
-  --color-sidebar-border: #E3E8EF;
-  --color-sidebar-text: #5A6577;
-  --color-sidebar-text-strong: #0E1A2B;
+  --color-sidebar-raised: #F2F3EF;
+  --color-sidebar-border: #E2E5DF;
+  --color-sidebar-text: #56605B;
+  --color-sidebar-text-strong: #17201C;
 
-  /* Status ketersediaan stok dan proses */
-  --color-kritis: #B42318;    --color-kritis-bg: #FEE4E2;    /* < 14 hari, ditolak */
-  --color-waspada: #B54708;   --color-waspada-bg: #FEF0C7;   /* 14–30 hari, menunggu */
-  --color-aman: #067647;      --color-aman-bg: #DCFAE6;      /* > 30 hari, selesai */
-  --color-info: #1D4FAE;      --color-info-bg: #E6EEFA;      /* diajukan, dalam pengiriman */
-  --color-netral: #344054;    --color-netral-bg: #F2F4F7;    /* draf, dibatalkan */
+  /* Status: teks dan latar badge (kontras teks minimal 4.5:1) */
+  --color-kritis: #B3321C;    --color-kritis-bg: #FBE6E1;    /* < 14 hari, ditolak */
+  --color-waspada: #8F5406;   --color-waspada-bg: #FBEFD6;   /* 14–30 hari, menunggu */
+  --color-aman: #2E6B2F;      --color-aman-bg: #E4F0E0;      /* > 30 hari, selesai */
+  --color-info: #0E5E6F;      --color-info-bg: #E3EFF0;      /* diajukan, dalam pengiriman */
+  --color-netral: #4A5450;    --color-netral-bg: #EEF0EC;    /* draf, riwayat kurang */
   --color-netral-border: var(--color-border-strong);
 
-  /* Tipografi */
-  --font-family: "Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
-  --font-size-xs: 0.75rem;    /* 12px: label kecil */
-  --font-size-sm: 0.875rem;   /* 14px: tabel, form */
+  /* Status: isian peta dan bar (lebih terang dari teks supaya terlihat di peta) */
+  --fill-kritis: #D2452B;
+  --fill-waspada: #E2A23A;
+  --fill-aman: #5B9A4C;
+  --fill-netral: #A3ABA6;
+
+  /* Tipografi: Instrument Sans, satu keluarga untuk judul dan isi.
+     Dipilih karena angka tabularnya tidak ikut melebarkan titik ribuan (1.284.560 tetap rapat). */
+  --font-family: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
+  --font-size-xs: 0.75rem;    /* 12px: keterangan */
+  --font-size-sm: 0.875rem;   /* 14px: tabel, form, label */
   --font-size-md: 1rem;       /* 16px: teks isi */
   --font-size-lg: 1.125rem;   /* 18px: judul kartu */
   --font-size-xl: 1.5rem;     /* 24px: judul halaman */
   --font-size-2xl: 2rem;      /* 32px: angka besar */
-  --font-size-3xl: 2.75rem;   /* 44px: judul beranda */
+  --font-size-3xl: 2.75rem;   /* 44px: angka utama di peta */
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
   --line-height: 1.55;
   --line-height-tight: 1.15;
-  --tracking-tight: -0.02em;
-  --tracking-wide: 0.06em;
+  --tracking-tight: -0.015em;
+  --tracking-wide: 0.01em;
 
   /* Spasi (kelipatan 4px) */
   --space-1: 4px;
@@ -70,21 +78,22 @@
   --space-12: 48px;
   --space-16: 64px;
 
-  /* Sudut: makin luar makin lembut */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  /* Sudut berjenjang: kontrol kecil paling tajam, lembar paling lembut */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
   --radius-full: 999px;
 
-  /* Bayangan lembut bernuansa biru, satu arah cahaya dari atas */
-  --shadow-sm: 0 1px 2px rgb(20 45 90 / 0.06);
-  --shadow-md: 0 8px 24px -8px rgb(20 45 90 / 0.14);
-  --shadow-float: 0 18px 44px -14px rgb(20 45 90 / 0.24);
+  /* Bayangan hanya untuk yang benar-benar melayang (laci, lembar di HP) */
+  --shadow-sm: 0 1px 2px rgb(23 32 28 / 0.05);
+  --shadow-md: 0 6px 20px -10px rgb(23 32 28 / 0.2);
+  --shadow-float: 0 18px 44px -18px rgb(23 32 28 / 0.32);
 
   /* Gerak */
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --duration: 180ms;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --duration: 160ms;
 
   /* Lapisan */
   --z-sticky: 30;

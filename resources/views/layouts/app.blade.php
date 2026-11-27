@@ -1,10 +1,10 @@
-{{-- Shell aplikasi v2 untuk semua role yang sudah masuk (PSKE-88).
+{{-- Shell aplikasi untuk semua role yang sudah masuk (v2: PSKE-88, v3: PSKE-96).
      Dipakai lewat layouts.admin dan layouts.panel supaya view lama tidak perlu diubah. --}}
 <!DOCTYPE html>
 <html lang="id">
 <head>
     @include('layouts.partials.head')
-    <title>@yield('title') · Kawan Pangan</title>
+    <title>@yield('title') | Kawan Pangan</title>
     @vite(['resources/css/design-system.css', 'resources/css/wilayah.css', 'resources/js/admin.js'])
     @stack('head')
 </head>

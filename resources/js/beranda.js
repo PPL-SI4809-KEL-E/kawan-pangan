@@ -1,14 +1,22 @@
-// Beranda publik: daftar kecamatan + peta Leaflet + kartu detail (PSKE-90, PSKE-91).
+// Beranda publik v3: atlas stok pangan per kecamatan (PSKE-96, lanjutan PSKE-90/91).
 // Data asli dikirim controller lewat <script id="peta-data">; selama belum ada, dipakai data simulasi di bawah.
 // Kontrak bentuk data ada di docs/design-system.md bagian "Pola layar peta".
+// Gambar wilayah di peta ada di satu fungsi (gambarWilayah) supaya mudah diganti polygon (PSKE-69).
 
-const WARNA = { aman: '#12A05C', waspada: '#D98A1C', kritis: '#B42318' };
-const WARNA_UTAMA = '#1D4FAE';
-const LABEL = { aman: 'Aman', waspada: 'Waspada', kritis: 'Kritis' };
-const SKALA_HARI = 60;
+const LABEL = { aman: 'Aman', waspada: 'Waspada', kritis: 'Kritis', netral: 'Riwayat kurang' };
+const STATUS_VALID = ['kritis', 'waspada', 'aman'];
+const gaya = getComputedStyle(document.documentElement);
+const token = (nama, cadangan) => gaya.getPropertyValue(nama).trim() || cadangan;
+const WARNA = {
+    kritis: token('--fill-kritis', '#D2452B'),
+    waspada: token('--fill-waspada', '#E2A23A'),
+    aman: token('--fill-aman', '#5B9A4C'),
+    netral: token('--fill-netral', '#A3ABA6'),
+};
+const TINTA = token('--color-text', '#17201C');
 
-const angka = new Intl.NumberFormat('id-ID');
-const tanggal = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+const angka = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 });
+const tanggal = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
 function buatSimulasi() {
     const dasar = [
@@ -52,20 +60,39 @@ function buatSimulasi() {
     });
 }
 
-function bacaData() {
+function bacaDataAsli() {
     try {
         const isi = JSON.parse(document.getElementById('peta-data')?.textContent || 'null');
-        if (Array.isArray(isi) && isi.length) return { data: isi, simulasi: false };
+        if (Array.isArray(isi)) return isi;
     } catch {
         // Data rusak: tetap tampilkan simulasi supaya halaman tidak kosong.
     }
-    return { data: buatSimulasi(), simulasi: true };
+    return null;
+}
+
+// Status dan hari selalu dibaca bersama: status di luar tiga nilai atau hari kosong dianggap riwayat kurang.
+function rapikan(w) {
+    const hari = Number.isFinite(Number(w.hari)) && w.hari !== null && w.hari !== '' ? Number(w.hari) : null;
+    const status = hari !== null && STATUS_VALID.includes(w.status) ? w.status : 'netral';
+    return { ...w, hari, status, stok_kg: Number(w.stok_kg) || 0, komoditas: w.komoditas ?? [], aktivitas: w.aktivitas ?? [] };
+}
+
+function statusDariHari(hari) {
+    if (hari === null || hari === undefined || !Number.isFinite(Number(hari))) return 'netral';
+    return hari < 14 ? 'kritis' : hari <= 30 ? 'waspada' : 'aman';
+}
+
+// Dibulatkan ke bawah supaya 13,6 hari tidak tampil "14 hari" dengan status Kritis.
+function teksHari(hari) {
+    if (hari === null) return null;
+    if (hari < 1) return '< 1';
+    return angka.format(Math.floor(hari));
 }
 
 function el(tag, kelas, teks) {
     const node = document.createElement(tag);
     if (kelas) node.className = kelas;
-    if (teks !== undefined) node.textContent = teks;
+    if (teks !== undefined && teks !== null) node.textContent = teks;
     return node;
 }
 
@@ -80,195 +107,285 @@ function ikon(nama, kelas = 'icon icon-sm') {
 }
 
 function badge(status) {
-    return el('span', `badge badge-${status}`, LABEL[status] ?? status);
+    return el('span', `badge badge-${status === 'netral' ? 'netral' : status}`, LABEL[status] ?? status);
 }
 
-function meter(hari, status) {
-    const bar = el('span', `meter meter-${status}`);
-    bar.style.setProperty('--meter', `${Math.min(100, Math.round((hari / SKALA_HARI) * 100))}%`);
-    bar.setAttribute('role', 'img');
-    bar.setAttribute('aria-label', `Ketahanan ${hari} hari`);
-    return bar;
+async function siapkanData() {
+    const asli = bacaDataAsli();
+    if (asli && asli.length) return { data: asli.map(rapikan), simulasi: false };
+
+    // Toggle data uji hanya ada saat `npm run dev`, tidak ikut ke build produksi.
+    if (import.meta.env.DEV) {
+        const { dataUji, pasangToggle } = await import('./beranda-uji.js');
+        const pilihan = new URLSearchParams(window.location.search).get('data');
+        pasangToggle(pilihan);
+        const uji = dataUji(pilihan, buatSimulasi);
+        if (uji) return { data: uji.map(rapikan), simulasi: true };
+    }
+    if (asli) return { data: [], simulasi: false };
+    return { data: buatSimulasi().map(rapikan), simulasi: true };
 }
 
-const { data, simulasi } = bacaData();
-if (!simulasi) document.getElementById('peta-sumber')?.setAttribute('hidden', '');
+async function mulai() {
+    const { data, simulasi } = await siapkanData();
+    if (!simulasi) document.getElementById('peta-sumber')?.setAttribute('hidden', '');
 
-const daftar = document.getElementById('peta-list');
-const kosong = document.getElementById('peta-kosong');
-const cari = document.getElementById('peta-cari');
-const detail = document.getElementById('peta-detail');
-const tombolFilter = [...document.querySelectorAll('[data-filter]')];
-const desktop = window.matchMedia('(min-width: 1024px)');
+    const daftar = document.getElementById('peta-list');
+    const kosong = document.getElementById('peta-kosong');
+    const cari = document.getElementById('peta-cari');
+    const detail = document.getElementById('peta-detail');
+    const tombolFilter = [...document.querySelectorAll('[data-filter]')];
+    const desktop = window.matchMedia('(min-width: 1024px)');
 
-let filter = 'semua';
-let terpilih = null;
-let sorot = null;
-const kartu = new Map();
-const penanda = new Map();
+    let filter = 'semua';
+    let terpilih = null;
+    const baris = new Map();
+    const penanda = new Map();
 
-// Hitung jumlah per status untuk tab filter
-const jumlah = { semua: data.length, aman: 0, waspada: 0, kritis: 0 };
-data.forEach((w) => { jumlah[w.status] = (jumlah[w.status] ?? 0) + 1; });
-document.querySelectorAll('[data-count]').forEach((node) => { node.textContent = jumlah[node.dataset.count] ?? 0; });
+    // Ringkasan: jumlah per status untuk filter, bar sebaran, dan kalimat cakupan
+    const jumlah = { semua: data.length, kritis: 0, waspada: 0, aman: 0, netral: 0 };
+    data.forEach((w) => { jumlah[w.status] += 1; });
+    document.querySelectorAll('[data-count]').forEach((node) => { node.textContent = angka.format(jumlah[node.dataset.count] ?? 0); });
+    document.querySelectorAll('[data-bar]').forEach((seg) => {
+        seg.style.setProperty('--n', jumlah[seg.dataset.bar] ?? 0);
+        seg.hidden = !jumlah[seg.dataset.bar];
+    });
+    const catatanNetral = document.getElementById('sebaran-netral');
+    if (jumlah.netral) {
+        catatanNetral.textContent = `${angka.format(jumlah.netral)} kecamatan berwarna abu: riwayat penyaluran belum 30 hari, jadi ketahanan belum bisa dihitung.`;
+        catatanNetral.hidden = false;
+    }
+    const kota = [...new Set(data.map((w) => w.kota).filter(Boolean))];
+    const cakupan = document.getElementById('peta-cakupan');
+    if (data.length) {
+        cakupan.textContent = `${angka.format(data.length)} kecamatan${kota.length === 1 ? ` di ${kota[0]}` : ''}. Diurutkan dari stok yang paling cepat habis.`;
+    }
 
-// Peta
-const L = window.L;
-const peta = L ? L.map('map', { zoomControl: false, scrollWheelZoom: true }) : null;
-if (peta) {
-    L.control.zoom({ position: 'bottomright' }).addTo(peta);
-    // Tile OpenStreetMap; warnanya diredam lewat CSS (.peta-canvas .leaflet-tile-pane) supaya titik status menonjol.
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    }).addTo(peta);
-
-    const maksStok = Math.max(...data.map((w) => w.stok_kg || 0), 1);
-    data.forEach((w) => {
-        const titik = L.circleMarker([w.lat, w.lng], {
-            radius: 8 + Math.sqrt((w.stok_kg || 0) / maksStok) * 10,
-            color: '#FFFFFF',
-            weight: 3,
-            fillColor: WARNA[w.status] ?? '#5A6577',
-            fillOpacity: 0.95,
-            className: 'peta-titik',
+    // Peta dasar OSM; warnanya dibuat abu lewat CSS (.atlas-canvas .leaflet-tile-pane) supaya warna status paling menonjol
+    const L = window.L;
+    const peta = L ? L.map('map', { zoomControl: false, scrollWheelZoom: true, zoomSnap: 0.5 }) : null;
+    if (peta) {
+        L.control.zoom({ position: 'bottomright' }).addTo(peta);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         }).addTo(peta);
-        titik.bindTooltip(`${w.nama} · ${LABEL[w.status] ?? w.status}`, { direction: 'top', offset: [0, -8] });
-        titik.on('click', () => pilih(w.id, { dariPeta: true }));
-        penanda.set(w.id, titik);
-    });
+        gambarWilayah(peta, L);
+        const titik = data.filter((w) => Number.isFinite(w.lat) && Number.isFinite(w.lng)).map((w) => [w.lat, w.lng]);
+        if (titik.length) peta.fitBounds(L.latLngBounds(titik), { padding: [56, 56], maxZoom: 13 });
+        else peta.setView([-2.5, 118], 5);
+    } else {
+        const gagal = el('p', 'atlas-gagal', 'Peta belum bisa dimuat. Daftar kecamatan di samping tetap bisa dipakai.');
+        document.getElementById('map').append(gagal);
+    }
 
-    peta.fitBounds(L.latLngBounds(data.map((w) => [w.lat, w.lng])), { padding: [48, 48] });
+    // Titik per kecamatan. PSKE-69 menggantinya dengan polygon batas kecamatan (warna = status).
+    function gambarWilayah(map, Leaflet) {
+        const maksStok = Math.max(...data.map((w) => w.stok_kg), 1);
+        data.forEach((w) => {
+            if (!Number.isFinite(w.lat) || !Number.isFinite(w.lng)) return;
+            const lapis = Leaflet.circleMarker([w.lat, w.lng], {
+                radius: 7 + Math.sqrt(w.stok_kg / maksStok) * 9,
+                color: '#FFFFFF',
+                weight: 2,
+                fillColor: WARNA[w.status],
+                fillOpacity: 1,
+                className: 'peta-titik',
+            }).addTo(map);
+            lapis.bindTooltip(`${w.nama}, ${LABEL[w.status]}`, { direction: 'top', offset: [0, -8] });
+            lapis.on('click', () => pilih(w.id, { dariPeta: true }));
+            penanda.set(w.id, lapis);
+        });
+    }
 
-    // Lingkaran sorot biru di bawah titik yang dipilih
-    sorot = L.circleMarker([0, 0], { radius: 30, stroke: false, fillColor: WARNA_UTAMA, fillOpacity: 0.16, interactive: false });
-} else {
-    document.getElementById('map').append(el('p', 'peta-kosong', 'Peta belum bisa dimuat. Daftar kecamatan tetap bisa dipakai.'));
-}
+    function tandai(id, aktif) {
+        penanda.get(id)?.setStyle(aktif ? { color: TINTA, weight: 3 } : { color: '#FFFFFF', weight: 2 });
+        if (aktif) penanda.get(id)?.bringToFront();
+    }
 
-// Daftar kartu
-function buatKartu(w) {
-    const li = el('li');
-    const tombol = el('button', 'item-card');
-    tombol.type = 'button';
-    tombol.dataset.id = w.id;
-
-    // Isi tombol hanya elemen frasa (span) supaya HTML tetap valid
-    const kepala = el('span', 'item-card-head');
-    const judul = el('span');
-    judul.append(el('span', 'item-card-title', w.nama), el('span', 'item-card-sub', w.kota));
-    kepala.append(judul, badge(w.status));
-
-    const meta = el('span', 'item-card-meta');
-    const kiri = el('span');
-    kiri.append('Estimasi habis ', el('strong', '', `${w.hari} hari`));
-    const kanan = el('span');
-    kanan.append(el('strong', '', `${angka.format(w.stok_kg)} kg`));
-    meta.append(kiri, kanan);
-
-    tombol.append(kepala, meter(w.hari, w.status), meta);
-    tombol.addEventListener('click', () => pilih(w.id));
-    li.append(tombol);
-    kartu.set(w.id, li);
-    return li;
-}
-
-const urut = [...data].sort((a, b) => a.hari - b.hari);
-daftar.replaceChildren(...urut.map(buatKartu));
-
-function terapkanFilter() {
-    const kata = cari.value.trim().toLowerCase();
-    let tampil = 0;
-    urut.forEach((w) => {
-        const cocok = (filter === 'semua' || w.status === filter) && (!kata || w.nama.toLowerCase().includes(kata));
-        kartu.get(w.id).hidden = !cocok;
-        const titik = penanda.get(w.id);
-        if (titik && peta) {
-            if (cocok && !peta.hasLayer(titik)) titik.addTo(peta);
-            if (!cocok && peta.hasLayer(titik)) titik.remove();
-        }
-        if (cocok) tampil += 1;
-    });
-    kosong.hidden = tampil > 0;
-}
-
-tombolFilter.forEach((tombol) => {
-    tombol.addEventListener('click', () => {
-        filter = tombol.dataset.filter;
-        tombolFilter.forEach((t) => t.setAttribute('aria-pressed', String(t === tombol)));
-        terapkanFilter();
-    });
-});
-cari.addEventListener('input', terapkanFilter);
-
-// Kartu detail
-function isiDetail(w) {
-    const bagian = (nama) => detail.querySelector(`[data-detail="${nama}"]`);
-    bagian('nama').textContent = w.nama;
-    bagian('lokasi').textContent = w.kota;
-    bagian('badge').replaceChildren(badge(w.status));
-    bagian('diperbarui').textContent = w.diperbarui ? `Diperbarui ${tanggal.format(new Date(w.diperbarui))}` : '';
-    bagian('hari').textContent = `${w.hari} hari`;
-    bagian('stok').textContent = `${angka.format(w.stok_kg)} kg`;
-
-    bagian('komoditas').replaceChildren(...(w.komoditas ?? []).map((k) => {
-        const status = k.hari < 14 ? 'kritis' : k.hari <= 30 ? 'waspada' : 'aman';
+    // Daftar baris kecamatan
+    function buatBaris(w) {
         const li = el('li');
-        li.append(el('span', '', k.nama), el('strong', '', `${angka.format(k.jumlah)} ${k.satuan}`), meter(k.hari, status));
+        const tombol = el('button', 'wil-row');
+        tombol.type = 'button';
+        tombol.dataset.status = w.status;
+        tombol.dataset.id = w.id;
+
+        const utama = el('span', 'wil-row-main');
+        const sub = el('span', 'wil-row-sub', w.kota ?? '');
+        if (w.kota) sub.title = w.kota;
+        utama.append(el('span', 'wil-row-name', w.nama), sub);
+
+        const angkaHari = teksHari(w.hari);
+        const kanan = el('span', 'wil-row-figure');
+        const hari = el('span', 'wil-row-days');
+        if (angkaHari === null) hari.append('Belum dihitung');
+        else if (w.stok_kg === 0) hari.append(el('b', '', 'Habis'));
+        else hari.append(el('b', '', angkaHari), 'hari');
+        kanan.append(hari, el('span', 'wil-row-sub', `${angka.format(w.stok_kg)} kg`));
+
+        tombol.append(utama, kanan);
+        const ringkas = angkaHari === null ? 'ketahanan belum bisa dihitung' : w.stok_kg === 0 ? 'stok habis' : `stok cukup ${angkaHari} hari`;
+        tombol.setAttribute('aria-label', `${w.nama}, ${LABEL[w.status]}, ${ringkas}`);
+        tombol.addEventListener('click', () => pilih(w.id));
+        li.append(tombol);
+        baris.set(w.id, li);
         return li;
-    }));
-
-    const gudang = bagian('gudang');
-    gudang.replaceChildren(ikon('i-warehouse'), document.createTextNode(w.gudang ?? '-'));
-
-    bagian('aktivitas').replaceChildren(...(w.aktivitas ?? []).map((a) => {
-        const li = el('li', `is-${a.jenis}`);
-        li.append(el('p', 'timeline-title', a.judul), el('p', 'timeline-time', tanggal.format(new Date(a.waktu))));
-        return li;
-    }));
-}
-
-function pilih(id, { dariPeta = false } = {}) {
-    const w = data.find((x) => x.id === id);
-    if (!w) return;
-
-    if (terpilih) {
-        kartu.get(terpilih)?.querySelector('.item-card')?.removeAttribute('aria-current');
-        penanda.get(terpilih)?.setStyle({ color: '#FFFFFF' });
-    }
-    terpilih = id;
-    const tombol = kartu.get(id)?.querySelector('.item-card');
-    tombol?.setAttribute('aria-current', 'true');
-    if (dariPeta) tombol?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-
-    const titik = penanda.get(id);
-    if (titik && peta) {
-        sorot?.setLatLng([w.lat, w.lng]).addTo(peta).bringToBack();
-        titik.setStyle({ color: WARNA_UTAMA }).bringToFront();
-        peta.flyTo([w.lat, w.lng], Math.max(peta.getZoom(), 14), { duration: 0.6 });
     }
 
-    isiDetail(w);
-    detail.hidden = false;
-    if (!desktop.matches && !dariPeta) detail.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-}
+    // Urut dari yang paling cepat habis; yang belum bisa dihitung di paling bawah
+    const urut = [...data].sort((a, b) => (a.hari ?? Infinity) - (b.hari ?? Infinity) || a.nama.localeCompare(b.nama, 'id'));
+    daftar.replaceChildren(...urut.map(buatBaris));
 
-function tutupDetail() {
-    detail.hidden = true;
-    if (terpilih) {
-        const tombol = kartu.get(terpilih)?.querySelector('.item-card');
-        tombol?.removeAttribute('aria-current');
-        penanda.get(terpilih)?.setStyle({ color: '#FFFFFF' });
-        sorot?.remove();
-        tombol?.focus();
+    if (!data.length) {
+        document.getElementById('peta-kosong-judul').textContent = 'Belum ada data kecamatan';
+        document.getElementById('peta-kosong-teks').textContent = 'Status muncul setelah gudang di wilayah ini mulai mencatat stok.';
+        kosong.hidden = false;
+        tombolFilter.forEach((t) => { t.disabled = true; });
+        cari.disabled = true;
+        document.getElementById('sebaran-bar').hidden = true;
     }
-    terpilih = null;
+
+    function terapkanFilter() {
+        const kata = cari.value.trim().toLocaleLowerCase('id');
+        let tampil = 0;
+        urut.forEach((w) => {
+            const cocok = (filter === 'semua' || w.status === filter) && (!kata || w.nama.toLocaleLowerCase('id').includes(kata));
+            baris.get(w.id).hidden = !cocok;
+            const lapis = penanda.get(w.id);
+            if (lapis && peta) {
+                if (cocok && !peta.hasLayer(lapis)) lapis.addTo(peta);
+                if (!cocok && peta.hasLayer(lapis)) lapis.remove();
+            }
+            if (cocok) tampil += 1;
+        });
+        document.querySelectorAll('[data-bar]').forEach((seg) => seg.classList.toggle('is-redup', filter !== 'semua' && seg.dataset.bar !== filter));
+        if (data.length) {
+            kosong.hidden = tampil > 0;
+            document.getElementById('peta-kosong-teks').textContent = filter === 'semua'
+                ? 'Coba nama lain. Daftar hanya memuat kecamatan yang gudangnya sudah tercatat.'
+                : `Coba nama lain, atau pilih status Semua.`;
+        }
+    }
+
+    tombolFilter.forEach((tombol) => {
+        tombol.addEventListener('click', () => {
+            filter = tombol.dataset.filter;
+            tombolFilter.forEach((t) => t.setAttribute('aria-pressed', String(t === tombol)));
+            terapkanFilter();
+        });
+    });
+    cari.addEventListener('input', terapkanFilter);
+
+    // Detail kecamatan
+    function isiDetail(w) {
+        const bagian = (nama) => detail.querySelector(`[data-detail="${nama}"]`);
+        bagian('nama').textContent = w.nama;
+        bagian('lokasi').textContent = w.kota ?? '';
+        bagian('figure').dataset.status = w.status;
+        bagian('badge').replaceChildren(badge(w.status));
+
+        const angkaHari = teksHari(w.hari);
+        const nilai = bagian('hari');
+        if (angkaHari === null) {
+            bagian('hari-label').textContent = 'Ketahanan stok';
+            nilai.replaceChildren('Belum bisa dihitung');
+            nilai.style.fontSize = 'var(--font-size-xl)';
+        } else {
+            bagian('hari-label').textContent = w.stok_kg === 0 ? 'Stok gudang' : 'Perkiraan stok habis dalam';
+            nilai.style.fontSize = '';
+            if (w.stok_kg === 0) nilai.replaceChildren('Habis');
+            else nilai.replaceChildren(angkaHari, el('small', '', 'hari'));
+        }
+        bagian('stok').textContent = `${angka.format(w.stok_kg)} kg tersedia`;
+        bagian('diperbarui').textContent = w.diperbarui ? `Diperbarui ${tanggal.format(new Date(w.diperbarui))}` : '';
+
+        const badan = bagian('komoditas');
+        if (w.komoditas.length) {
+            badan.replaceChildren(...w.komoditas.map((k) => {
+                const hariK = k.hari === null || k.hari === undefined ? null : Number(k.hari);
+                const statusK = statusDariHari(hariK);
+                const tr = el('tr');
+                const teksK = teksHari(hariK);
+                tr.append(
+                    el('td', '', k.nama),
+                    el('td', '', `${angka.format(k.jumlah)} ${k.satuan}`),
+                    el('td', `is-${statusK}`, teksK === null ? 'belum dihitung' : `${teksK} hari`),
+                );
+                return tr;
+            }));
+        } else {
+            const tr = el('tr');
+            const td = el('td', 'detail-kosong', 'Belum ada stok tercatat di gudang kecamatan ini.');
+            td.colSpan = 3;
+            tr.append(td);
+            badan.replaceChildren(tr);
+        }
+
+        const gudang = bagian('gudang');
+        gudang.replaceChildren(ikon('i-warehouse'), document.createTextNode(w.gudang || 'Belum ada gudang terdaftar'));
+
+        const jenisIkon = { masuk: 'i-arrow-in', keluar: 'i-arrow-out', rusak: 'i-alert' };
+        const catatan = bagian('aktivitas');
+        if (w.aktivitas.length) {
+            catatan.replaceChildren(...w.aktivitas.map((a) => {
+                const li = el('li', `is-${a.jenis}`);
+                li.append(ikon(jenisIkon[a.jenis] ?? 'i-history'), el('p', 'ledger-text', a.judul), el('p', 'ledger-time', tanggal.format(new Date(a.waktu))));
+                return li;
+            }));
+        } else {
+            catatan.replaceChildren(el('li', 'ledger-kosong', 'Belum ada mutasi tercatat.'));
+        }
+    }
+
+    function pilih(id, { dariPeta = false } = {}) {
+        const w = data.find((x) => x.id === id);
+        if (!w) return;
+
+        if (terpilih) {
+            baris.get(terpilih)?.querySelector('.wil-row')?.removeAttribute('aria-current');
+            tandai(terpilih, false);
+        }
+        terpilih = id;
+        const tombol = baris.get(id)?.querySelector('.wil-row');
+        tombol?.setAttribute('aria-current', 'true');
+        if (dariPeta && desktop.matches) tombol?.scrollIntoView({ block: 'nearest' });
+
+        tandai(id, true);
+        if (peta && penanda.has(id)) {
+            const sisiKanan = desktop.matches ? detail.offsetWidth || 380 : 0;
+            const bawah = desktop.matches ? 0 : Math.round(window.innerHeight * 0.4);
+            peta.flyToBounds(L.latLng(w.lat, w.lng).toBounds(1600), {
+                paddingTopLeft: [40, 40],
+                paddingBottomRight: [sisiKanan + 40, bawah + 40],
+                maxZoom: 14,
+                duration: 0.5,
+            });
+        }
+
+        isiDetail(w);
+        detail.hidden = false;
+        detail.scrollTop = 0;
+    }
+
+    function tutupDetail() {
+        detail.hidden = true;
+        if (terpilih) {
+            const tombol = baris.get(terpilih)?.querySelector('.wil-row');
+            tombol?.removeAttribute('aria-current');
+            tandai(terpilih, false);
+            tombol?.focus({ preventScroll: !desktop.matches });
+        }
+        terpilih = null;
+    }
+
+    document.getElementById('peta-tutup').addEventListener('click', tutupDetail);
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !detail.hidden) tutupDetail();
+    });
+
+    // Di desktop, kecamatan paling kritis langsung terbuka supaya panel detail tidak kosong
+    if (desktop.matches && urut.length) pilih(urut[0].id);
 }
 
-document.getElementById('peta-tutup').addEventListener('click', tutupDetail);
-document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && !detail.hidden) tutupDetail();
-});
-
-// Buka kecamatan paling kritis supaya kartu detail langsung terlihat di desktop
-if (desktop.matches && urut.length) pilih(urut[0].id);
+mulai();
