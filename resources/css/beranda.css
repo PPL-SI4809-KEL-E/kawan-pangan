@@ -203,3 +203,49 @@
 @media (prefers-reduced-motion: reduce) {
   .atlas-detail { transition: none; }
 }
+
+/* Tambahan PSKE-69: navigasi breadcrumb drill-down, filter komoditas, dan polygon choropleth */
+.atlas-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+.atlas-crumb-btn {
+  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+.atlas-crumb-btn:hover { background: var(--color-primary-soft); border-color: var(--color-primary); }
+.atlas-crumb-current { font-weight: var(--font-weight-semibold); color: var(--color-text); }
+.atlas-crumb-sep { color: var(--color-text-subtle); user-select: none; }
+
+.atlas-komoditas-wrap {
+  padding: var(--space-3) var(--space-4) 0;
+  border-top: 1px solid var(--color-border);
+}
+.atlas-komoditas { font-size: var(--font-size-sm); }
+
+.detail-drill {
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.atlas-canvas .peta-polygon {
+  cursor: pointer;
+  transition: fill-opacity 140ms ease, stroke-width 140ms ease;
+}
+.atlas-canvas .peta-polygon-kosong { cursor: default; }
+
+@media (min-width: 768px) {
+  .atlas-komoditas-wrap { padding-left: var(--space-6); padding-right: var(--space-6); }
+}
