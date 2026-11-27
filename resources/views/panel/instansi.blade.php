@@ -69,16 +69,16 @@
 
     <section>
         <div class="section-head">
-            <h2>Segera hadir</h2>
-            <p>Fitur berikut aktif sesuai jadwal sprint.</p>
+            <h2>Stok dan fitur berikutnya</h2>
+            <p>Fitur yang belum aktif menyusul sesuai jadwal sprint.</p>
         </div>
         <div class="tile-grid">
-            <div class="tile is-soon" aria-disabled="true">
+            <a class="tile" href="{{ route('panel.instansi.stok.index') }}">
                 <span class="tile-icon"><svg class="icon"><use href="#i-chart"/></svg></span>
-                <h3 class="tile-title">Manajemen stok dan mutasi</h3>
-                <p>Catat komoditas masuk, keluar, retur, rusak, dan penyesuaian stok.</p>
-                <span class="tile-foot"><span class="badge badge-netral">Sprint 2 · PBI-11</span></span>
-            </div>
+                <h3 class="tile-title">Stok dan mutasi</h3>
+                <p>Lihat stok tiap gudang dan catat barang masuk, penyaluran, rusak, retur, atau stock opname.</p>
+                <span class="tile-foot">Buka daftar stok <svg class="icon icon-sm"><use href="#i-arrow-right"/></svg></span>
+            </a>
             <div class="tile is-soon" aria-disabled="true">
                 <span class="tile-icon"><svg class="icon"><use href="#i-truck"/></svg></span>
                 <h3 class="tile-title">Penyaluran dan pengiriman</h3>
