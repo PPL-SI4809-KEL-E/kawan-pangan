@@ -18,11 +18,18 @@
         <h1>Daftar stok</h1>
         <p>Stok fisik, cadangan, dan stok tersedia per komoditas di setiap gudang instansi Anda.</p>
     </div>
+    <div class="page-actions">
+    @if (auth()->user()->isPengelolaInstansi())
+        <a class="btn btn-primary" href="{{ route('panel.instansi.stok.mutasi.create', array_filter(['gudang' => $filter['gudang'] ?? null])) }}">
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#i-arrow-in"/></svg>Catat mutasi
+        </a>
+    @endif
     <p class="text-muted cluster">
         <svg class="icon icon-sm"><use href="#i-clock"/></svg>
         Terakhir diperbarui:
         <strong>{{ $terakhirDiperbarui ? \Illuminate\Support\Carbon::parse($terakhirDiperbarui)->translatedFormat('d M Y H:i') : 'belum ada mutasi' }}</strong>
     </p>
+    </div>
 </div>
 
 <form class="card" method="get" action="{{ route('panel.instansi.stok.index') }}">

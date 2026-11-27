@@ -34,7 +34,10 @@
             'Utama' => [
                 ['label' => 'Dashboard', 'ikon' => 'i-home', 'url' => route('panel.instansi'), 'aktif' => request()->routeIs('panel.instansi')],
                 ['label' => 'Cakupan gudang', 'ikon' => 'i-warehouse', 'url' => route('panel.instansi').'#gudang', 'aktif' => request()->routeIs('panel.instansi.gudang.*')],
-                ['label' => 'Daftar stok', 'ikon' => 'i-chart', 'url' => route('panel.instansi.stok.index'), 'aktif' => request()->routeIs('panel.instansi.stok.*')],
+                ['label' => 'Daftar stok', 'ikon' => 'i-chart', 'url' => route('panel.instansi.stok.index'), 'aktif' => request()->routeIs('panel.instansi.stok.index')],
+                ...($pengguna->isPengelolaInstansi() ? [
+                    ['label' => 'Catat mutasi', 'ikon' => 'i-arrow-in', 'url' => route('panel.instansi.stok.mutasi.create'), 'aktif' => request()->routeIs('panel.instansi.stok.mutasi.*')],
+                ] : []),
             ],
             'Segera hadir' => [
                 ['label' => 'Penyaluran', 'ikon' => 'i-truck', 'tag' => 'Sprint 3'],
