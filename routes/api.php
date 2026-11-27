@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PetaChoroplethController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,3 +20,6 @@ Route::get('/health', function () {
         'timestamp' => now()->toIso8601String(),
     ]);
 });
+
+// PSKE-69 (PSKE-70/71/72): Data peta choropleth diambil per level yang dibuka.
+Route::get('/peta', [PetaChoroplethController::class, 'apiLevel'])->name('api.peta');
