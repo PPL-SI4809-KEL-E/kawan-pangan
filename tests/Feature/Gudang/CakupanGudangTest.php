@@ -482,4 +482,32 @@ class CakupanGudangTest extends TestCase
         $response->assertSee('Tanpa Cakupan');
         $response->assertSee('+ Layani (Gudang Utama)');
     }
+
+    public function test_menolak_cakupan_kecamatan_dari_kabupaten_lain(): void
+    {
+        $kotaBandung = Wilayah::create([
+            'kode' => '32.73',
+            'nama' => 'Kota Bandung',
+            'kode_induk' => '32',
+        ]);
+        $kecamatanKota = Wilayah::create([
+            'kode' => '32.73.01',
+            'nama' => 'Sukasari',
+            'kode_induk' => $kotaBandung->kode,
+        ]);
+
+        $pengelola = $this->userPengelola($this->instansi->id);
+
+        // Gudang berada di 32.04 (Kabupaten Bandung); mencoba menambahkan 32.73.01 (Kota Bandung) harus ditolak.
+        $response = $this->actingAs($pengelola)->post(route('panel.instansi.gudang.cakupan.store', $this->gudang), [
+            'kode_kecamatan' => $kecamatanKota->kode,
+            'is_utama' => '0',
+        ]);
+
+        $response->assertSessionHasErrors('kode_kecamatan');
+        $this->assertDatabaseMissing('cakupan_gudang', [
+            'gudang_id' => $this->gudang->id,
+            'kode_kecamatan' => $kecamatanKota->kode,
+        ]);
+    }
 }
