@@ -15,6 +15,17 @@ const WARNA = {
 };
 const TINTA = token('--color-text', '#17201C');
 
+// Ambang status dari Superadmin (PSKE-106): Kritis < kritis, Aman > aman, sisanya Waspada.
+const AMBANG = (() => {
+    try {
+        const isi = JSON.parse(document.getElementById('peta-ambang')?.textContent || 'null');
+        if (Number.isFinite(isi?.kritis) && Number.isFinite(isi?.aman)) return isi;
+    } catch {
+        // Pakai nilai awal di bawah.
+    }
+    return { kritis: 14, aman: 30 };
+})();
+
 const angka = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 });
 const tanggal = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
@@ -33,7 +44,7 @@ function buatSimulasi() {
     ];
 
     return dasar.map(([id, nama, lat, lng, hari, stokKg], i) => {
-        const status = hari < 14 ? 'kritis' : hari <= 30 ? 'waspada' : 'aman';
+        const status = statusDariHari(hari);
         const jam = (n) => new Date(Date.UTC(2026, 10, 17 - n, 1 + ((i * 3 + n * 5) % 9), (i * 17 + n * 11) % 60)).toISOString();
         return {
             id,
@@ -79,7 +90,7 @@ function rapikan(w) {
 
 function statusDariHari(hari) {
     if (hari === null || hari === undefined || !Number.isFinite(Number(hari))) return 'netral';
-    return hari < 14 ? 'kritis' : hari <= 30 ? 'waspada' : 'aman';
+    return hari < AMBANG.kritis ? 'kritis' : hari > AMBANG.aman ? 'aman' : 'waspada';
 }
 
 // Dibulatkan ke bawah supaya 13,6 hari tidak tampil "14 hari" dengan status Kritis.

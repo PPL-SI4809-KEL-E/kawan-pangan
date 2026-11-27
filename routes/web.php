@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AmbangStatusController;
+use App\Models\AmbangStatus;
 use App\Http\Controllers\Admin\GudangController;
 use App\Http\Controllers\Admin\InstansiController;
 use App\Http\Controllers\Admin\KomoditasController;
@@ -27,7 +28,16 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    // PSKE-106: legenda beranda mengikuti ambang status yang diatur Superadmin.
+    // Tanpa tabel/baris ambang (misalnya tes tanpa migrasi), pakai nilai awal 14/30.
+    $ambang = rescue(fn () => AmbangStatus::query()->find(1), null, false);
+
+    return view('welcome', [
+        'ambang' => [
+            'kritis' => (int) ($ambang->kritis_hari ?? 14),
+            'aman' => (int) ($ambang->aman_hari ?? 30),
+        ],
+    ]);
 });
 
 // PBI-04 & PBI-05 · Autentikasi Pengunjung (Tamu)

@@ -1,6 +1,7 @@
 {{-- Beranda publik v3: atlas stok pangan per kecamatan (PSKE-96, lanjutan PSKE-90/91).
      Data diambil dari $petaWilayah bila controller sudah mengirimnya; tanpa itu dipakai data simulasi di beranda.js.
      Kontrak data ada di docs/design-system.md bagian "Pola layar peta". --}}
+@php($ambang ??= ['kritis' => 14, 'aman' => 30])
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -70,19 +71,19 @@
                             <span class="swatch swatch-kritis" aria-hidden="true"></span>
                             <span class="sebaran-opt-label">Kritis</span>
                             <span class="sebaran-opt-count" data-count="kritis">0</span>
-                            <span class="sebaran-opt-hint">Kurang dari 14 hari</span>
+                            <span class="sebaran-opt-hint">Kurang dari {{ $ambang['kritis'] }} hari</span>
                         </button>
                         <button type="button" class="sebaran-opt" data-filter="waspada" aria-pressed="false">
                             <span class="swatch swatch-waspada" aria-hidden="true"></span>
                             <span class="sebaran-opt-label">Waspada</span>
                             <span class="sebaran-opt-count" data-count="waspada">0</span>
-                            <span class="sebaran-opt-hint">14 sampai 30 hari</span>
+                            <span class="sebaran-opt-hint">{{ $ambang['kritis'] }} sampai {{ $ambang['aman'] }} hari</span>
                         </button>
                         <button type="button" class="sebaran-opt" data-filter="aman" aria-pressed="false">
                             <span class="swatch swatch-aman" aria-hidden="true"></span>
                             <span class="sebaran-opt-label">Aman</span>
                             <span class="sebaran-opt-count" data-count="aman">0</span>
-                            <span class="sebaran-opt-hint">Lebih dari 30 hari</span>
+                            <span class="sebaran-opt-hint">Lebih dari {{ $ambang['aman'] }} hari</span>
                         </button>
                     </div>
                     <p class="sebaran-catatan" id="sebaran-netral" hidden></p>
@@ -187,6 +188,7 @@
     </footer>
 
     <script type="application/json" id="peta-data">@json($petaWilayah ?? null)</script>
+    <script type="application/json" id="peta-ambang">@json($ambang)</script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     @vite('resources/js/beranda.js')
 </body>
