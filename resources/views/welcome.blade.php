@@ -47,7 +47,8 @@
         <section class="atlas" id="peta" aria-labelledby="peta-judul">
             <div class="atlas-panel">
                 <div class="atlas-head">
-                    <h1 id="peta-judul">Stok pangan per kecamatan</h1>
+                    <nav class="atlas-breadcrumb" id="peta-breadcrumb" aria-label="Hierarki wilayah peta" hidden></nav>
+                    <h1 id="peta-judul">Stok pangan <span id="peta-level-label">{{ !empty($petaAwal) ? 'per provinsi' : 'per kecamatan' }}</span></h1>
                     <p class="atlas-lead" id="peta-cakupan">Berapa hari stok gudang cukup untuk penyaluran warga.</p>
                     <p class="atlas-sumber" id="peta-sumber"><svg class="icon icon-sm" aria-hidden="true"><use href="#i-alert"/></svg>Angka contoh. Data gudang belum tersambung.</p>
                 </div>
@@ -89,10 +90,17 @@
                     <p class="sebaran-catatan" id="sebaran-netral" hidden></p>
                 </div>
 
+                <div class="atlas-komoditas-wrap" id="peta-komoditas-wrap" hidden>
+                    <label class="sr-only" for="peta-komoditas">Filter komoditas</label>
+                    <select class="select atlas-komoditas" id="peta-komoditas" aria-label="Filter komoditas">
+                        <option value="">Semua komoditas</option>
+                    </select>
+                </div>
+
                 <label class="atlas-cari">
-                    <span class="sr-only">Cari kecamatan</span>
+                    <span class="sr-only" id="peta-cari-label">Cari wilayah</span>
                     <svg class="icon icon-sm" aria-hidden="true"><use href="#i-search"/></svg>
-                    <input class="input" type="search" id="peta-cari" placeholder="Cari kecamatan" autocomplete="off">
+                    <input class="input" type="search" id="peta-cari" placeholder="Cari wilayah" autocomplete="off">
                 </label>
 
                 <ul class="wil-list atlas-list" id="peta-list" aria-label="Daftar kecamatan, urut dari stok paling cepat habis" tabindex="-1">
@@ -128,6 +136,12 @@
                         <p class="detail-figure-label" data-detail="hari-label">Perkiraan stok habis dalam</p>
                         <p class="detail-figure-value" data-detail="hari"></p>
                         <p class="detail-figure-meta"><span data-detail="stok"></span><span data-detail="diperbarui"></span></p>
+                    </div>
+
+                    <div class="detail-drill" id="peta-drill-wrap" hidden>
+                        <button type="button" class="btn btn-primary btn-sm btn-block" id="peta-drill-btn">
+                            <span id="peta-drill-label">Buka wilayah turunan</span>
+                        </button>
                     </div>
 
                     <section class="detail-section" aria-labelledby="detail-komoditas">
@@ -187,6 +201,7 @@
         </p>
     </footer>
 
+    <script type="application/json" id="peta-awal">@json($petaAwal ?? null)</script>
     <script type="application/json" id="peta-data">@json($petaWilayah ?? null)</script>
     <script type="application/json" id="peta-ambang">@json($ambang)</script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
