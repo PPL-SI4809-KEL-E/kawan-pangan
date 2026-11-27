@@ -4,6 +4,7 @@ namespace Tests\Feature\Stok;
 
 use App\Enums\Role;
 use App\Enums\StatusAkun;
+use App\Models\Cadangan;
 use App\Models\Gudang;
 use App\Models\Instansi;
 use App\Models\Komoditas;
@@ -254,5 +255,439 @@ class LayananStokTest extends TestCase
         $ditemukan = $this->layanan->cariBerdasarkanRef('REF-CEK-001');
         $this->assertNotNull($ditemukan);
         $this->assertSame($mutasi->id, $ditemukan->id);
+    }
+
+    #[Test]
+    public function permintaan_berulang_dengan_catat_mutasi_idempoten_tidak_menggandakan_saldo_atau_baris(): void
+    {
+        $pertama = $this->layanan->catatMutasiIdempoten(
+            $this->stok,
+            MutasiStok::JENIS_PENERIMAAN,
+            '120.000',
+            $this->pencatat,
+            '  REF-IDEMP-001  ',
+            'Penerimaan tahap 1',
+        );
+
+        $kedua = $this->layanan->catatMutasiIdempoten(
+            $this->stok,
+            MutasiStok::JENIS_PENERIMAAN,
+            '120.000',
+            $this->pencatat,
+            'REF-IDEMP-001',
+            'Percobaan ulang karena timeout',
+        );
+
+        $ketiga = $this->layanan->catatMutasiIdempoten(
+            $this->stok,
+            MutasiStok::JENIS_PENERIMAAN,
+            120,
+            $this->pencatat,
+            '  REF-IDEMP-001 ',
+        );
+
+        $this->assertSame($pertama->id, $kedua->id);
+        $this->assertSame($pertama->id, $ketiga->id);
+        $this->assertSame('REF-IDEMP-001', $pertama->ref_operasi);
+        $this->assertSame('120.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame(1, MutasiStok::where('stok_id', $this->stok->id)->count());
+
+        $keluarPertama = $this->layanan->catatMutasiIdempoten(
+            $this->stok,
+            MutasiStok::JENIS_PENYALURAN,
+            '20.000',
+            $this->pencatat,
+            'REF-IDEMP-OUT-001',
+        );
+        $keluarUlang = $this->layanan->catatMutasiIdempoten(
+            $this->stok,
+            MutasiStok::JENIS_PENYALURAN,
+            '20.000',
+            $this->pencatat,
+            'REF-IDEMP-OUT-001',
+        );
+
+        $this->assertSame($keluarPertama->id, $keluarUlang->id);
+        $this->assertSame('100.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame(2, MutasiStok::where('stok_id', $this->stok->id)->count());
+    }
+
+    #[Test]
+    public function catat_mutasi_idempoten_menolak_ref_yang_sudah_dipakai_dengan_payload_berbeda(): void
+    {
+        $this->layanan->catatMutasiIdempoten(
+            $this->stok,
+            MutasiStok::JENIS_PENERIMAAN,
+            '50.000',
+            $this->pencatat,
+            'REF-KONFLIK-001',
+        );
+
+        $komoditasLain = Komoditas::create([
+            'nama' => 'Minyak Goreng',
+            'satuan' => 'liter',
+        ]);
+        $stokLain = $this->layanan->ambilAtauBuatStok($this->stok->gudang_id, $komoditasLain);
+
+        $skenarioKonflik = [
+            [$this->stok, MutasiStok::JENIS_PENERIMAAN, '75.000'],
+            [$this->stok, MutasiStok::JENIS_RETUR, '50.000'],
+            [$stokLain, MutasiStok::JENIS_PENERIMAAN, '50.000'],
+        ];
+
+        foreach ($skenarioKonflik as [$targetStok, $jenis, $jumlah]) {
+            try {
+                $this->layanan->catatMutasiIdempoten(
+                    $targetStok,
+                    $jenis,
+                    $jumlah,
+                    $this->pencatat,
+                    'REF-KONFLIK-001',
+                );
+                $this->fail('Penggunaan ref_operasi dengan payload berbeda seharusnya ditolak.');
+            } catch (ValidationException $e) {
+                $this->assertArrayHasKey('ref_operasi', $e->errors());
+            }
+        }
+
+        $this->assertSame('50.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame('0.000', $stokLain->fresh()->jumlah_fisik_layak);
+        $this->assertSame(1, MutasiStok::count());
+    }
+
+    #[Test]
+    public function catat_mutasi_idempoten_mewajibkan_ref_operasi_tidak_kosong(): void
+    {
+        try {
+            $this->layanan->catatMutasiIdempoten(
+                $this->stok,
+                MutasiStok::JENIS_PENERIMAAN,
+                '25.000',
+                $this->pencatat,
+                '   ',
+            );
+            $this->fail('ref_operasi kosong seharusnya ditolak pada pencatatan idempoten.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('ref_operasi', $e->errors());
+        }
+
+        $this->assertSame('0.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame(0, MutasiStok::where('stok_id', $this->stok->id)->count());
+    }
+
+    #[Test]
+    public function ref_operasi_duplikat_dengan_spasi_ditolak_di_semua_jalur_mutasi_tanpa_mengubah_saldo(): void
+    {
+        $this->layanan->catatPenerimaan($this->stok, '200.000', $this->pencatat, 'REF-SEMUA-001');
+
+        $percobaanDuplikat = [
+            fn () => $this->layanan->catatPenyaluran($this->stok, '10.000', $this->pencatat, '  REF-SEMUA-001  '),
+            fn () => $this->layanan->catatRetur($this->stok, '10.000', $this->pencatat, 'REF-SEMUA-001'),
+            fn () => $this->layanan->catatRusak($this->stok, '10.000', $this->pencatat, 'REF-SEMUA-001'),
+            fn () => $this->layanan->catatPenyesuaian($this->stok, '10.000', $this->pencatat, 'REF-SEMUA-001'),
+            fn () => $this->layanan->sesuaikanSaldo($this->stok, '150.000', $this->pencatat, '  REF-SEMUA-001  '),
+        ];
+
+        foreach ($percobaanDuplikat as $eksekusi) {
+            try {
+                $eksekusi();
+                $this->fail('ref_operasi duplikat seharusnya ditolak pada seluruh jalur mutasi.');
+            } catch (ValidationException $e) {
+                $this->assertArrayHasKey('ref_operasi', $e->errors());
+            }
+        }
+
+        $this->assertSame('200.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame(1, MutasiStok::where('stok_id', $this->stok->id)->count());
+    }
+
+    #[Test]
+    public function ref_operasi_melebihi_batas_191_karakter_ditolak_tanpa_mengubah_saldo(): void
+    {
+        $refTerlaluPanjang = str_repeat('A', 192);
+
+        foreach ([
+            fn () => $this->layanan->catatPenerimaan($this->stok, '10.000', $this->pencatat, $refTerlaluPanjang),
+            fn () => $this->layanan->catatMutasiIdempoten($this->stok, MutasiStok::JENIS_PENERIMAAN, '10.000', $this->pencatat, $refTerlaluPanjang),
+        ] as $eksekusi) {
+            try {
+                $eksekusi();
+                $this->fail('ref_operasi > 191 karakter seharusnya ditolak.');
+            } catch (ValidationException $e) {
+                $this->assertArrayHasKey('ref_operasi', $e->errors());
+            }
+        }
+
+        $this->assertSame('0.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame(0, MutasiStok::where('stok_id', $this->stok->id)->count());
+
+        $mutasiSah = $this->layanan->catatMutasiIdempoten(
+            $this->stok,
+            MutasiStok::JENIS_PENERIMAAN,
+            '10.000',
+            $this->pencatat,
+            str_repeat('B', 191),
+        );
+
+        $this->assertSame(191, mb_strlen($mutasiSah->ref_operasi));
+        $this->assertSame('10.000', $this->stok->fresh()->jumlah_fisik_layak);
+    }
+
+    #[Test]
+    public function pelanggaran_unique_constraint_db_pada_ref_operasi_dikonversi_ke_validation_exception_dan_rollback(): void
+    {
+        $sudahSisipkanKonflik = false;
+
+        MutasiStok::creating(function (MutasiStok $mutasi) use (&$sudahSisipkanKonflik): void {
+            if ($sudahSisipkanKonflik || $mutasi->ref_operasi !== 'REF-RACE-001') {
+                return;
+            }
+
+            $sudahSisipkanKonflik = true;
+            DB::table('mutasi_stok')->insert($mutasi->getAttributes());
+        });
+
+        try {
+            $this->layanan->catatPenerimaan($this->stok, '40.000', $this->pencatat, 'REF-RACE-001');
+            $this->fail('Konflik unique constraint pada tingkat database seharusnya dikonversi menjadi ValidationException.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('ref_operasi', $e->errors());
+        }
+
+        $this->assertTrue($sudahSisipkanKonflik);
+        $this->assertSame('0.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame(0, MutasiStok::where('stok_id', $this->stok->id)->count());
+    }
+
+    #[Test]
+    public function helper_total_cadangan_aktif_dan_hitung_stok_tersedia_menghitung_dengan_presisi(): void
+    {
+        $this->assertSame('0.000', $this->layanan->totalCadanganAktif($this->stok));
+        $this->assertSame('0.000', $this->layanan->hitungStokTersedia($this->stok));
+
+        $this->layanan->catatPenerimaan($this->stok, '150.500', $this->pencatat, 'REF-TERSEDIA-001');
+
+        $daftarCadangan = [
+            ['RESI-CAD-01', '40.250', Cadangan::STATUS_AKTIF],
+            ['RESI-CAD-02', '10.125', Cadangan::STATUS_AKTIF],
+            ['RESI-CAD-03', '25.000', Cadangan::STATUS_SELESAI],
+            ['RESI-CAD-04', '15.000', Cadangan::STATUS_BATAL],
+        ];
+
+        foreach ($daftarCadangan as [$noResi, $jumlahCadangan, $status]) {
+            $this->buatCadangan($noResi, $jumlahCadangan, $status);
+        }
+
+        $this->assertSame('50.375', $this->layanan->totalCadanganAktif($this->stok));
+        $this->assertSame('100.125', $this->layanan->hitungStokTersedia($this->stok));
+    }
+
+    #[Test]
+    public function mutasi_keluar_awal_ditolak_bila_membuat_saldo_fisik_negatif(): void
+    {
+        $this->layanan->catatPenerimaan($this->stok, '50.000', $this->pencatat, 'REF-NEG-AWAL');
+
+        try {
+            $this->layanan->catatPenyaluran($this->stok, '50.001', $this->pencatat, 'REF-NEG-TOLAK');
+            $this->fail('Mutasi keluar yang menyebabkan saldo fisik negatif seharusnya ditolak.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('jumlah', $e->errors());
+        }
+
+        $this->assertSame('50.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame(1, MutasiStok::where('stok_id', $this->stok->id)->count());
+        $this->assertFalse($this->layanan->refSudahAda('REF-NEG-TOLAK'));
+    }
+
+    #[Test]
+    public function mutasi_keluar_ditolak_bila_melebihi_stok_tersedia_karena_cadangan_aktif(): void
+    {
+        $this->layanan->catatPenerimaan($this->stok, '100.000', $this->pencatat, 'REF-TERSEDIA-MASUK');
+        $this->buatCadangan('RESI-AKTIF-01', '30.000', Cadangan::STATUS_AKTIF);
+        $this->buatCadangan('RESI-SELESAI-01', '20.000', Cadangan::STATUS_SELESAI);
+
+        $this->assertSame('70.000', $this->layanan->hitungStokTersedia($this->stok));
+
+        $percobaanMelebihiTersedia = [
+            ['REF-SALUR-LEBIH', fn () => $this->layanan->catatPenyaluran($this->stok, '70.001', $this->pencatat, 'REF-SALUR-LEBIH')],
+            ['REF-RUSAK-LEBIH', fn () => $this->layanan->catatRusak($this->stok, '70.001', $this->pencatat, 'REF-RUSAK-LEBIH')],
+            ['REF-SESUAI-LEBIH', fn () => $this->layanan->catatPenyesuaian($this->stok, '-70.001', $this->pencatat, 'REF-SESUAI-LEBIH')],
+        ];
+
+        foreach ($percobaanMelebihiTersedia as [$ref, $eksekusi]) {
+            try {
+                $eksekusi();
+                $this->fail("Mutasi keluar {$ref} yang melebihi stok tersedia seharusnya ditolak.");
+            } catch (ValidationException $e) {
+                $this->assertArrayHasKey('jumlah', $e->errors());
+            }
+            $this->assertFalse($this->layanan->refSudahAda($ref));
+        }
+
+        $this->assertSame('100.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame(1, MutasiStok::where('stok_id', $this->stok->id)->count());
+
+        // Tepat menghabiskan seluruh stok tersedia (70.000) harus diperbolehkan
+        $this->layanan->catatPenyaluran($this->stok, '70.000', $this->pencatat, 'REF-SALUR-PAS');
+        $this->assertSame('30.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame('0.000', $this->layanan->hitungStokTersedia($this->stok));
+
+        // Setelah stok tersedia 0.000, pengurangan sekecil 0.001 pun harus ditolak
+        try {
+            $this->layanan->catatPenyaluran($this->stok, '0.001', $this->pencatat, 'REF-SALUR-HABIS');
+            $this->fail('Mutasi keluar saat stok tersedia 0.000 seharusnya ditolak.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('jumlah', $e->errors());
+        }
+
+        $this->assertSame('30.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame(2, MutasiStok::where('stok_id', $this->stok->id)->count());
+    }
+
+    #[Test]
+    public function penyaluran_untuk_pengiriman_tercadang_boleh_memakai_cadangan_sendiri_tetapi_tidak_cadangan_lain(): void
+    {
+        $this->layanan->catatPenerimaan($this->stok, '100.000', $this->pencatat, 'REF-KRM-MASUK');
+        $pengiriman1 = $this->buatCadangan('RESI-KRM-01', '30.000', Cadangan::STATUS_AKTIF);
+        $this->buatCadangan('RESI-KRM-02', '20.000', Cadangan::STATUS_AKTIF);
+
+        // Tidak boleh mengambil hingga memakan cadangan pengiriman lain (20.000)
+        try {
+            $this->layanan->catatPenyaluran($this->stok, '80.001', $this->pencatat, 'REF-KRM-OVER', pengirimanId: $pengiriman1);
+            $this->fail('Penyaluran pengiriman 1 tidak boleh memakan cadangan pengiriman lain.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('jumlah', $e->errors());
+        }
+
+        // Boleh menyalurkan jatah cadangan miliknya sendiri (30.000)
+        $mutasi = $this->layanan->catatPenyaluran($this->stok, '30.000', $this->pencatat, 'REF-KRM-OK', pengirimanId: $pengiriman1);
+        $this->assertSame('70.000', $mutasi->saldo_setelah);
+        $this->assertSame('70.000', $this->stok->fresh()->jumlah_fisik_layak);
+    }
+
+    #[Test]
+    public function mutasi_rusak_dan_penyesuaian_negatif_ditolak_bila_saldo_menjadi_negatif(): void
+    {
+        try {
+            $this->layanan->catatPenyaluran($this->stok, '0.001', $this->pencatat, 'REF-NOL-SALUR');
+            $this->fail('Penyaluran pada saldo 0.000 seharusnya ditolak.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('jumlah', $e->errors());
+        }
+        $this->assertSame('0.000', $this->stok->fresh()->jumlah_fisik_layak);
+
+        $this->layanan->catatPenerimaan($this->stok, '25.000', $this->pencatat, 'REF-BATAS-MASUK');
+
+        foreach ([
+            fn () => $this->layanan->catatRusak($this->stok, '25.001', $this->pencatat, 'REF-RUSAK-NEG'),
+            fn () => $this->layanan->catatPenyesuaian($this->stok, '-25.001', $this->pencatat, 'REF-SESUAI-NEG'),
+        ] as $eksekusi) {
+            try {
+                $eksekusi();
+                $this->fail('Mutasi pengurangan yang menghasilkan saldo negatif seharusnya ditolak.');
+            } catch (ValidationException $e) {
+                $this->assertArrayHasKey('jumlah', $e->errors());
+            }
+        }
+
+        $this->assertSame('25.000', $this->stok->fresh()->jumlah_fisik_layak);
+
+        // Pengurangan tepat sampai 0.000 diizinkan dan saldo tidak negatif
+        $this->layanan->catatRusak($this->stok, '25.000', $this->pencatat, 'REF-RUSAK-PAS');
+        $this->assertSame('0.000', $this->stok->fresh()->jumlah_fisik_layak);
+    }
+
+    #[Test]
+    public function sesuaikan_saldo_menolak_target_negatif_dan_target_di_bawah_cadangan_aktif(): void
+    {
+        try {
+            $this->layanan->sesuaikanSaldo($this->stok, '-0.001', $this->pencatat, 'REF-TARGET-NEG');
+            $this->fail('sesuaikanSaldo dengan target negatif seharusnya ditolak.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('saldo_setelah', $e->errors());
+        }
+
+        $this->layanan->catatPenerimaan($this->stok, '100.000', $this->pencatat, 'REF-TARGET-AWAL');
+        $this->buatCadangan('RESI-TARGET-01', '40.000', Cadangan::STATUS_AKTIF);
+
+        try {
+            $this->layanan->sesuaikanSaldo($this->stok, '39.999', $this->pencatat, 'REF-TARGET-KURANG');
+            $this->fail('sesuaikanSaldo di bawah total cadangan aktif seharusnya ditolak.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('saldo_setelah', $e->errors());
+        }
+        $this->assertSame('100.000', $this->stok->fresh()->jumlah_fisik_layak);
+
+        $this->layanan->sesuaikanSaldo($this->stok, '40.000', $this->pencatat, 'REF-TARGET-PAS');
+        $this->assertSame('40.000', $this->stok->fresh()->jumlah_fisik_layak);
+        $this->assertSame('0.000', $this->layanan->hitungStokTersedia($this->stok));
+    }
+
+    #[Test]
+    public function catat_mutasi_idempoten_yang_ditolak_karena_stok_kurang_tidak_mengunci_ref_operasi(): void
+    {
+        $this->layanan->catatPenerimaan($this->stok, '20.000', $this->pencatat, 'REF-IDEMP-AWAL');
+
+        try {
+            $this->layanan->catatMutasiIdempoten(
+                $this->stok,
+                MutasiStok::JENIS_PENYALURAN,
+                '50.000',
+                $this->pencatat,
+                'REF-IDEMP-RETRY',
+            );
+            $this->fail('Mutasi keluar idempoten yang melebihi stok seharusnya ditolak.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('jumlah', $e->errors());
+        }
+
+        $this->assertFalse($this->layanan->refSudahAda('REF-IDEMP-RETRY'));
+        $this->assertSame('20.000', $this->stok->fresh()->jumlah_fisik_layak);
+
+        // Setelah stok ditambah, permintaan ulang dengan ref_operasi yang sama dapat diproses
+        $this->layanan->catatPenerimaan($this->stok, '40.000', $this->pencatat, 'REF-IDEMP-TAMBAH');
+
+        $pertama = $this->layanan->catatMutasiIdempoten(
+            $this->stok,
+            MutasiStok::JENIS_PENYALURAN,
+            '50.000',
+            $this->pencatat,
+            'REF-IDEMP-RETRY',
+        );
+        $ulang = $this->layanan->catatMutasiIdempoten(
+            $this->stok,
+            MutasiStok::JENIS_PENYALURAN,
+            '50.000',
+            $this->pencatat,
+            'REF-IDEMP-RETRY',
+        );
+
+        $this->assertSame($pertama->id, $ulang->id);
+        $this->assertSame('10.000', $this->stok->fresh()->jumlah_fisik_layak);
+    }
+
+    private function buatCadangan(string $noResi, string $jumlah, string $status = Cadangan::STATUS_AKTIF): int
+    {
+        $pengirimanId = DB::table('pengiriman')->insertGetId([
+            'no_resi' => $noResi,
+            'gudang_asal_id' => $this->stok->gudang_id,
+            'kode_wilayah_tujuan' => '32.04.12',
+            'petugas_id' => $this->pencatat->id,
+            'status' => 'DISETUJUI',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        Cadangan::create([
+            'stok_id' => $this->stok->id,
+            'pengiriman_id' => $pengirimanId,
+            'jumlah' => $jumlah,
+            'status' => $status,
+            'dibuat_pada' => now(),
+            'selesai_pada' => $status === Cadangan::STATUS_AKTIF ? null : now(),
+            'is_contoh' => false,
+        ]);
+
+        return $pengirimanId;
     }
 }

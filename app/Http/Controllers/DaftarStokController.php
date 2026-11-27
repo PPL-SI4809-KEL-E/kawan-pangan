@@ -22,9 +22,13 @@ class DaftarStokController extends Controller
 
     public function index(Request $request, LayananEstimasiStok $layanan): View
     {
-        Gate::authorize('viewAny', Gudang::class);
-
         $instansiId = $request->user()->instansi_id;
+
+        // Akun tanpa instansi tetap bisa buka halaman ini untuk lihat pesan
+        // "belum ditugaskan". Query di bawah sudah filter data per instansi.
+        if ($instansiId !== null) {
+            Gate::authorize('viewAny', Gudang::class);
+        }
 
         $filter = $request->validate([
             'gudang' => ['nullable', 'integer'],

@@ -2,12 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\Cadangan;
 use App\Models\Gudang;
 use App\Models\Komoditas;
 use App\Models\MutasiStok;
 use App\Models\Stok;
 use App\Models\User;
 use DateTimeInterface;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -48,6 +50,43 @@ class LayananStok
                 'is_contoh' => false,
             ]
         );
+    }
+
+    /**
+     * Hitung total jumlah cadangan berstatus AKTIF pada baris stok.
+     */
+    public function totalCadanganAktif(Stok|int $stok, ?int $kecualikanPengirimanId = null): string
+    {
+        $stokId = $stok instanceof Stok ? $stok->id : $stok;
+        $daftarJumlah = Cadangan::where('stok_id', $stokId)
+            ->where('status', Cadangan::STATUS_AKTIF)
+            ->when(
+                $kecualikanPengirimanId !== null,
+                fn ($query) => $query->where('pengiriman_id', '!=', $kecualikanPengirimanId),
+            )
+            ->pluck('jumlah');
+
+        $total = '0.000';
+        foreach ($daftarJumlah as $jumlah) {
+            $total = bcadd($total, $this->formatKuantitas($jumlah, 'cadangan'), 3);
+        }
+
+        return $total;
+    }
+
+    /**
+     * Hitung stok tersedia (saldo fisik layak dikurangi total cadangan aktif).
+     */
+    public function hitungStokTersedia(Stok|int $stok, ?int $kecualikanPengirimanId = null): string
+    {
+        $stokId = $stok instanceof Stok ? $stok->id : $stok;
+        $stokSegar = Stok::findOrFail($stokId);
+
+        $fisik = $this->formatKuantitas($stokSegar->jumlah_fisik_layak, 'jumlah_fisik_layak');
+        $cadanganAktif = $this->totalCadanganAktif($stokId, $kecualikanPengirimanId);
+        $tersedia = bcsub($fisik, $cadanganAktif, 3);
+
+        return bccomp($tersedia, '0.000', 3) < 0 ? '0.000' : $tersedia;
     }
 
     /**
@@ -98,6 +137,65 @@ class LayananStok
         }
 
         return MutasiStok::where('ref_operasi', $ref)->exists();
+    }
+
+    /**
+     * Catat mutasi stok secara idempoten berdasarkan ref_operasi unik.
+     * Permintaan berulang dengan ref_operasi dan payload yang sama akan
+     * mengembalikan baris mutasi yang sudah ada tanpa menggandakan perubahan saldo.
+     */
+    public function catatMutasiIdempoten(
+        Stok|int $stok,
+        string $jenis,
+        float|int|string $jumlah,
+        User|int $pencatat,
+        string $refOperasi,
+        ?string $keterangan = null,
+        ?int $pengirimanId = null,
+        DateTimeInterface|string|null $waktu = null,
+    ): MutasiStok {
+        [$jumlahFormatted, $jumlahTersimpan] = $this->validasiInputMutasi($jenis, $jumlah);
+        $refNormal = $this->normalisasiDanValidasiRef($refOperasi, wajibDiisi: true);
+
+        $stokId = $stok instanceof Stok ? $stok->id : $stok;
+        $pencatatId = $pencatat instanceof User ? $pencatat->id : $pencatat;
+
+        return DB::transaction(function () use (
+            $stokId,
+            $jenis,
+            $jumlahFormatted,
+            $jumlahTersimpan,
+            $pencatatId,
+            $refNormal,
+            $keterangan,
+            $pengirimanId,
+            $waktu
+        ): MutasiStok {
+            $stokTerkunci = Stok::whereKey($stokId)->lockForUpdate()->firstOrFail();
+
+            $mutasiSudahAda = $this->cariBerdasarkanRef($refNormal);
+            if ($mutasiSudahAda !== null) {
+                return $this->validasiPayloadIdempoten(
+                    $mutasiSudahAda,
+                    $stokId,
+                    $jenis,
+                    $jumlahTersimpan,
+                    $pengirimanId,
+                );
+            }
+
+            return $this->eksekusiMutasiTerkunci(
+                stokTerkunci: $stokTerkunci,
+                jenis: $jenis,
+                jumlahFormatted: $jumlahFormatted,
+                jumlahTersimpan: $jumlahTersimpan,
+                pencatatId: $pencatatId,
+                refOperasi: $refNormal,
+                keterangan: $keterangan,
+                pengirimanId: $pengirimanId,
+                waktu: $waktu,
+            );
+        });
     }
 
     /**
@@ -206,6 +304,8 @@ class LayananStok
         DateTimeInterface|string|null $waktu = null,
     ): MutasiStok {
         $targetFormatted = $this->formatKuantitas($saldoFisikBaru, 'saldo_setelah');
+        $this->pastikanSaldoTidakNegatif($targetFormatted, 'saldo_setelah');
+
         $stokId = $stok instanceof Stok ? $stok->id : $stok;
         $pencatatId = $pencatat instanceof User ? $pencatat->id : $pencatat;
 
@@ -228,6 +328,17 @@ class LayananStok
             }
 
             $jumlahAbsolut = str_starts_with($selisih, '-') ? substr($selisih, 1) : $selisih;
+
+            if (bccomp($selisih, '0.000', 3) < 0) {
+                $this->validasiBatasPenguranganStok(
+                    stokId: $stokTerkunci->id,
+                    saldoAwal: $saldoAwal,
+                    jumlahPengurangan: $jumlahAbsolut,
+                    saldoSetelah: $targetFormatted,
+                    pengirimanId: null,
+                    namaField: 'saldo_setelah',
+                );
+            }
 
             return $this->simpanPerubahanSaldo(
                 stokTerkunci: $stokTerkunci,
@@ -256,6 +367,45 @@ class LayananStok
         ?int $pengirimanId = null,
         DateTimeInterface|string|null $waktu = null,
     ): MutasiStok {
+        [$jumlahFormatted, $jumlahTersimpan] = $this->validasiInputMutasi($jenis, $jumlah);
+
+        $stokId = $stok instanceof Stok ? $stok->id : $stok;
+        $pencatatId = $pencatat instanceof User ? $pencatat->id : $pencatat;
+
+        return DB::transaction(function () use (
+            $stokId,
+            $jenis,
+            $jumlahFormatted,
+            $jumlahTersimpan,
+            $pencatatId,
+            $refOperasi,
+            $keterangan,
+            $pengirimanId,
+            $waktu
+        ): MutasiStok {
+            $stokTerkunci = Stok::whereKey($stokId)->lockForUpdate()->firstOrFail();
+
+            return $this->eksekusiMutasiTerkunci(
+                stokTerkunci: $stokTerkunci,
+                jenis: $jenis,
+                jumlahFormatted: $jumlahFormatted,
+                jumlahTersimpan: $jumlahTersimpan,
+                pencatatId: $pencatatId,
+                refOperasi: $refOperasi,
+                keterangan: $keterangan,
+                pengirimanId: $pengirimanId,
+                waktu: $waktu,
+            );
+        });
+    }
+
+    /**
+     * Validasi jenis serta kuantitas mutasi dan kembalikan nilai terformat serta nilai absolutnya.
+     *
+     * @return array{0: string, 1: string}
+     */
+    private function validasiInputMutasi(string $jenis, float|int|string $jumlah): array
+    {
         if (! in_array($jenis, self::JENIS_MUTASI_VALID, true)) {
             throw ValidationException::withMessages([
                 'jenis' => ['Jenis mutasi stok tidak valid.'],
@@ -275,46 +425,137 @@ class LayananStok
             ]);
         }
 
-        $stokId = $stok instanceof Stok ? $stok->id : $stok;
-        $pencatatId = $pencatat instanceof User ? $pencatat->id : $pencatat;
+        $jumlahTersimpan = str_starts_with($jumlahFormatted, '-')
+            ? substr($jumlahFormatted, 1)
+            : $jumlahFormatted;
 
-        return DB::transaction(function () use (
-            $stokId,
-            $jenis,
-            $jumlahFormatted,
-            $pencatatId,
-            $refOperasi,
-            $keterangan,
-            $pengirimanId,
-            $waktu
-        ): MutasiStok {
-            $stokTerkunci = Stok::whereKey($stokId)->lockForUpdate()->firstOrFail();
-            $saldoAwal = $this->formatKuantitas($stokTerkunci->jumlah_fisik_layak, 'jumlah_fisik_layak');
+        return [$jumlahFormatted, $jumlahTersimpan];
+    }
 
-            $saldoSetelah = match ($jenis) {
-                MutasiStok::JENIS_PENERIMAAN,
-                MutasiStok::JENIS_RETUR => bcadd($saldoAwal, $jumlahFormatted, 3),
-                MutasiStok::JENIS_PENYALURAN,
-                MutasiStok::JENIS_RUSAK => bcsub($saldoAwal, $jumlahFormatted, 3),
-                MutasiStok::JENIS_PENYESUAIAN => bcadd($saldoAwal, $jumlahFormatted, 3),
-            };
+    /**
+     * Pastikan permintaan ulang dengan ref_operasi yang sudah tercatat memiliki payload mutasi yang sama.
+     */
+    private function validasiPayloadIdempoten(
+        MutasiStok $mutasiSudahAda,
+        int $stokId,
+        string $jenis,
+        string $jumlahTersimpan,
+        ?int $pengirimanId,
+    ): MutasiStok {
+        $pengirimanTercatat = $mutasiSudahAda->pengiriman_id !== null
+            ? (int) $mutasiSudahAda->pengiriman_id
+            : null;
 
-            $jumlahTersimpan = str_starts_with($jumlahFormatted, '-')
-                ? substr($jumlahFormatted, 1)
-                : $jumlahFormatted;
+        $payloadCocok = (int) $mutasiSudahAda->stok_id === $stokId
+            && $mutasiSudahAda->jenis === $jenis
+            && bccomp((string) $mutasiSudahAda->jumlah, $jumlahTersimpan, 3) === 0
+            && $pengirimanTercatat === $pengirimanId;
 
-            return $this->simpanPerubahanSaldo(
-                stokTerkunci: $stokTerkunci,
-                jenis: $jenis,
-                jumlahMutasi: $jumlahTersimpan,
+        if (! $payloadCocok) {
+            throw ValidationException::withMessages([
+                'ref_operasi' => ['Referensi operasi sudah digunakan oleh transaksi mutasi lain.'],
+            ]);
+        }
+
+        return $mutasiSudahAda;
+    }
+
+    /**
+     * Hitung saldo akhir pada stok yang sudah dikunci dan simpan mutasi stoknya.
+     */
+    private function eksekusiMutasiTerkunci(
+        Stok $stokTerkunci,
+        string $jenis,
+        string $jumlahFormatted,
+        string $jumlahTersimpan,
+        int $pencatatId,
+        ?string $refOperasi,
+        ?string $keterangan,
+        ?int $pengirimanId,
+        DateTimeInterface|string|null $waktu,
+    ): MutasiStok {
+        $saldoAwal = $this->formatKuantitas($stokTerkunci->jumlah_fisik_layak, 'jumlah_fisik_layak');
+
+        $saldoSetelah = match ($jenis) {
+            MutasiStok::JENIS_PENERIMAAN,
+            MutasiStok::JENIS_RETUR => bcadd($saldoAwal, $jumlahFormatted, 3),
+            MutasiStok::JENIS_PENYALURAN,
+            MutasiStok::JENIS_RUSAK => bcsub($saldoAwal, $jumlahFormatted, 3),
+            MutasiStok::JENIS_PENYESUAIAN => bcadd($saldoAwal, $jumlahFormatted, 3),
+        };
+
+        $adalahPengurangan = in_array($jenis, [MutasiStok::JENIS_PENYALURAN, MutasiStok::JENIS_RUSAK], true)
+            || ($jenis === MutasiStok::JENIS_PENYESUAIAN && bccomp($jumlahFormatted, '0.000', 3) < 0);
+
+        if ($adalahPengurangan) {
+            $kecualikanPengirimanId = $jenis === MutasiStok::JENIS_PENYALURAN ? $pengirimanId : null;
+            $this->validasiBatasPenguranganStok(
+                stokId: $stokTerkunci->id,
+                saldoAwal: $saldoAwal,
+                jumlahPengurangan: $jumlahTersimpan,
                 saldoSetelah: $saldoSetelah,
-                pencatatId: $pencatatId,
-                refOperasi: $refOperasi,
-                keterangan: $keterangan,
-                pengirimanId: $pengirimanId,
-                waktu: $waktu,
+                pengirimanId: $kecualikanPengirimanId,
+                namaField: 'jumlah',
             );
-        });
+        } else {
+            $this->pastikanSaldoTidakNegatif($saldoSetelah);
+        }
+
+        return $this->simpanPerubahanSaldo(
+            stokTerkunci: $stokTerkunci,
+            jenis: $jenis,
+            jumlahMutasi: $jumlahTersimpan,
+            saldoSetelah: $saldoSetelah,
+            pencatatId: $pencatatId,
+            refOperasi: $refOperasi,
+            keterangan: $keterangan,
+            pengirimanId: $pengirimanId,
+            waktu: $waktu,
+        );
+    }
+
+    /**
+     * Pastikan pengurangan saldo tidak menghasilkan saldo negatif dan tidak melebihi stok tersedia.
+     */
+    private function validasiBatasPenguranganStok(
+        int $stokId,
+        string $saldoAwal,
+        string $jumlahPengurangan,
+        string $saldoSetelah,
+        ?int $pengirimanId = null,
+        string $namaField = 'jumlah',
+    ): void {
+        $this->pastikanSaldoTidakNegatif($saldoSetelah, $namaField);
+
+        $cadanganAktif = $this->totalCadanganAktif($stokId, $pengirimanId);
+        $stokTersedia = bcsub($saldoAwal, $cadanganAktif, 3);
+        if (bccomp($stokTersedia, '0.000', 3) < 0) {
+            $stokTersedia = '0.000';
+        }
+
+        if (bccomp($jumlahPengurangan, $stokTersedia, 3) > 0) {
+            throw ValidationException::withMessages([
+                $namaField => [
+                    sprintf(
+                        'Jumlah mutasi keluar (%s) melebihi stok tersedia (%s).',
+                        $jumlahPengurangan,
+                        $stokTersedia,
+                    ),
+                ],
+            ]);
+        }
+    }
+
+    /**
+     * Pastikan saldo akhir hasil mutasi tidak pernah bernilai negatif.
+     */
+    private function pastikanSaldoTidakNegatif(string $saldoSetelah, string $namaField = 'jumlah'): void
+    {
+        if (bccomp($saldoSetelah, '0.000', 3) < 0) {
+            throw ValidationException::withMessages([
+                $namaField => ['Saldo stok tidak mencukupi dan tidak boleh menjadi negatif.'],
+            ]);
+        }
     }
 
     /**
@@ -341,18 +582,24 @@ class LayananStok
         }
         $stokTerkunci->save();
 
-        return MutasiStok::create([
-            'stok_id' => $stokTerkunci->id,
-            'jenis' => $jenis,
-            'jumlah' => $jumlahMutasi,
-            'saldo_setelah' => $saldoSetelah,
-            'waktu' => $waktuMutasi->format(self::FORMAT_WAKTU_MILIDETIK),
-            'ref_operasi' => $refFinal,
-            'pengiriman_id' => $pengirimanId,
-            'pencatat_id' => $pencatatId,
-            'keterangan' => $keterangan,
-            'is_contoh' => (bool) $stokTerkunci->is_contoh,
-        ]);
+        try {
+            return MutasiStok::create([
+                'stok_id' => $stokTerkunci->id,
+                'jenis' => $jenis,
+                'jumlah' => $jumlahMutasi,
+                'saldo_setelah' => $saldoSetelah,
+                'waktu' => $waktuMutasi->format(self::FORMAT_WAKTU_MILIDETIK),
+                'ref_operasi' => $refFinal,
+                'pengiriman_id' => $pengirimanId,
+                'pencatat_id' => $pencatatId,
+                'keterangan' => $keterangan,
+                'is_contoh' => (bool) $stokTerkunci->is_contoh,
+            ]);
+        } catch (UniqueConstraintViolationException $e) {
+            throw ValidationException::withMessages([
+                'ref_operasi' => ['Referensi operasi sudah pernah dicatat.'],
+            ]);
+        }
     }
 
     /**
@@ -389,11 +636,33 @@ class LayananStok
     }
 
     /**
+     * Normalisasi whitespace dan validasi panjang serta keterisian ref_operasi.
+     */
+    private function normalisasiDanValidasiRef(?string $refOperasi, bool $wajibDiisi = false): string
+    {
+        $ref = $refOperasi !== null ? trim($refOperasi) : '';
+
+        if ($wajibDiisi && $ref === '') {
+            throw ValidationException::withMessages([
+                'ref_operasi' => ['Referensi operasi wajib diisi.'],
+            ]);
+        }
+
+        if ($ref !== '' && mb_strlen($ref) > 191) {
+            throw ValidationException::withMessages([
+                'ref_operasi' => ['Referensi operasi maksimal 191 karakter.'],
+            ]);
+        }
+
+        return $ref;
+    }
+
+    /**
      * Validasi format dan keunikan ref_operasi sebelum disimpan.
      */
     private function siapkanRefOperasi(?string $refOperasi, Carbon $waktuMutasi): string
     {
-        $ref = $refOperasi !== null ? trim($refOperasi) : '';
+        $ref = $this->normalisasiDanValidasiRef($refOperasi);
 
         if ($ref === '') {
             return sprintf(
@@ -401,12 +670,6 @@ class LayananStok
                 $waktuMutasi->format('YmdHisv'),
                 Str::upper(Str::random(8))
             );
-        }
-
-        if (mb_strlen($ref) > 191) {
-            throw ValidationException::withMessages([
-                'ref_operasi' => ['Referensi operasi maksimal 191 karakter.'],
-            ]);
         }
 
         if ($this->refSudahAda($ref)) {

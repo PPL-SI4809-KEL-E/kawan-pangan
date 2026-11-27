@@ -6,6 +6,7 @@ use App\Enums\Role;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -35,8 +36,10 @@ class PeriksaRole
             abort(403);
         }
 
-        // PSKE-17: Cek status akun bolehLogin(). Bila false, logout dan alihkan ke login.
+        // Pastikan hanya akun berstatus AKTIF yang boleh mengakses sistem.
         if (! $user->bolehLogin()) {
+            $pesan = $user->pesanLoginDitolak() ?? 'Akun Anda tidak dapat mengakses sistem.';
+
             Auth::logout();
 
             if ($request->hasSession()) {
@@ -44,9 +47,17 @@ class PeriksaRole
                 $request->session()->regenerateToken();
             }
 
-            return redirect()->route('login')->withErrors([
-                'email' => $user->pesanLoginDitolak() ?? 'Akun Anda tidak dapat mengakses sistem.',
-            ]);
+            if ($request->expectsJson()) {
+                abort(403, $pesan);
+            }
+
+            if (Route::has('login')) {
+                return redirect()->route('login')->withErrors([
+                    'email' => $pesan,
+                ]);
+            }
+
+            abort(403, $pesan);
         }
 
         // Bandingkan nilai enum role pengguna dengan daftar yang diizinkan.

@@ -122,4 +122,46 @@ class UserOtorisasiHelperTest extends TestCase
 
         $this->assertFalse($user->menguasaiInstansi(1));
     }
+
+    #[Test]
+    public function wilayah_kosong_atau_spasi_selalu_ditolak(): void
+    {
+        $userKosong = new User(['kode_wilayah' => '   ']);
+
+        $this->assertFalse($userKosong->menguasaiWilayah('32.04'));
+        $this->assertFalse($userKosong->menguasaiWilayah(''));
+
+        $userValid = new User(['kode_wilayah' => '32.04']);
+        $this->assertFalse($userValid->menguasaiWilayah(''));
+    }
+
+    #[Test]
+    public function pengelola_dan_petugas_instansi_dibedakan_berdasarkan_jabatan(): void
+    {
+        $pengelola = new User([
+            'role' => Role::BadanResmi->value,
+            'instansi_id' => 1,
+        ]);
+        $pengelola->forceFill(['jabatan' => User::JABATAN_PENGELOLA]);
+
+        $petugas = new User([
+            'role' => Role::BadanResmi->value,
+            'instansi_id' => 1,
+        ]);
+        $petugas->forceFill(['jabatan' => User::JABATAN_PETUGAS]);
+
+        $tanpaJabatan = new User([
+            'role' => Role::BadanResmi->value,
+            'instansi_id' => 1,
+        ]);
+
+        $this->assertTrue($pengelola->isPengelolaInstansi());
+        $this->assertFalse($pengelola->isPetugasInstansi());
+
+        $this->assertTrue($petugas->isPetugasInstansi());
+        $this->assertFalse($petugas->isPengelolaInstansi());
+
+        $this->assertFalse($tanpaJabatan->isPengelolaInstansi());
+        $this->assertFalse($tanpaJabatan->isPetugasInstansi());
+    }
 }

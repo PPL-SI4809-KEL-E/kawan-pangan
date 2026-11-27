@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Enums\Role;
+use App\Models\Gudang;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
@@ -34,8 +35,15 @@ class PengirimanPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->role === Role::BadanResmi
-            || $user->role === Role::KepalaWilayah;
+        if ($user->role === Role::BadanResmi) {
+            return $user->instansi_id !== null;
+        }
+
+        if ($user->role === Role::KepalaWilayah) {
+            return trim((string) $user->kode_wilayah) !== '';
+        }
+
+        return false;
     }
 
     /**
@@ -43,7 +51,7 @@ class PengirimanPolicy
      * Kepala Wilayah boleh melihat pengiriman ke wilayahnya.
      *
      * @param  Model  $pengiriman  Model pengiriman dengan atribut
-     *                             `instansi_id`, `petugas_id`, `wilayah_tujuan_kode`.
+     *                             `gudang_asal_id`/`instansi_id`, `petugas_id`, `kode_wilayah_tujuan`/`wilayah_tujuan_kode`.
      */
     public function view(User $user, Model $pengiriman): bool
     {
@@ -64,12 +72,11 @@ class PengirimanPolicy
     }
 
     /**
-     * Hanya Badan Resmi yang boleh membuat pengiriman.
+     * Hanya Pengelola instansi (Badan Resmi dengan jabatan PENGELOLA) yang boleh membuat pengiriman.
      */
     public function create(User $user): bool
     {
-        return $user->role === Role::BadanResmi
-            && $user->instansi_id !== null;
+        return $user->isPengelolaInstansi();
     }
 
     /**
@@ -95,7 +102,7 @@ class PengirimanPolicy
     }
 
     /**
-     * Hanya petugas yang ditugaskan yang boleh memperbarui checkpoint.
+     * Hanya petugas yang ditugaskan pada pengiriman instansinya yang boleh memperbarui checkpoint.
      *
      * @param  Model  $pengiriman  Model pengiriman.
      */
@@ -105,7 +112,8 @@ class PengirimanPolicy
             return false;
         }
 
-        return $this->petugasCocok($user, $pengiriman);
+        return $this->petugasCocok($user, $pengiriman)
+            && $this->instansiCocok($user, $pengiriman);
     }
 
     /**
@@ -123,18 +131,29 @@ class PengirimanPolicy
     }
 
     /**
-     * Periksa kecocokan instansi: user.instansi_id === pengiriman.instansi_id.
+     * Periksa kecocokan instansi: user.instansi_id === instansi gudang asal pengiriman.
      */
     private function instansiCocok(User $user, Model $pengiriman): bool
     {
-        $instansiUser = $user->instansi_id;
         $instansiPengiriman = $pengiriman->getAttribute('instansi_id');
 
-        if ($instansiUser === null || $instansiPengiriman === null) {
+        if ($instansiPengiriman === null && $pengiriman->relationLoaded('gudangAsal')) {
+            $instansiPengiriman = $pengiriman->getRelation('gudangAsal')?->getAttribute('instansi_id');
+        }
+
+        if ($instansiPengiriman === null && $pengiriman->relationLoaded('gudang')) {
+            $instansiPengiriman = $pengiriman->getRelation('gudang')?->getAttribute('instansi_id');
+        }
+
+        if ($instansiPengiriman === null && $pengiriman->getAttribute('gudang_asal_id') !== null) {
+            $instansiPengiriman = Gudang::whereKey($pengiriman->getAttribute('gudang_asal_id'))->value('instansi_id');
+        }
+
+        if ($instansiPengiriman === null) {
             return false;
         }
 
-        return (int) $instansiUser === (int) $instansiPengiriman;
+        return $user->menguasaiInstansi((int) $instansiPengiriman);
     }
 
     /**
@@ -143,14 +162,13 @@ class PengirimanPolicy
      */
     private function wilayahTujuanCocok(User $user, Model $pengiriman): bool
     {
-        $kodeUser = $user->kode_wilayah;
-        $kodeTujuan = $pengiriman->getAttribute('wilayah_tujuan_kode');
+        $kodeTujuan = $pengiriman->getAttribute('kode_wilayah_tujuan')
+            ?? $pengiriman->getAttribute('wilayah_tujuan_kode');
 
-        if ($kodeUser === null || $kodeTujuan === null) {
+        if ($kodeTujuan === null) {
             return false;
         }
 
-        return $kodeTujuan === $kodeUser
-            || str_starts_with($kodeTujuan, $kodeUser.'.');
+        return $user->menguasaiWilayah((string) $kodeTujuan);
     }
 }

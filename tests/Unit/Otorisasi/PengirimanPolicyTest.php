@@ -3,6 +3,8 @@
 namespace Tests\Unit\Otorisasi;
 
 use App\Enums\Role;
+use App\Models\Gudang;
+use App\Models\Pengiriman;
 use App\Models\User;
 use App\Policies\PengirimanPolicy;
 use Illuminate\Database\Eloquent\Model;
@@ -22,7 +24,7 @@ class PengirimanPolicyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->policy = new PengirimanPolicy();
+        $this->policy = new PengirimanPolicy;
     }
 
     private function buatPengiriman(
@@ -194,6 +196,27 @@ class PengirimanPolicyTest extends TestCase
     }
 
     #[Test]
+    public function hanya_pengelola_instansi_yang_boleh_membuat_pengiriman(): void
+    {
+        $pengelola = $this->buatPengelola(id: 5, instansiId: 1);
+
+        $petugas = new User([
+            'role' => Role::BadanResmi->value,
+            'instansi_id' => 1,
+        ]);
+        $petugas->forceFill(['jabatan' => User::JABATAN_PETUGAS]);
+
+        $tanpaJabatan = new User([
+            'role' => Role::BadanResmi->value,
+            'instansi_id' => 1,
+        ]);
+
+        $this->assertTrue($this->policy->create($pengelola));
+        $this->assertFalse($this->policy->create($petugas));
+        $this->assertFalse($this->policy->create($tanpaJabatan));
+    }
+
+    #[Test]
     public function badan_resmi_tanpa_instansi_tidak_boleh_update(): void
     {
         $user = new User([
@@ -279,5 +302,37 @@ class PengirimanPolicyTest extends TestCase
         );
 
         $this->assertFalse($this->policy->view($user, $pengiriman));
+    }
+
+    #[Test]
+    public function kolom_erd_kode_wilayah_tujuan_dan_relasi_gudang_asal_didukung(): void
+    {
+        $pengiriman = new Pengiriman([
+            'petugas_id' => 10,
+            'kode_wilayah_tujuan' => '32.04.12.2001',
+        ]);
+        $pengiriman->setRelation('gudangAsal', new Gudang(['instansi_id' => 1]));
+
+        $petugasCocok = new User([
+            'role' => Role::BadanResmi->value,
+            'instansi_id' => 1,
+        ]);
+        $petugasCocok->id = 10;
+
+        $petugasInstansiLain = new User([
+            'role' => Role::BadanResmi->value,
+            'instansi_id' => 2,
+        ]);
+        $petugasInstansiLain->id = 10;
+
+        $kepalaWilayah = new User([
+            'role' => Role::KepalaWilayah->value,
+            'kode_wilayah' => '32.04.12',
+        ]);
+
+        $this->assertTrue($this->policy->update($petugasCocok, $pengiriman));
+        $this->assertTrue($this->policy->updateCheckpoint($petugasCocok, $pengiriman));
+        $this->assertFalse($this->policy->updateCheckpoint($petugasInstansiLain, $pengiriman));
+        $this->assertTrue($this->policy->view($kepalaWilayah, $pengiriman));
     }
 }
