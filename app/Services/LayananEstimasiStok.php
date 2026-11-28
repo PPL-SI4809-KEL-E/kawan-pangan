@@ -27,18 +27,20 @@ class LayananEstimasiStok
 
     public const STATUS_TANPA_DATA = 'TANPA_DATA';
 
-    public function hitungKetahanan(float|int|string $stokFisik, float|int|string $pemakaianHarian): float
+    public function __construct(private readonly LayananStok $layananStok = new LayananStok) {}
+
+    public function hitungKetahanan(float|int|string $stokTersedia, float|int|string $pemakaianHarian): float
     {
-        $fisik = (float) $stokFisik;
+        $tersedia = (float) $stokTersedia;
         $pemakaian = (float) $pemakaianHarian;
-        if ($pemakaian < 0 || $fisik < 0) {
-            throw new InvalidArgumentException('Stok fisik dan penggunaan harian harus nonnegatif.');
+        if ($pemakaian < 0 || $tersedia < 0) {
+            throw new InvalidArgumentException('Stok tersedia dan penggunaan harian harus nonnegatif.');
         }
-        if ($fisik === 0.0) {
+        if ($tersedia === 0.0) {
             return 0.0;
         }
 
-        return $pemakaian === 0.0 ? INF : $fisik / $pemakaian;
+        return $pemakaian === 0.0 ? INF : $tersedia / $pemakaian;
     }
 
     public function tentukanStatus(float $hari, ?AmbangStatus $ambang = null): string
@@ -132,7 +134,7 @@ class LayananEstimasiStok
 
     /**
      * Ringkas satu atau beberapa baris stok dari denganTotalPeriode().
-     * Stok fisik menentukan tanggal habis. Cadangan aktif mengurangi jumlah yang dapat disalurkan.
+     * Hari tersisa memakai jumlah yang dapat disalurkan setelah cadangan aktif tiap gudang.
      *
      * @param  iterable<Stok>  $daftarStok
      */
@@ -143,7 +145,7 @@ class LayananEstimasiStok
         foreach ($daftarStok as $stok) {
             $fisik += (float) $stok->jumlah_fisik_layak;
             $cadangan += (float) $stok->cadangan_aktif;
-            $tersedia += max(0.0, (float) $stok->jumlah_fisik_layak - (float) $stok->cadangan_aktif);
+            $tersedia += (float) $this->layananStok->hitungStokTersedia($stok, gunakanAgregat: true);
             $penyaluran += (float) $stok->penyaluran_periode;
             $mulai = $stok->mulai_pencatatan_lengkap ?? $stok->penyaluran_pertama;
             $umur = $mulai ? (int) Carbon::parse($mulai)->startOfDay()->diffInDays($acuan->copy()->startOfDay()) + 1 : 0;
@@ -180,7 +182,7 @@ class LayananEstimasiStok
 
         // Kolom kuantitas memiliki tiga desimal. Rasio satuan terkecil menjaga batas
         // tepat 14/30 hari dari galat pembagian rata-rata harian pecahan.
-        $hari = $this->hitungKetahanan(round($fisik * 1000) * self::MINIMUM_HARI_RIWAYAT, round($penyaluran * 1000));
+        $hari = $this->hitungKetahanan(round($tersedia * 1000) * self::MINIMUM_HARI_RIWAYAT, round($penyaluran * 1000));
         $hasil['status'] = $this->tentukanStatus($hari, $ambang);
         if (is_infinite($hari)) {
             $hasil['is_tak_terhingga'] = true;
