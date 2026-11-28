@@ -7,9 +7,12 @@ use App\Http\Requests\GudangRequest;
 use App\Models\Gudang;
 use App\Models\Instansi;
 use App\Models\Wilayah;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class GudangController extends Controller
@@ -83,7 +86,19 @@ class GudangController extends Controller
 
     public function destroy(Gudang $gudang): RedirectResponse
     {
-        $gudang->delete();
+        try {
+            DB::transaction(function () use ($gudang) {
+                $gudang = Gudang::lockForUpdate()->findOrFail($gudang->id);
+                if ($gudang->stok()->exists()) {
+                    throw ValidationException::withMessages(['gudang' => 'Gudang masih punya stok dan tidak bisa dihapus.']);
+                }
+                $gudang->delete();
+            });
+        } catch (QueryException $e) {
+            report($e);
+
+            return back()->withErrors(['gudang' => 'Gudang gagal dihapus. Periksa apakah masih digunakan, lalu coba lagi.']);
+        }
 
         return to_route('admin.gudang.index')->with('sukses', 'Gudang berhasil dihapus.');
     }
