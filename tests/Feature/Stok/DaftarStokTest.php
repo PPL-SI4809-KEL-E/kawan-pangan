@@ -158,7 +158,7 @@ class DaftarStokTest extends TestCase
         $this->assertSame(0.0, $baris->tersedia);
     }
 
-    public function test_estimasi_pske_60_membedakan_hari_stok_fisik_dan_jumlah_tersedia(): void
+    public function test_estimasi_hari_tersisa_memakai_stok_setelah_cadangan_aktif(): void
     {
         $this->travelTo(Carbon::parse('2026-11-25 12:00:00'));
         $user = $this->pengelola();
@@ -182,11 +182,11 @@ class DaftarStokTest extends TestCase
         }
 
         $respons = $this->actingAs($user)->get(route('panel.instansi.stok.index'))->assertOk()
-            ->assertSeeInOrder(['300', '60', '240', '15', '20', '2026-12-15', 'Waspada']);
+            ->assertSeeInOrder(['300', '60', '240', '15', '16', '2026-12-11', 'Waspada']);
         $hasil = $respons->viewData('estimasi')[$stok->id];
         $this->assertSame(240.0, $hasil['stok_tersedia']);
         $this->assertSame(15.0, $hasil['pemakaian_harian']);
-        $this->assertSame(20.0, $hasil['hari']);
+        $this->assertSame(16.0, $hasil['hari']);
     }
 
     public function test_hanya_stok_gudang_instansi_sendiri_yang_tampil(): void

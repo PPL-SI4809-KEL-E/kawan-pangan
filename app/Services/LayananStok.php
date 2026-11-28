@@ -77,13 +77,16 @@ class LayananStok
     /**
      * Hitung stok tersedia (saldo fisik layak dikurangi total cadangan aktif).
      */
-    public function hitungStokTersedia(Stok|int $stok, ?int $kecualikanPengirimanId = null): string
+    public function hitungStokTersedia(Stok|int $stok, ?int $kecualikanPengirimanId = null, bool $gunakanAgregat = false): string
     {
-        $stokId = $stok instanceof Stok ? $stok->id : $stok;
-        $stokSegar = Stok::findOrFail($stokId);
-
-        $fisik = $this->formatKuantitas($stokSegar->jumlah_fisik_layak, 'jumlah_fisik_layak');
-        $cadanganAktif = $this->totalCadanganAktif($stokId, $kecualikanPengirimanId);
+        // Dalam laporan, saldo dan SUM cadangan berasal dari query yang sama.
+        if ($gunakanAgregat && $stok instanceof Stok && $kecualikanPengirimanId === null && array_key_exists('cadangan_aktif', $stok->getAttributes())) {
+            $cadanganAktif = $this->formatKuantitas($stok->cadangan_aktif ?? 0, 'cadangan');
+        } else {
+            $stok = Stok::findOrFail($stok instanceof Stok ? $stok->id : $stok);
+            $cadanganAktif = $this->totalCadanganAktif($stok->id, $kecualikanPengirimanId);
+        }
+        $fisik = $this->formatKuantitas($stok->jumlah_fisik_layak, 'jumlah_fisik_layak');
         $tersedia = bcsub($fisik, $cadanganAktif, 3);
 
         return bccomp($tersedia, '0.000', 3) < 0 ? '0.000' : $tersedia;

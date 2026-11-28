@@ -59,7 +59,7 @@ class StokNolTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        Cadangan::create([
+        $cadangan = Cadangan::create([
             'stok_id' => $data['stok']->id,
             'pengiriman_id' => $pengirimanId,
             'jumlah' => '100.000',
@@ -73,6 +73,13 @@ class StokNolTest extends TestCase
 
         $this->assertSame(0.0, $estimasi['stok_tersedia']);
         $this->assertSame(0.0, $estimasi['hari']);
+        $this->assertSame(LayananEstimasiStok::STATUS_KRITIS, $estimasi['status']);
+
+        $data['stok']->update(['jumlah_fisik_layak' => '310.000']);
+        $cadangan->update(['jumlah' => '171.000']);
+        $estimasi = $this->layanan->estimasiStokWilayah($data['wilayah'], $data['komoditas']);
+        $this->assertSame(139.0, $estimasi['stok_tersedia']);
+        $this->assertSame(13.9, $estimasi['hari']);
         $this->assertSame(LayananEstimasiStok::STATUS_KRITIS, $estimasi['status']);
     }
 
