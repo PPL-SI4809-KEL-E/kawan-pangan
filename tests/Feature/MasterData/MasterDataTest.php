@@ -118,6 +118,24 @@ class MasterDataTest extends TestCase
         Komoditas::create(['nama' => ' BERAS ', 'satuan' => 'ton']);
     }
 
+    public function test_gudang_dan_komoditas_dengan_catatan_stok_tidak_bisa_dihapus(): void
+    {
+        $this->actingAs($this->admin());
+        $gudang = Gudang::create($this->dataGudang());
+        $komoditas = Komoditas::create(['nama' => 'Beras', 'satuan' => 'kg']);
+        $stok = $gudang->stok()->create(['komoditas_id' => $komoditas->id, 'jumlah_fisik_layak' => 0]);
+
+        foreach (['gudang' => $gudang, 'komoditas' => $komoditas] as $nama => $model) {
+            $index = route("admin.$nama.index");
+            $pesan = ucfirst($nama).' masih punya stok dan tidak bisa dihapus.';
+            $this->from($index)->delete(route("admin.$nama.destroy", $model))
+                ->assertRedirect($index)->assertSessionHasErrors([$nama => $pesan]);
+            $this->get($index)->assertOk()->assertSeeText($pesan);
+            $this->assertModelExists($model);
+            $this->assertModelExists($stok);
+        }
+    }
+
     public function test_nama_dan_satuan_komoditas_divalidasi(): void
     {
         $this->actingAs($this->admin());

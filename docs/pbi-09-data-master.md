@@ -10,7 +10,7 @@ Implementasi PSKE-44, PSKE-45, dan PSKE-46 di bawah PSKE-20. Seluruh pekerjaan b
 4. Tambahkan instansi dengan nama, alamat, latitude, dan longitude. Instansi langsung tersedia pada dropdown registrasi Badan Resmi. Jika master kosong, dropdown kosong dan tidak memakai data contoh. Registrasi menolak ID instansi yang tidak tersedia.
 5. Tambahkan gudang dengan instansi pengelola, kode wilayah yang sudah diimpor lewat PSKE-19, nama, alamat, koordinat, dan status. Ketik awalan kode wilayah untuk mendapatkan maksimal 20 saran. Tanpa JavaScript, kode dapat disalin dari halaman master wilayah.
 6. Gunakan **Nonaktifkan** untuk mempertahankan data gudang. Gudang tetap terlihat dan dapat difilter menurut status atau instansi, lalu diaktifkan kembali. Endpoint status menerima nilai tujuan eksplisit, sehingga pengiriman ulang tidak membalik status.
-7. Ubah data lewat **Ubah**, atau gunakan **Hapus** untuk menghapus data yang tidak diperlukan. Instansi yang masih dipakai akun atau gudang, termasuk gudang nonaktif, ditolak penghapusannya.
+7. Ubah data lewat **Ubah**, atau gunakan **Hapus** untuk menghapus data yang tidak diperlukan. Instansi yang masih dipakai akun atau gudang, termasuk gudang nonaktif, ditolak penghapusannya. Gudang dan komoditas hanya bisa dihapus jika sudah tidak memiliki catatan stok, termasuk catatan bersaldo nol.
 8. Buka **Ambang Status** (`/admin/ambang-status`) untuk mengubah batas hari ketersediaan pangan. Migrasi menyediakan pengaturan awal 14/30 tanpa memerlukan seeder. Kedua batas berupa bilangan bulat positif, maksimal 65535, dengan `kritis_hari < aman_hari`.
 
 ## Ambang status dan integrasi PSKE-56
@@ -66,7 +66,7 @@ Ketiga resource memakai pola yang sama dengan nama rute `admin.{resource}.{actio
 - `ambang_status(id,kritis_hari,aman_hari,created_at,updated_at)`: model `AmbangStatus`, ID global 1, default 14/30. Penyimpanan melalui model memvalidasi ID dan urutan batas; tidak ada endpoint membuat/menghapus baris lain. Query builder langsung melewati validasi model. Kontrak lengkap tersedia di [pbi-09-kontrak-tabel.md](pbi-09-kontrak-tabel.md).
 - Tidak ada data master contoh yang dimasukkan otomatis. Nama instansi/gudang boleh sama; keunikan nama diwajibkan pada komoditas.
 - PSKE-15/PBI-03 masih dikerjakan terpisah. Selaraskan nama tabel, koordinat, dan migrasi sebelum penggabungan agar tidak membuat master dua kali. Kolom `users.instansi_id` sebelumnya belum memiliki foreign key; validasi registrasi dan pemeriksaan penghapusan melindungi jalur aplikasi saat ini. Penambahan foreign key memerlukan audit ID contoh/legacy dan penyelarasan migrasi pada integrasi PSKE-15, termasuk transaksi registrasi/penghapusan bersamaan.
-- Modul stok dan penugasan belum tersedia di `main`. Modul tersebut perlu membaca `gudang.aktif` untuk pilihan operasional, dan menambahkan foreign key/proteksi penghapusan komoditas dan gudang saat sudah memiliki referensi stok atau penugasan. Nonaktif saat ini mengubah penanda status tanpa menghapus master.
+- Saat gudang masih memiliki catatan stok, Superadmin dapat memilih **Nonaktifkan** untuk mempertahankan master dan riwayatnya. Foreign key pada `stok.gudang_id` dan `stok.komoditas_id` juga menjaga relasi di basis data.
 - Perubahan otorisasi PSKE-18 dari PR #5 sudah diintegrasikan bersama PR #8 dari `main`. Policy Gudang dari PSKE-18 tetap tersedia; seluruh halaman master tetap menggunakan `SuperadminAktif` dari PSKE-19 dan memeriksa status akun aktif.
 
 ## Verifikasi

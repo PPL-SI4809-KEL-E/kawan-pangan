@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\KomoditasRequest;
 use App\Models\Komoditas;
+use Illuminate\Database\QueryException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -59,7 +61,19 @@ class KomoditasController extends Controller
 
     public function destroy(Komoditas $komoditas): RedirectResponse
     {
-        $komoditas->delete();
+        try {
+            DB::transaction(function () use ($komoditas) {
+                $komoditas = Komoditas::lockForUpdate()->findOrFail($komoditas->id);
+                if ($komoditas->stok()->exists()) {
+                    throw ValidationException::withMessages(['komoditas' => 'Komoditas masih punya stok dan tidak bisa dihapus.']);
+                }
+                $komoditas->delete();
+            });
+        } catch (QueryException $e) {
+            report($e);
+
+            return back()->withErrors(['komoditas' => 'Komoditas gagal dihapus. Periksa apakah masih digunakan, lalu coba lagi.']);
+        }
 
         return to_route('admin.komoditas.index')->with('sukses', 'Komoditas berhasil dihapus.');
     }
